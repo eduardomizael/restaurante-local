@@ -10,7 +10,10 @@ INSTALLATION = read_installation(DATA_DIR)
 SECRET_KEY = INSTALLATION.get("secret_key", "")
 DEBUG = False
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-INSTALLED_APPS = ["django.contrib.contenttypes", "apps.core"]
+INSTALLED_APPS = [
+    "django.contrib.contenttypes", "apps.core", "apps.products",
+    "apps.measurements", "apps.orders",
+]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",

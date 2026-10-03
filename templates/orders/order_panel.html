@@ -8,6 +8,6 @@
       </article>
     {% empty %}<p>Inclua uma pesagem disponível ou um produto.</p>{% endfor %}</div>
     <div class="subtotal"><span>Subtotal pré-inserido</span><strong>R$ {{ subtotal|money }}</strong></div>
-    <div class="form-actions"><button type="button" disabled>Impressão indisponível</button><a class="button danger" href="{% url 'confirm_cancel' selected.pk %}">× Cancelar comanda</a></div>
+    <div class="form-actions"><a class="button" href="{% url 'print_preview' selected.pk %}">Prévia e impressão simulada</a><a class="button danger" href="{% url 'confirm_cancel' selected.pk %}">× Cancelar comanda</a></div>
   {% else %}<h2>Selecione uma comanda aberta</h2><p>As pesagens disponíveis ficam guardadas até você escolher seu destino ou descartá-las.</p>{% endif %}
 </section>

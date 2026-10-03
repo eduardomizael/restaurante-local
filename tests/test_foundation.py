@@ -158,6 +158,10 @@ class RuntimeTests(SimpleTestCase):
         self.schema_patch.start()
         self.capture_patch = patch("runtime.application.ScaleCaptureController", return_value=None)
         self.capture_patch.start()
+        self.print_patch = patch("runtime.application.PrintWorker", return_value=None)
+        self.print_patch.start()
+        self.print_recovery_patch = patch("runtime.application.recover_interrupted_jobs")
+        self.print_recovery_patch.start()
         self.thread_errors = patch("threading.excepthook")
         self.exception_hook = self.thread_errors.start()
 
@@ -167,6 +171,8 @@ class RuntimeTests(SimpleTestCase):
         finally:
             self.thread_errors.stop()
             self.capture_patch.stop()
+            self.print_patch.stop()
+            self.print_recovery_patch.stop()
             self.schema_patch.stop()
             self.temporary.cleanup()
 
@@ -196,6 +202,7 @@ class RuntimeTests(SimpleTestCase):
             duplicate = LocalApplication(self.data_dir, application.port, browser=False)
             self.assertFalse(duplicate.start())
             self.assertIsNone(duplicate.worker)
+            self.assertIsNone(duplicate.print_worker)
             duplicate.stop()
             self.assertTrue(state.snapshot()["running"])
             # Leave a keep-alive connection open to verify complete socket cleanup.
@@ -261,6 +268,34 @@ class RuntimeTests(SimpleTestCase):
         browser.assert_not_called()
         self.assertIsNone(application.worker)
         self.assertFalse(application.owns_lock)
+
+    def test_print_worker_start_failure_closes_both_adapters(self):
+        adapter = SimulatedScale()
+        printer = Mock(ident=None)
+        printer.start.side_effect = RuntimeError("Falha da fila simulada")
+        application = LocalApplication(self.data_dir, free_port(), browser=False,
+                                       adapter_factory=lambda: adapter,
+                                       print_worker_factory=lambda event: printer)
+        with self.assertRaisesRegex(RuntimeError, "Falha da fila simulada"):
+            application.start()
+        printer.adapter.close.assert_called_once()
+        self.assertTrue(adapter.closed)
+        self.assertFalse(application.server_thread.is_alive())
+        self.assertFalse(application.owns_lock)
+
+    def test_stuck_print_worker_keeps_mutex_until_it_can_stop(self):
+        application = LocalApplication(self.data_dir, free_port(), browser=False)
+        application.owns_lock = application.lock.acquire()
+        application.print_worker = Mock(ident=1)
+        application.print_worker.is_alive.return_value = True
+        try:
+            with self.assertRaisesRegex(RuntimeError, "Impressão não encerrou"):
+                application.stop()
+            self.assertTrue(application.owns_lock)
+            self.assertFalse(InstanceLock(self.data_dir).acquire())
+        finally:
+            application.print_worker.is_alive.return_value = False
+            application.stop()
 
     def test_missing_database_is_not_created_at_startup(self):
         with self.assertRaisesRegex(RuntimeError, "Banco ausente"):

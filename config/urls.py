@@ -3,6 +3,7 @@ from django.urls import path
 from apps.core import views
 from apps.orders import views as order_views
 from apps.products import views as product_views
+from apps.printing import views as print_views
 
 urlpatterns = [
     path("", order_views.attendance, name="home"),
@@ -17,6 +18,12 @@ urlpatterns = [
     path("orders/<int:order_id>/cancel/", order_views.confirm_cancel, name="confirm_cancel"),
     path("measurements/<int:measurement_id>/discard/", order_views.confirm_discard, name="confirm_discard"),
     path("numbering/", order_views.numbering, name="numbering"),
+    path("configuration/document/", print_views.configuration, name="document_configuration"),
+    path("orders/<int:order_id>/preview/", print_views.preview, name="print_preview"),
+    path("orders/<int:order_id>/finalize/", print_views.finalize, name="finalize_order"),
+    path("printing/history/", print_views.history, name="print_history"),
+    path("printing/<int:document_id>/jobs/", print_views.job_fragment, name="print_jobs_fragment"),
+    path("printing/<int:document_id>/reprint/", print_views.reprint, name="reprint_document"),
     path("status/", views.status_page, name="status"),
     path("status/fragment/", views.status_fragment, name="status_fragment"),
     path("health/", views.health, name="health"),

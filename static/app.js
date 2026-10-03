@@ -20,7 +20,7 @@ window.localPollingAllowed = () => !document.hidden
   && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
 
 document.addEventListener("htmx:beforeSwap", (event) => {
-  if (["shared-board", "runtime-status"].includes(event.detail.target.id)
+  if (["shared-board", "runtime-status", "print-jobs"].includes(event.detail.target.id)
       && !window.localPollingAllowed()) {
     event.detail.shouldSwap = false;
     return;

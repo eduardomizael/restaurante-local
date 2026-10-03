@@ -95,7 +95,7 @@ class TouchFlowTests(TestCase):
         self.assertEqual(Measurement.objects.filter(status="AVAILABLE").get().pk, measurements[2].pk)
         page = self.client.get(f"/?order={first.pk}")
         self.assertContains(page, "R$ 53,50")
-        self.assertContains(page, "Impressão indisponível")
+        self.assertContains(page, "Prévia e impressão simulada")
         self.assertEqual(OrderItem.objects.filter(order=first).count(), 3)
 
     def test_manual_form_has_only_unit_relevant_quantity_and_rejects_route_tampering(self):

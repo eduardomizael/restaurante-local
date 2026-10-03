@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><p class="eyebrow">{% if document %}DOCUMENTO CONGELADO{% else %}PRÉVIA DE RASCUNHO{% endif %}</p><h1>Comanda {{ order.number }}</h1><p>Bobina contínua de 80 mm · Simulação sem papel ou spooler</p></div>
+{% if document %}{% include 'printing/jobs.html' with document_id=document.pk %}
+{% else %}<div class="card">
+<p>Revise o documento. A confirmação encerra somente a comanda {{ order.number }}, preserva as outras comandas e as pesagens disponíveis.</p>
+{% if can_finalize %}<form method="post" action="{% url 'finalize_order' order.pk %}">{% csrf_token %}{% include 'core/form_fields.html' %}<button type="submit">Finalizar e simular impressão</button></form>
+{% else %}<p class="error">Configure o cabeçalho e inclua pelo menos um item para finalizar.</p><a class="button secondary" href="{% url 'document_configuration' %}">Configurar cabeçalho e rodapé</a>{% endif %}
+</div>{% endif %}
+<div class="form-actions"><a class="button secondary" href="{% url 'home' %}{% if not document %}?order={{ order.pk }}{% endif %}">Voltar ao atendimento</a><a class="button secondary" href="{% url 'print_history' %}">Histórico</a></div>
+{% include 'printing/slip.html' %}
+{% endblock %}

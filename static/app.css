@@ -52,6 +52,7 @@ footer { padding: 24px 32px; color: #486052; text-align: center; }
 .editor-form { max-width: 760px; margin: 0 auto; }
 .form-field { margin-bottom: 20px; }
 .form-field > label { display: block; font-weight: 600; margin-bottom: 8px; }
+textarea { min-height: 140px; width: 100%; border: 1px solid #9db4a7; border-radius: 8px; padding: 12px; color: #173d36; background: white; font: inherit; resize: vertical; }
 input:not([type=checkbox]):not([type=hidden]), select { min-height: 52px; min-width: 0; width: 100%; border: 1px solid #9db4a7; border-radius: 8px; padding: 12px; color: #173d36; background: white; font: inherit; }
 .field-input { display: flex; gap: 8px; }
 .field-input input { flex: 1; }
@@ -75,3 +76,9 @@ dialog .form-actions { flex-wrap: nowrap; }
 dialog .form-actions button { flex: 1; min-width: 48px; }
 @media (max-width: 950px) { .attendance-grid { grid-template-columns: 1fr; } .product-row, .item-row { align-items: flex-start; flex-wrap: wrap; } .item-total { width: 100%; display: flex; align-items: center; justify-content: space-between; } }
 @media (max-width: 700px) { nav { flex-wrap: wrap; } .subtotal { flex-wrap: wrap; } .search-form input { width: 100%; } }
+.topbar { flex-wrap: wrap; }
+.slip-container { overflow-x: auto; padding: 24px 0; }
+.order-slip { box-sizing: border-box; margin: 0 auto; padding: 4mm; width: 80mm; min-width: 80mm; background: white; color: #111; border: 1px solid #baccc0; font: 2.4mm/1.7 Consolas, 'Courier New', monospace; white-space: pre; }
+.job-row { border-bottom: 1px solid #d5e0d9; padding: 12px 0; margin-bottom: 16px; }
+.slip-zoom { width: fit-content; margin-top: 24px; }
+.slip-preview:has(.slip-zoom input:checked) .order-slip { width: 160mm; min-width: 160mm; padding: 8mm; font-size: 4.8mm; }

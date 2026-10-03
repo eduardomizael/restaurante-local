@@ -12,7 +12,7 @@ DEBUG = False
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes", "apps.core", "apps.products",
-    "apps.measurements", "apps.orders",
+    "apps.measurements", "apps.orders", "apps.printing",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

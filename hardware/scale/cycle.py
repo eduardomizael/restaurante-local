@@ -1,4 +1,4 @@
-"""Pure physical cycle for simulated captures; no ORM, serial or threads."""
+"""Pure physical cycle for scale captures; no ORM, serial or threads."""
 
 from collections import deque
 from dataclasses import dataclass
@@ -22,15 +22,17 @@ class CaptureCycle:
         zero_grams: Maximum weight considered removal/zero.
         minimum_grams: Minimum positive commercial weight.
         maximum_age_seconds: Age/gap above which samples are rejected or reset.
+        profile: Technical profile recorded with each persisted capture.
     """
 
     def __init__(self, sample_count=3, tolerance_grams=2, zero_grams=10,
-                 minimum_grams=11, maximum_age_seconds=2):
+                 minimum_grams=11, maximum_age_seconds=2, profile="SIMULATION_ONLY"):
         self.sample_count = sample_count
         self.tolerance_grams = tolerance_grams
         self.zero_grams = zero_grams
         self.minimum_grams = minimum_grams
         self.maximum_age_seconds = maximum_age_seconds
+        self.profile = profile
         self.samples = deque(maxlen=sample_count)
         self.reset()
 
@@ -107,9 +109,9 @@ class CaptureCycle:
         self.status = "WAITING_REMOVAL"
 
     def parameters(self):
-        """Return the provisional simulator stability parameters for snapshots."""
+        """Return the provisional stability parameters for snapshots."""
         return {
             "sample_count": self.sample_count, "tolerance_grams": self.tolerance_grams,
             "zero_grams": self.zero_grams, "minimum_grams": self.minimum_grams,
-            "maximum_age_seconds": self.maximum_age_seconds, "profile": "SIMULATION_ONLY",
+            "maximum_age_seconds": self.maximum_age_seconds, "profile": self.profile,
         }

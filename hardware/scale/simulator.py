@@ -1,15 +1,7 @@
 """Deterministic readings for the simulated commercial capture cycle."""
 
-from dataclasses import dataclass
 from time import monotonic
-
-
-@dataclass(frozen=True)
-class ScaleSample:
-    net_weight_grams: int
-    tare_grams: int
-    sampled_at: float
-    moving: bool = False
+from hardware.scale.sample import ScaleSample
 
 
 class SimulatedScale:

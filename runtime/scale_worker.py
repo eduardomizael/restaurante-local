@@ -1,4 +1,4 @@
-"""Simulated reading/capture worker, independent of every HTTP page."""
+"""Reading/capture worker, independent of every HTTP page."""
 
 import logging
 from threading import Thread
@@ -24,6 +24,7 @@ class ScaleWorker(Thread):
         """Read until shutdown, always closing the adapter."""
         try:
             was_paused = False
+            adapter_revision = None
             while not self.stop_event.is_set():
                 close_old_connections()
                 if self.state.snapshot()["paused"]:
@@ -37,6 +38,11 @@ class ScaleWorker(Thread):
                     was_paused = False
                     try:
                         sample = self.adapter.read()
+                        revision = getattr(self.adapter, "revision", None)
+                        if revision != adapter_revision:
+                            if self.capture_controller:
+                                self.capture_controller.reset()
+                            adapter_revision = revision
                         if self.stop_event.is_set():
                             break
                         status = self.capture_controller.observe(sample) if self.capture_controller else "SIMULATED"

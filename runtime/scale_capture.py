@@ -42,7 +42,7 @@ class ScaleCaptureController:
         if candidate:
             capture_measurement(
                 capture_key=candidate.capture_key, net_weight_grams=candidate.net_weight_grams,
-                tare_grams=candidate.tare_grams, device="SIMULATOR",
+                tare_grams=candidate.tare_grams, device=sample.device,
                 stability_parameters=self.cycle.parameters(),
                 expected_product_id=product.pk, expected_product_revision=product.revision,
             )

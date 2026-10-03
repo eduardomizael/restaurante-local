@@ -1,7 +1,10 @@
 """In-memory transport: never opens a printer, spooler or network endpoint."""
 
 
-class SimulatedPrintFailure(Exception):
+from hardware.printer.results import PrintFailure
+
+
+class SimulatedPrintFailure(PrintFailure):
     """Known failure before the simulator accepted any content."""
 
 

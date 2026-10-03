@@ -105,6 +105,8 @@ Cada worker administra sua própria conexão Django e fecha conexões obsoletas;
 
 ## 4. Hardware e impressão
 
+Em 03/10/2026, documento versionado, configuração de texto, finalização atômica, preview, histórico e fila simulada estão implementados no app `printing`. Estado SIMULATED é distinto de aceitação física/spooler; UNKNOWN não é reenviado automaticamente. Decisão e limites: [ADR-0014](adr/0014-documento-congelado-e-fila-simulada.md) e [entrega documental](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). RAW/ESC-POS continuam contratos futuros.
+
 `ScaleAdapter` retorna peso líquido, tara, indício de estabilidade, horário monotônico da amostra e falha física. O parser valida quadro completo e campo PESO L. `ScaleWorker` coordena consulta; a máquina de estados detecta estabilidade, grava uma medição única por ciclo e espera retirada. Ausência de marcador de movimento não é prova suficiente de estabilidade: combinar janela de amostras homologada e idade da leitura.
 
 Simulador reproduz sequências determinísticas de zero, variação, estabilidade, retirada, desconexão e reconexão. Alteração de COM/configuração reinicia apenas o adaptador entre ciclos, sem perder medições persistidas.
@@ -114,6 +116,8 @@ HTTP de impressão cria snapshot e trabalho, sem falar com a impressora. `PrintW
 Snapshot inclui itens, todas as refeições, união de produtos marcados e lançados, preço das linhas manuscritas, espaços conforme largura, cabeçalho e rodapé. Comprimento variável em bobina de 80 mm. Preview e ESC/POS usam o mesmo DTO documental, com testes de equivalência de conteúdo; preview web não substitui homologação física.
 
 ## 5. Interface touch e HTTP local
+
+Estado implementado em 03/10/2026: atendimento, catálogo, numeração, teclado numérico, captura persistente pelo simulador e telas documentais. Contratos de apresentação, polling e limites provisórios estão registrados em [Atendimento e captura](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [Impressão simulada](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Serial e impressão física continuam propostos. Os simuladores não alteram os contratos de hardware homologável.
 
 Templates Django e HTMX retornam HTML e fragments; forms validam sintaxe, services calculam e persistem, selectors consultam. JavaScript cuida de teclado numérico, foco e feedback; não é autoridade de preços, comanda ou consumo da pesagem.
 

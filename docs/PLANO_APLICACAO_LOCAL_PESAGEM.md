@@ -2,7 +2,7 @@
 
 Data: 03/10/2026. Status: **escopo e fluxo definidos; Django e interface web touch escolhidos; estrutura técnica especificada para implementação**. Este documento planeja uma aplicação independente; não modifica o Restaurante atual.
 
-Andamento em 03/10/2026: primeiro recorte da etapa 1 implementado e validado com simulador; a etapa não está integralmente concluída. Backend de produtos, medições e múltiplas comandas implementado e validado, ainda sem integração comercial com telas/worker. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md) e do [domínio](IMPLEMENTACAO_DOMINIO.md) para entregas, evidências e pendências. Os requisitos abaixo continuam sendo o contrato alvo.
+Andamento em 03/10/2026: fundação, domínio comercial, atendimento touch, captura automática simulada e documento/fila simulada implementados. Etapas físicas e distribuição ainda não concluídas. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md), [domínio](IMPLEMENTACAO_DOMINIO.md), [atendimento](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [documento](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Os requisitos abaixo continuam sendo o contrato alvo.
 
 ## 1. Objetivo e limites
 
@@ -157,6 +157,8 @@ Salvar a medição no momento da captura. No clique de impressão, finalizar a c
 O parser novo deve rejeitar resposta incompleta, campo ausente, peso negativo, sobrecarga conhecida e leitura antiga. Enquadramento e mensagens de erro precisam de capturas homologadas. Não copiar a fila JSON atual como armazenamento definitivo de histórico comercial.
 
 ## 7. Sequência de implementação e critérios de aceite
+
+Em 03/10/2026, cadastro/atendimento touch, captura automática simulada e recorte documental da etapa 4 estão implementados e validados em 94 testes. Etapas 2–4 permanecem parciais: faltam configuração de equipamentos, serial real, homologação de estabilidade e transporte físico RAW/ESC-POS. Cabeçalho/rodapé, documento congelado, preview, histórico e segunda via simulada já existem. Evidências e limites: [Atendimento e captura](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [Documento e impressão](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 | Etapa | Entrega | Evidência obrigatória |
 | --- | --- | --- |

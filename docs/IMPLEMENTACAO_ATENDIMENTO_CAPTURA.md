@@ -28,5 +28,6 @@ Verificação manual no navegador local com dados temporários separados: pausa,
 
 ## Próximo incremento
 
+Este incremento documental foi concluído em seguida; consulte [Documento e impressão simulada](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md) para entrega, testes e pendências atuais.
 
 Configuração de cabeçalho/rodapé e DTO documental congelado; preview em bobina contínua de 80 mm, finalização isolada da selecionada e fila simulada com idempotência/recuperação de resultado incerto. Adaptadores COM/RAW, perfil de estabilidade definitivo e distribuição Windows continuam pendentes.

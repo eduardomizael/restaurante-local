@@ -10,7 +10,11 @@ Fundação Django e primeiro recorte do inicializador implementados: Waitress em
 
 Backend comercial implementado: products, measurements e orders, snapshots em centavos/gramas, captura persistente explícita, múltiplos rascunhos, inclusão/remoção, consumo único, descarte manual e cancelamento isolado. Commits deste recorte autorizados expressamente pelo usuário. Consulte [entrega do domínio](docs/IMPLEMENTACAO_DOMINIO.md).
 
-Ainda pendentes: telas comerciais e configuração, captura automática persistente pelo worker, fila/preview de impressão, adaptadores reais e distribuição. `--preview-print` bloqueia qualquer futura impressão física neste modo; não significa que o preview documental já exista. A etapa 1 do plano permanece parcialmente concluída.
+Atendimento touch implementado: cadastro de produtos, múltiplas comandas, produtos rápidos, inclusão manual em UN/KG, teclado numérico, correções, cancelamento, descarte confirmado e ajuste da numeração. O worker persiste automaticamente as pesagens do simulador, mesmo sem navegador aberto. Consulte [entrega de atendimento e captura](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md).
+
+Documento e fila simulada implementados: cabeçalho/rodapé, preview contínuo de 80 mm, finalização somente da selecionada, snapshot congelado, histórico e segunda via confirmada. Consulte [entrega documental](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+
+Ainda pendentes: configuração de equipamentos, adaptadores reais e distribuição. `--preview-print` utiliza somente simulador, sem papel ou spooler. Os limiares da balança e o perfil documental de 48 colunas são provisórios e exigem homologação física.
 
 ## Desenvolvimento e execução
 
@@ -22,7 +26,7 @@ rtk proxy uv run --offline --no-sync python manage.py initialize_local
 rtk proxy uv run --offline --no-sync python manage.py run_local --simulate --preview-print
 ```
 
-`initialize_local` é a etapa explícita de instalação/atualização: gera segredo local e aplica migrations; em dados existentes, salva backup consistente de SQLite e configuração antes de atualizar. Exige o programa fechado. O início normal nunca migra o banco. Inclui as migrations nativas de `contenttypes` e as migrations geradas dos apps core, products, measurements e orders.
+`initialize_local` é a etapa explícita de instalação/atualização: gera segredo local e aplica migrations; em dados existentes, salva backup consistente de SQLite e configuração antes de atualizar. Exige o programa fechado. O início normal nunca migra o banco. Inclui as migrations nativas de `contenttypes` e as migrations geradas dos apps core, products, measurements, orders e printing.
 
 Dados padrão: `%LOCALAPPDATA%\RestauranteLocal`, fora dos arquivos do programa. Para testes ou outra instalação, definir `LOCAL_WEIGHING_DATA_DIR` antes de executar os comandos. Nunca apontar para os dados do Restaurante anterior. Porta padrão `8765`; alterar com `initialize_local --port 8766`, com programa fechado.
 
@@ -42,7 +46,7 @@ rtk proxy uv run --offline --no-sync python manage.py test --settings=config.tes
 rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-45 testes isolados usam diretórios/banco temporários, simulador e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress real em loopback, backup, processos distintos, porta ocupada, falha parcial, CSRF, encerramento, invariantes comerciais e concorrência SQLite em arquivo com conexões distintas. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md) e do [domínio](docs/IMPLEMENTACAO_DOMINIO.md) para evidências e limitações.
+94 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 ## Documentação
 

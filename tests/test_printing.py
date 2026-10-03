@@ -198,7 +198,7 @@ class PrintHTTPTests(PrintingFixture, TestCase):
         self.assertEqual(self.client.post(url, initial).status_code, 302)
         response = self.client.get(reverse("print_preview", args=[self.order.pk]))
         self.assertContains(response, "DOCUMENTO CONGELADO")
-        self.assertContains(response, "Aguardando simulação")
+        self.assertContains(response, "Aguardando envio")
         self.assertContains(self.client.get(reverse("print_history")), "Comanda 1")
 
     def test_changed_preview_returns_conflict_without_finalizing(self):

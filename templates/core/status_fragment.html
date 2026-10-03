@@ -2,7 +2,7 @@
   hx-get="{% url 'status_fragment' %}"
   hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
   <div class="card weight-card">
-    <span class="eyebrow">PESO LÍQUIDO SIMULADO</span>
+    <span class="eyebrow">PESO LÍQUIDO {% if runtime.scale_mode == 'SERIAL' %}DA BALANÇA{% else %}SIMULADO{% endif %}</span>
     <div class="weight">{{ runtime.weight_kg }} <small>kg</small></div>
     <p>{{ runtime.scale_label }}</p>
   </div>

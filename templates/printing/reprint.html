@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<div class="heading"><h1>Segunda via da comanda {{ document.order.number }}?</h1><p>O conteúdo e os preços serão os do documento original. Esta ação solicita uma nova simulação.</p></div>
+<div class="heading"><h1>Segunda via da comanda {{ document.order.number }}?</h1><p>O conteúdo e os preços serão os do documento original. Esta ação solicita {% if runtime_mode.print_mode == 'RAW' %}nova impressão física{% else %}uma nova simulação{% endif %}.</p></div>
 {% if uncertain %}<div class="notice" role="alert">Há envio com resultado incerto. Confira o resultado anterior antes de confirmar uma nova via; não há reenvio automático.</div>{% endif %}
-<form method="post" class="card">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Sim, solicitar segunda via simulada</button><a class="button secondary" href="{% url 'print_preview' document.order_id %}">Voltar ao documento</a></div></form>
+<form method="post" class="card">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Sim, solicitar segunda via{% if runtime_mode.print_mode != 'RAW' %} simulada{% endif %}</button><a class="button secondary" href="{% url 'print_preview' document.order_id %}">Voltar ao documento</a></div></form>
 {% include 'printing/slip.html' %}
 {% endblock %}

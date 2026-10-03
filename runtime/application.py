@@ -17,6 +17,8 @@ from runtime.http_server import LocalHTTPServer
 from runtime.scale_worker import ScaleWorker
 from runtime.scale_capture import ScaleCaptureController
 from runtime.print_worker import PrintWorker
+from runtime.configured_scale import ConfiguredSerialScale
+from hardware.scale.cycle import CaptureCycle
 from apps.printing.services import recover_interrupted_jobs
 from runtime.state import state
 
@@ -62,20 +64,23 @@ def validate_schema(data_dir):
 
 
 class LocalApplication:
-    """Own one installation, server and simulated adapter."""
+    """Own one installation, server and explicit real/simulated transports."""
 
     def __init__(self, data_dir, port, *, browser=True, server_factory=LocalHTTPServer,
-                 adapter_factory=SimulatedScale, browser_open=webbrowser.open, capture_factory=None,
-                 print_worker_factory=None):
+                 adapter_factory=None, browser_open=webbrowser.open, capture_factory=None,
+                 print_worker_factory=None, simulate=True, preview_print=True):
         self.data_dir = data_dir
         self.port = port
         self.url = f"http://127.0.0.1:{port}/"
         self.browser = browser
         self.browser_open = browser_open
         self.server_factory = server_factory
-        self.adapter_factory = adapter_factory
-        self.capture_factory = capture_factory or ScaleCaptureController
-        self.print_worker_factory = print_worker_factory or PrintWorker
+        self.simulate, self.preview_print = simulate, preview_print
+        self.adapter_factory = adapter_factory or (SimulatedScale if simulate else ConfiguredSerialScale)
+        self.capture_factory = capture_factory or (lambda: ScaleCaptureController(CaptureCycle(
+            profile="SIMULATION_ONLY" if simulate else "US31_POP_S_PHYSICAL_PENDING_VALIDATION")))
+        self.print_worker_factory = print_worker_factory or (lambda event: PrintWorker(
+            event, delivery_mode="PREVIEW" if preview_print else "RAW"))
         self.lock = InstanceLock(data_dir)
         self.stop_event = Event()
         self.server = None
@@ -108,7 +113,10 @@ class LocalApplication:
                 application, host="127.0.0.1", port=self.port,
                 threads=4, asyncore_loop_timeout=0.1,
             )
-            state.update(running=True, paused=False, error="", instance_id=self.instance_id)
+            state.update(running=True, paused=False, error="", instance_id=self.instance_id,
+                         mode="SIMULATION" if self.simulate and self.preview_print else "HARDWARE",
+                         scale_mode="SIMULATION" if self.simulate else "SERIAL",
+                         print_mode="PREVIEW" if self.preview_print else "RAW")
             self.server_thread = Thread(target=self.server.run, name="local-http", daemon=True)
             self.server_thread.start()
             probe_instance(self.url, self.instance_id)
@@ -128,7 +136,9 @@ class LocalApplication:
             self.started = True
             if self.browser:
                 self.browser_open(self.url)
-            logger.info("Inicializador pronto em %s (simulação)", self.url)
+            logger.info("Inicializador pronto em %s (serial=%s, impressão=%s)",
+                        self.url, "simulada" if self.simulate else "real",
+                        "simulada" if self.preview_print else "RAW")
             return True
         except BaseException:
             self.stop()

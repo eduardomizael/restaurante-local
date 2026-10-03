@@ -8,6 +8,8 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.core.domain import DomainConflict
 from apps.core.http import requires_runtime
+from apps.configuration.selectors import hardware_configuration
+from runtime.state import state
 from apps.orders.models import Order
 from apps.printing.documents import fingerprint, render_text
 from apps.printing.forms import DocumentConfigurationForm, FinalizeForm, ReprintForm
@@ -54,7 +56,9 @@ def preview(request, order_id):
     if document is None and order.status != Order.Status.DRAFT:
         return _error(request, ValidationError("Comanda cancelada não possui documento para impressão."))
     content = document.content if document else draft_content(order)
-    form = FinalizeForm(initial={"request_key": uuid4(), "expected_fingerprint": fingerprint(content)})
+    form = FinalizeForm(initial={"request_key": uuid4(), "expected_fingerprint": fingerprint(content),
+                                 "reviewed_mode": state.snapshot()["print_mode"],
+                                 "printer_revision": hardware_configuration().revision})
     return render(request, "printing/preview.html", {
         "order": order, "document": document, "slip_text": render_text(content), "form": form,
         "can_finalize": bool(content["header"] and content["items"]),
@@ -71,7 +75,13 @@ def finalize(request, order_id):
     if not form.is_valid():
         return HttpResponse("Identificador ou revisão da prévia inválidos.", status=400)
     try:
-        finalize_order(order_id=order_id, **form.cleaned_data)
+        values = dict(form.cleaned_data)
+        reviewed_mode = values.pop("reviewed_mode")
+        printer_revision = values.pop("printer_revision")
+        if reviewed_mode != state.snapshot()["print_mode"]:
+            raise DomainConflict("Modo de impressão mudou após a prévia. Revise novamente.")
+        finalize_order(order_id=order_id, delivery_mode=reviewed_mode,
+                       expected_printer_revision=printer_revision, **values)
     except ValidationError as exc:
         return _error(request, exc)
     return redirect("print_preview", order_id=order_id)
@@ -98,12 +108,19 @@ def job_fragment(request, document_id):
 def reprint(request, document_id):
     """Require an explicit second-copy action, including uncertain outcomes."""
     document = get_object_or_404(OrderDocument.objects.select_related("order"), pk=document_id)
-    form = ReprintForm(request.POST if request.method == "POST" else None, initial={"request_key": uuid4()})
+    form = ReprintForm(request.POST if request.method == "POST" else None, initial={
+        "request_key": uuid4(), "reviewed_mode": state.snapshot()["print_mode"],
+        "printer_revision": hardware_configuration().revision,
+    })
     if request.method == "POST":
         if not form.is_valid():
             return HttpResponse("Confirme a solicitação de segunda via.", status=400)
         try:
-            request_reprint(document_id=document_id, request_key=form.cleaned_data["request_key"])
+            if form.cleaned_data["reviewed_mode"] != state.snapshot()["print_mode"]:
+                raise DomainConflict("Modo de impressão mudou após a revisão. Reabra a segunda via.")
+            request_reprint(document_id=document_id, request_key=form.cleaned_data["request_key"],
+                            delivery_mode=state.snapshot()["print_mode"],
+                            expected_printer_revision=form.cleaned_data["printer_revision"])
         except ValidationError as exc:
             return _error(request, exc)
         return redirect("print_preview", order_id=document.order_id)

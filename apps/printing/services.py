@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.core.domain import DomainConflict, require_integer, require_uuid, write_transaction
 from apps.core.services import record_event
+from apps.configuration.selectors import hardware_configuration
 from apps.orders.models import Order
 from apps.printing.documents import fingerprint
 from apps.printing.models import DocumentConfiguration, OrderDocument, PrintJob
@@ -36,24 +37,28 @@ def save_document_configuration(*, header, footer, expected_revision):
         return configuration
 
 
-def finalize_order(*, order_id, request_key, expected_fingerprint):
+def finalize_order(*, order_id, request_key, expected_fingerprint, delivery_mode="PREVIEW", expected_printer_revision=None):
     """Freeze one order and initial job in the same short transaction.
 
     Args:
         order_id: Explicit selected order identity.
         request_key: UUID reused on double click or retry.
         expected_fingerprint: Commercial content reviewed in the draft preview.
+        delivery_mode: PREVIEW or RAW, frozen for the resulting job.
+        expected_printer_revision: Configuration revision reviewed by the operator.
 
     Returns:
         PrintJob: Exactly one initial job, including idempotent retries.
     """
     key = require_uuid(request_key)
+    if delivery_mode not in ("PREVIEW", "RAW"):
+        raise ValidationError("Modo de impressão inválido.")
     with write_transaction():
         existing = PrintJob.objects.filter(request_key=key).select_related("document").first()
         if existing:
             reviewed = {name: value for name, value in existing.document.content.items() if name != "finalized_at"}
             if (existing.document.order_id != order_id or existing.kind != PrintJob.Kind.INITIAL
-                    or fingerprint(reviewed) != expected_fingerprint):
+                    or fingerprint(reviewed) != expected_fingerprint or existing.delivery_mode != delivery_mode):
                 raise DomainConflict("Identificador de impressão já usado com outro destino.")
             return existing
         order = Order.objects.filter(pk=order_id).first()
@@ -70,21 +75,28 @@ def finalize_order(*, order_id, request_key, expected_fingerprint):
             raise DomainConflict("Itens ou configuração mudaram após a prévia. Revise o documento novamente.")
         now = timezone.now()
         content["finalized_at"] = timezone.localtime(now).isoformat(timespec="seconds")
+        target = hardware_configuration()
+        if delivery_mode == "RAW" and expected_printer_revision is not None and target.revision != expected_printer_revision:
+            raise DomainConflict("Fila de impressão mudou após a prévia. Revise novamente.")
         document = OrderDocument.objects.create(order=order, content=content, fingerprint=fingerprint(content))
-        job = PrintJob.objects.create(document=document, request_key=key, kind=PrintJob.Kind.INITIAL)
+        job = PrintJob.objects.create(document=document, request_key=key, kind=PrintJob.Kind.INITIAL,
+                                      delivery_mode=delivery_mode,
+                                      printer_name=target.printer_name if delivery_mode == "RAW" else "")
         order.status, order.finalized_at = Order.Status.FINALIZED, now
         order.save(update_fields=["status", "finalized_at"])
         record_event("ORDER_FINALIZED", order, document_id=document.pk, job_id=job.pk)
         return job
 
 
-def request_reprint(*, document_id, request_key):
+def request_reprint(*, document_id, request_key, delivery_mode="PREVIEW", expected_printer_revision=None):
     """Create an explicit second copy without changing the frozen content."""
     key = require_uuid(request_key)
+    if delivery_mode not in ("PREVIEW", "RAW"):
+        raise ValidationError("Modo de impressão inválido.")
     with write_transaction():
         existing = PrintJob.objects.filter(request_key=key).first()
         if existing:
-            if (existing.document_id, existing.kind) != (document_id, PrintJob.Kind.REPRINT):
+            if (existing.document_id, existing.kind, existing.delivery_mode) != (document_id, PrintJob.Kind.REPRINT, delivery_mode):
                 raise DomainConflict("Identificador de segunda via já usado com outros dados.")
             return existing
         document = OrderDocument.objects.filter(pk=document_id).first()
@@ -92,15 +104,23 @@ def request_reprint(*, document_id, request_key):
             raise ValidationError("Documento não encontrado.")
         if PrintJob.objects.filter(document=document, status__in=["PENDING", "SUBMITTING"]).exists():
             raise DomainConflict("Já há um envio pendente para esta comanda. Aguarde o resultado.")
-        job = PrintJob.objects.create(document=document, request_key=key, kind=PrintJob.Kind.REPRINT)
+        target = hardware_configuration()
+        if delivery_mode == "RAW" and expected_printer_revision is not None and target.revision != expected_printer_revision:
+            raise DomainConflict("Fila de impressão mudou após a revisão. Reabra a segunda via.")
+        job = PrintJob.objects.create(document=document, request_key=key, kind=PrintJob.Kind.REPRINT,
+                                      delivery_mode=delivery_mode,
+                                      printer_name=target.printer_name if delivery_mode == "RAW" else "")
         record_event("REPRINT_REQUESTED", job, document_id=document.pk)
         return job
 
 
-def claim_next_job():
+def claim_next_job(delivery_mode=None):
     """Persist intent before invoking any transport outside the transaction."""
     with write_transaction():
-        job = PrintJob.objects.filter(status=PrintJob.Status.PENDING).select_related("document").first()
+        jobs = PrintJob.objects.filter(status=PrintJob.Status.PENDING)
+        if delivery_mode is not None:
+            jobs = jobs.filter(delivery_mode=delivery_mode)
+        job = jobs.select_related("document").first()
         if job is None:
             return None
         job.status, job.attempt_key = PrintJob.Status.SUBMITTING, uuid4()
@@ -111,9 +131,9 @@ def claim_next_job():
         return job
 
 
-def complete_job(*, job_id, attempt_key, status, message):
-    """Record a definitive simulated result, known failure or uncertainty."""
-    if status not in (PrintJob.Status.SIMULATED, PrintJob.Status.FAILED, PrintJob.Status.UNKNOWN):
+def complete_job(*, job_id, attempt_key, status, message, spooler_job_id=None):
+    """Record simulated delivery, spooler acceptance, failure or uncertainty."""
+    if status not in (PrintJob.Status.SIMULATED, PrintJob.Status.SPOOL_ACCEPTED, PrintJob.Status.FAILED, PrintJob.Status.UNKNOWN):
         raise ValidationError("Resultado de impressão inválido.")
     key = require_uuid(attempt_key)
     with write_transaction():
@@ -125,8 +145,15 @@ def complete_job(*, job_id, attempt_key, status, message):
                 return job
             raise DomainConflict("Resultado já registrado; nenhuma alteração aplicada.")
         job.status, job.result_message = status, str(message)[:500]
+        if status == PrintJob.Status.SPOOL_ACCEPTED:
+            if job.delivery_mode != "RAW":
+                raise ValidationError("Trabalho simulado não pode registrar aceitação física.")
+            require_integer(spooler_job_id, maximum=4_294_967_295, label="Trabalho do spooler")
+        elif spooler_job_id is not None or (status == PrintJob.Status.SIMULATED and job.delivery_mode != "PREVIEW"):
+            raise ValidationError("Resultado incompatível com o modo de envio.")
+        job.spooler_job_id = spooler_job_id
         job.completed_at = timezone.now()
-        job.save(update_fields=["status", "result_message", "completed_at"])
+        job.save(update_fields=["status", "result_message", "completed_at", "spooler_job_id"])
         record_event("PRINT_RESULT", job, status=status)
         return job
 

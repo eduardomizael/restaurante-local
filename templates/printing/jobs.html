@@ -1,6 +1,6 @@
-<section id="print-jobs" class="card" aria-label="Fila de impressão simulada"
+<section id="print-jobs" class="card" aria-label="Fila de impressão"
  hx-get="{% url 'print_jobs_fragment' document_id %}" hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
 <h2>Envios desta comanda</h2>
-{% for job in jobs %}<div class="job-row"><strong>#{{ job.pk }} · {{ job.get_kind_display }}</strong><p>{{ job.get_status_display }}</p>{% if job.result_message %}<p class="muted">{{ job.result_message }}</p>{% endif %}</div>{% empty %}<p>Nenhum envio registrado.</p>{% endfor %}
-<a class="button secondary" href="{% url 'reprint_document' document_id %}">Solicitar segunda via simulada</a>
+{% for job in jobs %}<div class="job-row"><strong>#{{ job.pk }} · {{ job.get_kind_display }} · {{ job.get_delivery_mode_display }}</strong><p>{{ job.get_status_display }}</p>{% if job.printer_name %}<p>Fila: {{ job.printer_name }}</p>{% endif %}{% if job.result_message %}<p class="muted">{{ job.result_message }}</p>{% endif %}</div>{% empty %}<p>Nenhum envio registrado.</p>{% endfor %}
+<a class="button secondary" href="{% url 'reprint_document' document_id %}">Solicitar segunda via{% if runtime_mode.print_mode != 'RAW' %} simulada{% endif %}</a>
 </section>

@@ -8,7 +8,7 @@ from runtime.application import LocalApplication
 
 
 class Command(BaseCommand):
-    help = "Inicia a aplicação local em modo de simulação."
+    help = "Inicia equipamentos reais; --simulate e --preview-print substituem os respectivos transportes."
     requires_system_checks = []
 
     def add_arguments(self, parser):
@@ -18,8 +18,6 @@ class Command(BaseCommand):
         parser.add_argument("--no-browser", action="store_true")
 
     def handle(self, *args, **options):
-        if not options["simulate"] or not options["preview_print"]:
-            raise CommandError("Este incremento exige --simulate --preview-print; hardware real ainda não implementado.")
         if not settings.INSTALLATION:
             raise CommandError("Instalação ausente. Execute initialize_local.")
         logs = settings.DATA_DIR / "logs"
@@ -32,12 +30,13 @@ class Command(BaseCommand):
         logger.setLevel(logging.INFO)
         application = LocalApplication(
             settings.DATA_DIR, settings.INSTALLATION["port"], browser=not options["no_browser"],
+            simulate=options["simulate"], preview_print=options["preview_print"],
         )
         try:
             if not application.start():
                 self.stdout.write("Instância existente verificada; nenhum componente duplicado.")
                 return
-            self.stdout.write(f"Simulação disponível em {application.url}")
+            self.stdout.write(f"Aplicação disponível em {application.url}")
             if options["no_tray"]:
                 while not application.stop_event.wait(0.5):
                     if not application.server_thread.is_alive():

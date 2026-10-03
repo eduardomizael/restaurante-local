@@ -1,6 +1,11 @@
 from apps.products.models import Product
 
 
+def catalogue_products(search=""):
+    """Return editable catalogue entries, including inactive products."""
+    return Product.objects.filter(description__icontains=search)
+
+
 def active_products():
     """Return the complete active catalogue."""
     return Product.objects.filter(active=True)

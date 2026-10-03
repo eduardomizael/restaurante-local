@@ -1,0 +1,4 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<section class="card editor-form"><h1>Ação não concluída</h1><div class="form-errors" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div><a class="button" href="{% url 'home' %}{% if order_id %}?order={{ order_id }}{% endif %}">Voltar ao atendimento</a></section>
+{% endblock %}

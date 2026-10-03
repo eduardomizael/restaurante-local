@@ -1,0 +1,12 @@
+<dialog id="numeric-keypad" aria-labelledby="keypad-title">
+  <div class="dialog-heading"><h2 id="keypad-title">Teclado numérico</h2><button type="button" id="keypad-cancel" class="secondary compact" aria-label="Fechar teclado">×</button></div>
+  <p id="keypad-label"></p>
+  <output id="keypad-value" aria-live="polite">0</output>
+  <div class="keypad-grid">
+    <button type="button" data-digit="7">7</button><button type="button" data-digit="8">8</button><button type="button" data-digit="9">9</button>
+    <button type="button" data-digit="4">4</button><button type="button" data-digit="5">5</button><button type="button" data-digit="6">6</button>
+    <button type="button" data-digit="1">1</button><button type="button" data-digit="2">2</button><button type="button" data-digit="3">3</button>
+    <button type="button" id="keypad-separator">,</button><button type="button" data-digit="0">0</button><button type="button" id="keypad-backspace" aria-label="Apagar último dígito">⌫</button>
+  </div>
+  <div class="form-actions"><button type="button" id="keypad-clear" class="secondary">Limpar</button><button type="button" id="keypad-apply">Confirmar valor</button></div>
+</dialog>

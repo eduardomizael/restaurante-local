@@ -23,6 +23,9 @@ def run_tray(application):
     def open_status(icon, item):
         application.browser_open(application.url + "status/")
 
+    def open_configuration(icon, item):
+        application.browser_open(application.url + "numbering/")
+
     def pause(icon, item):
         state.toggle_pause()
 
@@ -37,6 +40,7 @@ def run_tray(application):
             lambda item: "Retomar leitura" if state.snapshot()["paused"] else "Pausar leitura", pause,
         ),
         pystray.MenuItem("Sair", exit_runtime),
+        pystray.MenuItem("Numeração", open_configuration),
     ))
     try:
         icon.run()

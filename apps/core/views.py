@@ -10,13 +10,6 @@ from runtime.state import state
 
 @require_GET
 @never_cache
-def home(request):
-    """Present the foundation screen without starting components."""
-    return render(request, "core/home.html", {"runtime": runtime_snapshot()})
-
-
-@require_GET
-@never_cache
 def status_page(request):
     """Present runtime diagnostics."""
     return render(request, "core/status.html", {"runtime": runtime_snapshot()})

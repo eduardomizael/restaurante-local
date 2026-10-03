@@ -1,0 +1,7 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><p class="eyebrow">CADASTRO LOCAL</p><h1>{% if product %}Editar produto{% else %}Novo produto{% endif %}</h1><p>Para a balança, selecione um produto ativo com unidade KG.</p></div>
+<form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}
+  <div class="form-actions"><button type="submit">✓ Salvar produto</button><a class="button secondary" href="{% url 'catalogue' %}">Voltar aos produtos</a></div>
+</form>
+{% endblock %}

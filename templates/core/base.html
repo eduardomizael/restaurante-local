@@ -8,16 +8,19 @@
   <script src="{% url 'asset' 'htmx.min.js' %}" defer></script>
   <script src="{% url 'asset' 'app.js' %}" defer></script>
 </head>
-<body>
+<body data-selected-order="{{ selected_id|default_if_none:'' }}">
   <header class="topbar">
     <a class="brand" href="{% url 'home' %}">Restaurante Local</a>
     <span class="badge">Modo de simulação</span>
     <nav aria-label="Navegação principal">
       <a href="{% url 'home' %}">Atendimento</a>
+      <a href="{% url 'catalogue' %}">Produtos</a>
+      <a href="{% url 'numbering' %}">Numeração</a>
       <a href="{% url 'status' %}">Status</a>
     </nav>
   </header>
   <main>{% block content %}{% endblock %}</main>
+  {% include 'core/keypad.html' %}
   <footer>Aplicação independente · Equipamentos reais ainda não habilitados</footer>
 </body>
 </html>

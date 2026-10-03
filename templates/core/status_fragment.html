@@ -1,6 +1,6 @@
 <section id="runtime-status" class="status-grid" aria-label="Estado técnico"
   hx-get="{% url 'status_fragment' %}"
-  hx-trigger="every 500ms [!document.hidden &amp;&amp; !document.querySelector('form.htmx-request')]" hx-swap="outerHTML">
+  hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
   <div class="card weight-card">
     <span class="eyebrow">PESO LÍQUIDO SIMULADO</span>
     <div class="weight">{{ runtime.weight_kg }} <small>kg</small></div>

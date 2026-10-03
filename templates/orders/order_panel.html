@@ -1,0 +1,13 @@
+{% load commercial %}
+<section id="order-panel" class="card" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if selected %}
+    <div class="panel-heading"><h2>Comanda {{ selected.number }}</h2><span class="tag">Aberta</span></div>
+    <div class="item-list">{% for item in items %}
+      <article class="item-row"><div><strong>{{ item.product_description }}</strong><p>{% if item.unit == 'KG' %}{{ item.weight_grams|kilograms }} kg × R$ {{ item.unit_price_cents|money }}/kg{% else %}{{ item.quantity_units }} UN × R$ {{ item.unit_price_cents|money }}{% endif %}{% if item.measurement_id %} · Pesagem #{{ item.measurement_id }}{% endif %}</p></div>
+        <div class="item-total"><strong>R$ {{ item.total_cents|money }}</strong><form method="post" action="{% url 'delete_item' %}">{% csrf_token %}<input type="hidden" name="order_id" value="{{ selected.pk }}"><input type="hidden" name="item_id" value="{{ item.pk }}"><button type="submit" id="remove-item-{{ item.pk }}" class="secondary compact" aria-label="Remover {{ item.product_description }}">⌫ Remover</button></form></div>
+      </article>
+    {% empty %}<p>Inclua uma pesagem disponível ou um produto.</p>{% endfor %}</div>
+    <div class="subtotal"><span>Subtotal pré-inserido</span><strong>R$ {{ subtotal|money }}</strong></div>
+    <div class="form-actions"><button type="button" disabled>Impressão indisponível</button><a class="button danger" href="{% url 'confirm_cancel' selected.pk %}">× Cancelar comanda</a></div>
+  {% else %}<h2>Selecione uma comanda aberta</h2><p>As pesagens disponíveis ficam guardadas até você escolher seu destino ou descartá-las.</p>{% endif %}
+</section>

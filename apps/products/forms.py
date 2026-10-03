@@ -18,6 +18,7 @@ class ScaledDecimalField(forms.CharField):
         self.maximum = maximum
         super().__init__(**kwargs)
         self.widget.attrs.update({"inputmode": "decimal", "autocomplete": "off"})
+        self.widget.attrs["data-keypad"] = str(decimal_places)
 
     def clean(self, value):
         """Convert validated decimal text to integer cents or grams."""
@@ -44,3 +45,8 @@ class ProductForm(forms.Form):
     quick_access_order = forms.IntegerField(label="Ordem rápida", min_value=0, initial=0)
     slip_order = forms.IntegerField(label="Ordem no papel", min_value=0, initial=0)
     expected_revision = forms.IntegerField(required=False, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("quick_access_order", "slip_order"):
+            self.fields[name].widget.attrs.update({"inputmode": "numeric", "data-keypad": "0"})

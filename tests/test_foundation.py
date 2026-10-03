@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 from urllib.request import ProxyHandler, build_opener
 
 from django.conf import settings
-from django.test import Client, SimpleTestCase
+from django.test import Client, SimpleTestCase, TestCase
 
 from hardware.scale.simulator import SimulatedScale
 from runtime.application import LocalApplication, validate_schema
@@ -83,17 +83,17 @@ class StateAndWorkerTests(SimpleTestCase):
         adapter.close.assert_called_once()
 
 
-class HTTPTests(SimpleTestCase):
+class HTTPTests(TestCase):
     def setUp(self):
         state.update(running=False, paused=False, scale_status="STOPPED", error="")
 
     def test_home_and_local_assets(self):
         response = self.client.get("/")
-        self.assertContains(response, "ainda não criam medições comerciais")
+        self.assertContains(response, "Comandas e pesagens")
         for name in ("app.css", "app.js", "htmx.min.js"):
             response = self.client.get(f"/assets/{name}")
             self.assertEqual(response.status_code, 200)
-            response.close()
+            self.assertTrue(b"".join(response.streaming_content))
         self.assertEqual(self.client.get("/assets/installation.json").status_code, 404)
 
     def test_health_has_no_side_effect_and_reports_not_ready(self):

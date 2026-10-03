@@ -1,0 +1,23 @@
+{% extends 'core/base.html' %}{% load commercial %}
+{% block content %}
+<div class="heading heading-actions"><div><p class="eyebrow">ATENDIMENTO LOCAL</p><h1>Comandas e pesagens</h1></div>
+  <form method="post" action="{% url 'create_order' %}">{% csrf_token %}<input type="hidden" name="request_key" value="{{ open_key }}"><button type="submit">＋ Nova comanda</button></form>
+</div>
+{% include 'core/status_fragment.html' %}
+{% if not scale_product %}<div class="notice" role="status">Selecione um produto ativo em KG para capturar pesagens. <a href="{% url 'catalogue' %}">Abrir produtos</a></div>{% endif %}
+<div class="attendance-grid">
+  {% include 'orders/board.html' %}
+  <div class="attendance-main">
+    {% include 'orders/order_panel.html' %}
+    {% if selected %}
+    <section class="card"><h2>Produtos rápidos</h2><div class="quick-grid">
+      {% for product in quick_products %}<a class="button quick-product secondary" href="{% url 'manual_item' selected.pk product.pk %}"><span>＋ {{ product.description }}</span><span>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</span></a>{% empty %}<p>Marque os produtos desejados como acesso rápido no cadastro.</p>{% endfor %}
+    </div></section>
+    <section class="card"><h2>Incluir produto</h2>
+      <form method="get" class="search-form"><input type="hidden" name="order" value="{{ selected.pk }}"><label for="product-search">Buscar no catálogo</label><input id="product-search" name="q" value="{{ search }}" placeholder="Descrição"><button type="submit" class="secondary">⌕ Buscar</button></form>
+      <div class="catalogue-choices">{% for product in products %}<a class="button secondary" href="{% url 'manual_item' selected.pk product.pk %}">＋ {{ product.description }} · R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</a>{% empty %}<p>Nenhum produto encontrado.</p>{% endfor %}</div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

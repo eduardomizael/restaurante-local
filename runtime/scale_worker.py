@@ -1,7 +1,10 @@
-"""Live-reading worker; commercial capture belongs to the next increment."""
+"""Simulated reading/capture worker, independent of every HTTP page."""
 
 import logging
 from threading import Thread
+
+from django.db import close_old_connections, connections
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -9,28 +12,45 @@ logger = logging.getLogger(__name__)
 class ScaleWorker(Thread):
     """Read an injected adapter, independently of browser lifetime."""
 
-    def __init__(self, adapter, state, stop_event, interval=0.5):
+    def __init__(self, adapter, state, stop_event, interval=0.5, capture_controller=None):
         super().__init__(name="scale-worker", daemon=True)
         self.adapter = adapter
         self.state = state
         self.stop_event = stop_event
         self.interval = interval
+        self.capture_controller = capture_controller
 
     def run(self):
         """Read until shutdown, always closing the adapter."""
         try:
+            was_paused = False
             while not self.stop_event.is_set():
+                close_old_connections()
                 if self.state.snapshot()["paused"]:
+                    if not was_paused and self.capture_controller:
+                        self.capture_controller.reset()
+                    was_paused = True
                     self.state.update(scale_status="PAUSED")
                 else:
+                    if was_paused and self.capture_controller:
+                        self.capture_controller.reset()
+                    was_paused = False
                     try:
                         sample = self.adapter.read()
+                        if self.stop_event.is_set():
+                            break
+                        status = self.capture_controller.observe(sample) if self.capture_controller else "SIMULATED"
                         self.state.update(
                             weight_grams=sample.net_weight_grams,
-                            scale_status="SIMULATED", error="",
+                            scale_status=status, error="",
                         )
+                    except ValidationError as exc:
+                        logger.warning("Captura comercial recusada: %s", exc.messages)
+                        self.state.update(scale_status="ERROR", error=" ".join(exc.messages))
                     except Exception as exc:
                         logger.exception("Falha de leitura")
+                        if self.capture_controller:
+                            self.capture_controller.reset()
                         self.state.update(scale_status="ERROR", error=str(exc))
                 self.stop_event.wait(self.interval)
         finally:
@@ -38,3 +58,4 @@ class ScaleWorker(Thread):
                 self.adapter.close()
             finally:
                 self.state.update(scale_status="STOPPED")
+                connections.close_all()

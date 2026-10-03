@@ -156,6 +156,8 @@ class RuntimeTests(SimpleTestCase):
         self.data_dir = Path(self.temporary.name)
         self.schema_patch = patch("runtime.application.validate_schema")
         self.schema_patch.start()
+        self.capture_patch = patch("runtime.application.ScaleCaptureController", return_value=None)
+        self.capture_patch.start()
         self.thread_errors = patch("threading.excepthook")
         self.exception_hook = self.thread_errors.start()
 
@@ -164,6 +166,7 @@ class RuntimeTests(SimpleTestCase):
             self.exception_hook.assert_not_called()
         finally:
             self.thread_errors.stop()
+            self.capture_patch.stop()
             self.schema_patch.stop()
             self.temporary.cleanup()
 

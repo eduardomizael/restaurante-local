@@ -7,7 +7,8 @@ from apps.measurements.models import Measurement
 from apps.products.selectors import scale_product
 
 
-def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="SIMULATOR", stability_parameters=None):
+def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="SIMULATOR", stability_parameters=None,
+                        expected_product_id=None, expected_product_revision=None):
     """Persist one explicitly stable capture with immutable commercial values.
 
     Args:
@@ -16,6 +17,8 @@ def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="
         tare_grams: Informative tare; never subtracted again.
         device: Adapter identity for history.
         stability_parameters: JSON-compatible parameters used for stability.
+        expected_product_id: Optional product identity observed by the cycle.
+        expected_product_revision: Optional observed revision to reject changes mid-cycle.
 
     Returns:
         Measurement: Existing or newly persisted capture.
@@ -40,6 +43,8 @@ def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="
         product = scale_product()
         if product is None:
             raise DomainConflict("Selecione um produto ativo em KG antes de capturar medições.")
+        if expected_product_id is not None and (product.pk, product.revision) != (expected_product_id, expected_product_revision):
+            raise DomainConflict("Produto da balança mudou durante a captura; aguarde retorno ao zero.")
         measurement = Measurement.objects.create(
             capture_key=key, product=product, product_description=product.description,
             unit_price_cents=product.unit_price_cents,

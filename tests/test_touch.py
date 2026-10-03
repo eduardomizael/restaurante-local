@@ -1,8 +1,12 @@
 """Touch HTTP flows and independent, deterministic scale capture tests."""
 
+from threading import Event
+from time import monotonic, sleep
+from unittest.mock import patch
 from uuid import uuid4
 
-from django.test import Client, TestCase
+from django.db import connections
+from django.test import Client, SimpleTestCase, TestCase, TransactionTestCase
 from django.urls import reverse
 
 from apps.core.domain import DomainConflict
@@ -13,7 +17,11 @@ from apps.orders.selectors import subtotal_cents
 from apps.orders.services import open_order
 from apps.products.models import Product
 from apps.products.services import save_product
-from runtime.state import state
+from hardware.scale.cycle import CaptureCycle
+from hardware.scale.simulator import ScaleSample, SimulatedScale
+from runtime.scale_capture import ScaleCaptureController
+from runtime.scale_worker import ScaleWorker
+from runtime.state import RuntimeState, state
 
 
 class TouchFlowTests(TestCase):
@@ -188,3 +196,149 @@ class TouchFlowTests(TestCase):
         state.update(running=False)
         self.assertEqual(client.post(reverse("create_order"), {"request_key": uuid4()}, HTTP_X_CSRFTOKEN=token).status_code, 503)
         self.assertEqual(Order.objects.count(), 0)
+
+
+class CaptureCycleTests(SimpleTestCase):
+    def sample(self, cycle, weight, at, tare=0, moving=False, now=None):
+        return cycle.observe(ScaleSample(weight, tare, at, moving), at if now is None else now)
+
+    def test_start_with_plate_requires_zero_and_three_stable_samples(self):
+        cycle = CaptureCycle()
+        for at in (0, 0.5, 1):
+            self.assertIsNone(self.sample(cycle, 252, at))
+        self.assertEqual(cycle.status, "WAITING_ZERO")
+        self.sample(cycle, 0, 1.5)
+        self.assertIsNone(self.sample(cycle, 252, 2))
+        self.assertIsNone(self.sample(cycle, 251, 2.5))
+        candidate = self.sample(cycle, 252, 3)
+        self.assertEqual(candidate.net_weight_grams, 252)
+        cycle.acknowledge()
+        for at, weight in ((3.5, 255), (4, 400), (4.5, 252)):
+            self.assertIsNone(self.sample(cycle, weight, at))
+        self.assertEqual(cycle.status, "WAITING_REMOVAL")
+
+    def test_variation_moving_marker_and_tare_change_are_not_stable(self):
+        cycle = CaptureCycle()
+        self.sample(cycle, 0, 0)
+        for at, weight in enumerate((150, 252, 245, 300, 302, 299), start=1):
+            self.assertIsNone(self.sample(cycle, weight, at * 0.5))
+        self.assertIsNone(self.sample(cycle, 300, 3.5, moving=True))
+        self.assertIsNone(self.sample(cycle, 300, 4, tare=20))
+        self.assertIsNone(self.sample(cycle, 300, 4.5, tare=21))
+        self.assertIsNone(self.sample(cycle, 300, 5, tare=21))
+        candidate = self.sample(cycle, 300, 5.5, tare=21)
+        self.assertEqual(candidate.tare_grams, 21)
+
+    def test_removal_before_stable_does_not_capture_and_next_plate_rearms(self):
+        cycle = CaptureCycle()
+        for at, weight in enumerate((0, 252, 252, 0, 300, 300)):
+            self.assertIsNone(self.sample(cycle, weight, at * 0.5))
+        first = self.sample(cycle, 300, 3)
+        cycle.acknowledge()
+        self.sample(cycle, 0, 3.5)
+        self.sample(cycle, 400, 4)
+        self.sample(cycle, 400, 4.5)
+        second = self.sample(cycle, 400, 5)
+        self.assertNotEqual(first.capture_key, second.capture_key)
+
+    def test_retry_reuses_candidate_until_acknowledged(self):
+        cycle = CaptureCycle()
+        for at, weight in enumerate((0, 252, 252)):
+            self.sample(cycle, weight, at * 0.5)
+        first = self.sample(cycle, 252, 1.5)
+        self.assertEqual(self.sample(cycle, 252, 2).capture_key, first.capture_key)
+        cycle.acknowledge()
+        self.assertIsNone(self.sample(cycle, 252, 2.5))
+
+    def test_stale_future_repeated_or_invalid_reading_requires_zero_again(self):
+        for invalid in (ScaleSample(252, 0, -3), ScaleSample(252, 0, 2),
+                        ScaleSample(-1, 0, 0), ScaleSample(252.0, 0, 0)):
+            cycle = CaptureCycle()
+            with self.assertRaises(ValueError):
+                cycle.observe(invalid, 0)
+            self.assertEqual(cycle.status, "WAITING_ZERO")
+        cycle = CaptureCycle()
+        self.sample(cycle, 0, 0)
+        with self.assertRaises(ValueError):
+            self.sample(cycle, 252, 0)
+
+
+class CapturePersistenceTests(TestCase):
+    def setUp(self):
+        self.product = save_product(description="Refeição", unit="KG", unit_price_cents=5000, is_scale_product=True)
+
+    def observe(self, controller, weight, at):
+        with patch("runtime.scale_capture.monotonic", return_value=at):
+            return controller.observe(ScaleSample(weight, 0, at))
+
+    def test_three_plates_accumulate_captures_without_orders(self):
+        controller = ScaleCaptureController()
+        for index, weight in enumerate((0, 252, 252, 252, 255, 0, 300, 300, 300, 0, 400, 400, 400)):
+            self.observe(controller, weight, index * 0.5)
+        self.assertEqual(list(Measurement.objects.values_list("net_weight_grams", flat=True)), [252, 300, 400])
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(Measurement.objects.filter(status="AVAILABLE").count(), 3)
+
+    def test_configuration_change_requires_zero_and_preserves_previous_price(self):
+        controller = ScaleCaptureController()
+        for index, weight in enumerate((0, 252, 252, 252)):
+            self.observe(controller, weight, index * 0.5)
+        save_product(product_id=self.product.pk, expected_revision=1, description="Novo preço",
+                     unit="KG", unit_price_cents=7000, is_scale_product=True)
+        for index in range(4, 8):
+            self.observe(controller, 252, index * 0.5)
+        self.assertEqual(Measurement.objects.count(), 1)
+        for index, weight in enumerate((0, 300, 300, 300), start=8):
+            self.observe(controller, weight, index * 0.5)
+        self.assertEqual(list(Measurement.objects.values_list("total_cents", flat=True)), [1260, 2100])
+
+    def test_failed_capture_retries_same_identity_without_duplicate(self):
+        controller = ScaleCaptureController()
+        for index, weight in enumerate((0, 252, 252)):
+            self.observe(controller, weight, index * 0.5)
+        with patch("runtime.scale_capture.capture_measurement", side_effect=DomainConflict("Banco ocupado")):
+            with self.assertRaises(DomainConflict):
+                self.observe(controller, 252, 1.5)
+        key = controller.cycle.candidate.capture_key
+        self.observe(controller, 252, 2)
+        self.observe(controller, 252, 2.5)
+        self.assertEqual(Measurement.objects.get().capture_key, key)
+        self.assertEqual(controller.status, "WAITING_REMOVAL")
+
+    def test_missing_configuration_blocks_capture_without_crashing(self):
+        Product.objects.filter(pk=self.product.pk).update(is_scale_product=False)
+        controller = ScaleCaptureController()
+        self.assertEqual(self.observe(controller, 252, 0), "CONFIG_REQUIRED")
+        self.assertEqual(Measurement.objects.count(), 0)
+
+    def test_price_change_between_observation_and_transaction_is_rejected(self):
+        with self.assertRaises(DomainConflict):
+            capture_measurement(capture_key=uuid4(), net_weight_grams=252,
+                                expected_product_id=self.product.pk, expected_product_revision=0)
+        self.assertEqual(Measurement.objects.count(), 0)
+
+
+class WorkerPersistenceTests(TransactionTestCase):
+    def test_worker_persists_without_browser_and_reconnect_requires_removal(self):
+        save_product(description="Refeição", unit="KG", unit_price_cents=5000, is_scale_product=True)
+        adapter = SimulatedScale(weights=(0, 252, 252, 252, None, 252, 252, 252, 0, 300, 300, 300, 300))
+        runtime_state = RuntimeState()
+        runtime_state.update(running=True)
+        stop = Event()
+        worker = ScaleWorker(adapter, runtime_state, stop, interval=0.01, capture_controller=ScaleCaptureController())
+        errors = []
+        with patch("threading.excepthook", side_effect=lambda args: errors.append(args.exc_value)), self.assertLogs("runtime.scale_worker", level="ERROR"):
+            worker.start()
+            try:
+                deadline = monotonic() + 2
+                while adapter.index < 13 and monotonic() < deadline:
+                    sleep(0.01)
+            finally:
+                stop.set()
+                worker.join(timeout=2)
+        self.assertEqual(errors, [])
+        self.assertFalse(worker.is_alive())
+        self.assertTrue(adapter.closed)
+        self.assertEqual(list(Measurement.objects.values_list("net_weight_grams", flat=True)), [252, 300])
+        self.assertEqual(Order.objects.count(), 0)
+        connections.close_all()

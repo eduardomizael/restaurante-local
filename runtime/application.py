@@ -15,6 +15,7 @@ from hardware.scale.simulator import SimulatedScale
 from runtime.instance_lock import InstanceLock
 from runtime.http_server import LocalHTTPServer
 from runtime.scale_worker import ScaleWorker
+from runtime.scale_capture import ScaleCaptureController
 from runtime.state import state
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class LocalApplication:
     """Own one installation, server and simulated adapter."""
 
     def __init__(self, data_dir, port, *, browser=True, server_factory=LocalHTTPServer,
-                 adapter_factory=SimulatedScale, browser_open=webbrowser.open):
+                 adapter_factory=SimulatedScale, browser_open=webbrowser.open, capture_factory=None):
         self.data_dir = data_dir
         self.port = port
         self.url = f"http://127.0.0.1:{port}/"
@@ -70,6 +71,7 @@ class LocalApplication:
         self.browser_open = browser_open
         self.server_factory = server_factory
         self.adapter_factory = adapter_factory
+        self.capture_factory = capture_factory or ScaleCaptureController
         self.lock = InstanceLock(data_dir)
         self.stop_event = Event()
         self.server = None
@@ -103,7 +105,9 @@ class LocalApplication:
             self.server_thread = Thread(target=self.server.run, name="local-http", daemon=True)
             self.server_thread.start()
             probe_instance(self.url, self.instance_id)
-            self.worker = ScaleWorker(self.adapter_factory(), state, self.stop_event)
+            capture_controller = self.capture_factory()
+            self.worker = ScaleWorker(self.adapter_factory(), state, self.stop_event,
+                                      capture_controller=capture_controller)
             self.worker.start()
             record = self.data_dir / "instance.json"
             temporary = record.with_suffix(".tmp")

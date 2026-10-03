@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restaurante Local</title>
+  <link rel="stylesheet" href="{% url 'asset' 'app.css' %}">
+  <script src="{% url 'asset' 'htmx.min.js' %}" defer></script>
+  <script src="{% url 'asset' 'app.js' %}" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'home' %}">Restaurante Local</a>
+    <span class="badge">Modo de simulação</span>
+    <nav aria-label="Navegação principal">
+      <a href="{% url 'home' %}">Atendimento</a>
+      <a href="{% url 'status' %}">Status</a>
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Aplicação independente · Equipamentos reais ainda não habilitados</footer>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<section id="runtime-status" class="status-grid" aria-label="Estado técnico"
+  hx-get="{% url 'status_fragment' %}"
+  hx-trigger="every 500ms [!document.hidden &amp;&amp; !document.querySelector('form.htmx-request')]" hx-swap="outerHTML">
+  <div class="card weight-card">
+    <span class="eyebrow">PESO LÍQUIDO SIMULADO</span>
+    <div class="weight">{{ runtime.weight_kg }} <small>kg</small></div>
+    <p>{{ runtime.scale_label }}</p>
+  </div>
+  <div class="card">
+    <h2>Inicializador</h2>
+    <p>{% if runtime.running %}Em execução no próprio PC{% else %}Inicializador não está em execução{% endif %}</p>
+    {% if runtime.error %}<p role="alert" class="error">{{ runtime.error }}</p>{% endif %}
+    <form hx-post="{% url 'toggle_pause' %}" hx-target="#runtime-status" hx-swap="outerHTML">
+      {% csrf_token %}
+      <button id="pause-reading" type="submit" {% if not runtime.running %}disabled{% endif %}>
+        {% if runtime.paused %}▶ Retomar leitura{% else %}Ⅱ Pausar leitura{% endif %}
+      </button>
+    </form>
+    <p class="muted" id="connection-message" role="status">Atualização local a cada meio segundo.</p>
+  </div>
+</section>

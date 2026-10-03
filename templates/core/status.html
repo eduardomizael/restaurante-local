@@ -1,0 +1,9 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><p class="eyebrow">DIAGNÓSTICO</p><h1>Status da aplicação</h1>
+<p>Fechar esta janela mantém o inicializador em execução.</p></div>
+{% include 'core/status_fragment.html' %}
+<section class="card"><h2>Como encerrar</h2>
+<p>Use <strong>Sair</strong> no ícone da bandeja. Em modo sem bandeja, use Ctrl+C no terminal.</p>
+<p>A captura comercial, a fila de impressão e a tela de configurações ainda estão em desenvolvimento.</p></section>
+{% endblock %}

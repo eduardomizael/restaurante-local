@@ -4,6 +4,7 @@ from apps.core import views
 from apps.orders import views as order_views
 from apps.products import views as product_views
 from apps.printing import views as print_views
+from apps.configuration import views as configuration_views
 
 urlpatterns = [
     path("", order_views.attendance, name="home"),
@@ -19,6 +20,7 @@ urlpatterns = [
     path("measurements/<int:measurement_id>/discard/", order_views.confirm_discard, name="confirm_discard"),
     path("numbering/", order_views.numbering, name="numbering"),
     path("configuration/document/", print_views.configuration, name="document_configuration"),
+    path("configuration/equipment/", configuration_views.equipment, name="equipment_configuration"),
     path("orders/<int:order_id>/preview/", print_views.preview, name="print_preview"),
     path("orders/<int:order_id>/finalize/", print_views.finalize, name="finalize_order"),
     path("printing/history/", print_views.history, name="print_history"),

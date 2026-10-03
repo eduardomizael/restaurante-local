@@ -11,18 +11,19 @@
 <body data-selected-order="{{ selected_id|default_if_none:'' }}">
   <header class="topbar">
     <a class="brand" href="{% url 'home' %}">Restaurante Local</a>
-    <span class="badge">Modo de simulação</span>
+    <span class="badge">{% if runtime_mode.scale_mode == 'SERIAL' %}Balança real{% else %}Balança simulada{% endif %} · {% if runtime_mode.print_mode == 'RAW' %}Impressão real{% else %}Impressão simulada{% endif %}</span>
     <nav aria-label="Navegação principal">
       <a href="{% url 'home' %}">Atendimento</a>
       <a href="{% url 'catalogue' %}">Produtos</a>
       <a href="{% url 'numbering' %}">Numeração</a>
       <a href="{% url 'document_configuration' %}">Documento</a>
+      <a href="{% url 'equipment_configuration' %}">Equipamentos</a>
       <a href="{% url 'print_history' %}">Histórico</a>
       <a href="{% url 'status' %}">Status</a>
     </nav>
   </header>
   <main>{% block content %}{% endblock %}</main>
   {% include 'core/keypad.html' %}
-  <footer>Aplicação independente · Equipamentos reais ainda não habilitados</footer>
+  <footer>Aplicação independente · Aceitação pelo spooler não confirma saída física do papel</footer>
 </body>
 </html>

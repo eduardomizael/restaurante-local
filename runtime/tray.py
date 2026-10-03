@@ -24,7 +24,7 @@ def run_tray(application):
         application.browser_open(application.url + "status/")
 
     def open_configuration(icon, item):
-        application.browser_open(application.url + "numbering/")
+        application.browser_open(application.url + "configuration/equipment/")
 
     def pause(icon, item):
         state.toggle_pause()
@@ -33,14 +33,14 @@ def run_tray(application):
         application.request_stop()
         icon.stop()
 
-    icon = pystray.Icon("restaurante-local", image, "Restaurante Local — simulação", pystray.Menu(
+    icon = pystray.Icon("restaurante-local", image, "Restaurante Local", pystray.Menu(
         pystray.MenuItem("Abrir atendimento", open_home, default=True),
         pystray.MenuItem("Status", open_status),
         pystray.MenuItem(
             lambda item: "Retomar leitura" if state.snapshot()["paused"] else "Pausar leitura", pause,
         ),
         pystray.MenuItem("Sair", exit_runtime),
-        pystray.MenuItem("Numeração", open_configuration),
+        pystray.MenuItem("Equipamentos", open_configuration),
     ))
     try:
         icon.run()

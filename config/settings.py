@@ -12,7 +12,7 @@ DEBUG = False
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes", "apps.core", "apps.products",
-    "apps.measurements", "apps.orders", "apps.printing",
+    "apps.measurements", "apps.orders", "apps.printing", "apps.configuration",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -27,6 +27,7 @@ TEMPLATES = [{
     "APP_DIRS": True,
     "OPTIONS": {"context_processors": [
         "django.template.context_processors.request",
+        "apps.core.context_processors.runtime_mode",
     ]},
 }]
 WSGI_APPLICATION = "config.wsgi.application"

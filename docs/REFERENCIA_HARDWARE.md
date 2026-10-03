@@ -26,6 +26,14 @@ Evidência de referência: ESC/POS, envio RAW pelo spooler Windows, perfil ensai
 
 Validar largura útil, comprimento variável, corte, legibilidade, falta de papel, desconexão e resultado incerto. Aceitação pelo spooler não prova saída física. Sem reenvio automático de trabalho incerto. TCP 9100 e QR Code não fazem parte do MVP e não foram comprovados por esta consolidação.
 
+## Ensaios locais autorizados em 03/10/2026
+
+COM3 identificada como USB-SERIAL CH340; quadro completo de zero e leituras de 236 g obtidos com o adaptador próprio. O usuário confirmou 0,236 kg no visor e retorno a zero. Peso inicialmente informado: 234 g; diferença de 2 g não compensada por software. Nova colocação apresentou 234 g. Respostas fora do enquadramento foram rejeitadas e reiniciaram a exigência de zero; não foram transformadas em peso comercial.
+
+Fila `balanca`, driver POS-80 11.3.0.0, porta USB002. Teste RAW nº 7 teve acentos cp860/tabela 3, 48 caracteres e corte confirmados pelo usuário. Estes pontos estão comprovados para o equipamento instalado. Falta de papel, desconexão, documentos longos e homologação metrológica permanecem pendentes. Consulte [implementação](IMPLEMENTACAO_HARDWARE_REAL.md) e [ADR-0015](adr/0015-adaptadores-seriais-e-impressao-windows-raw.md).
+
+Continuação do ensaio local: captura automática persistiu uma única medição de 236 g, mesmo com oscilação de 234–236 g. A comanda nº 2 foi enviada uma vez como trabalho RAW nº 8; o usuário confirmou peso, subtotal R$ 23,60 com preço fictício de teste, campos manuscritos e corte. A comanda nº 1 permaneceu aberta. Retorno ao zero, recuperação sem duplicação após reinício e liberação da COM3 foram verificados. Uma consulta vazia admite repetição limitada conforme [ADR-0016](adr/0016-repeticao-limitada-de-consulta-sem-resposta.md); quadros inválidos continuam sendo recusados.
+
 ## Modelo impresso e origem
 
 [Fotografia fornecida pelo usuário](references/order-slip-reference.png). É referência de apresentação, não autorização para importar preços, cadastro, nome ou endereço web nela contidos. Requisitos atuais de várias refeições e linhas manuscritas prevalecem sobre o exemplo de uma única refeição.

@@ -14,7 +14,7 @@ Atendimento touch implementado: cadastro de produtos, múltiplas comandas, produ
 
 Documento e fila simulada implementados: cabeçalho/rodapé, preview contínuo de 80 mm, finalização somente da selecionada, snapshot congelado, histórico e segunda via confirmada. Consulte [entrega documental](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
-Ainda pendentes: configuração de equipamentos, adaptadores reais e distribuição. `--preview-print` utiliza somente simulador, sem papel ou spooler. Os limiares da balança e o perfil documental de 48 colunas são provisórios e exigem homologação física.
+Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). Distribuição e homologação física completa permanecem pendentes. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Os limiares de estabilidade ainda exigem ensaio prolongado; acentos, 48 caracteres e corte foram confirmados no equipamento instalado.
 
 ## Desenvolvimento e execução
 
@@ -38,6 +38,8 @@ rtk proxy uv run --offline --no-sync python manage.py run_local --simulate --pre
 
 Abrir `http://127.0.0.1:8765/` após a mensagem de prontidão. Encerrar com **Sair** na bandeja ou Ctrl+C sem bandeja. Fechar o navegador não encerra o processo. Segunda execução confirma a identidade HTTP da instância existente antes de abrir sua interface e não duplica leitor/servidor. A abertura atual usa o navegador padrão; perfil próprio e kiosk ficam para distribuição.
 
+Para os equipamentos reais, execute o comando run_local sem --simulate e sem --preview-print, após atualização explícita com o programa fechado. As flags selecionam os transportes independentemente; trabalhos antigos de simulação não passam a imprimir em papel.
+
 ## Validação
 
 ```powershell
@@ -46,7 +48,7 @@ rtk proxy uv run --offline --no-sync python manage.py test --settings=config.tes
 rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-94 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+118 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 ## Documentação
 
@@ -61,6 +63,6 @@ rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --d
 
 Várias comandas abertas, pesagens compartilhadas, produtos rápidos, peso manual, numeração sequencial, configurações e impressão em bobina contínua de 80 mm. Descarte de medições somente manual. Sem estoque, caixa, pagamento ou emissão fiscal.
 
-Equipamentos previstos: COM3 e fila Windows `balanca`, futuramente editáveis pela tela de configuração. Backend Django/SQLite, Templates/HTMX e assets locais; entrada técnica `manage.py run_local`.
+Equipamentos integrados: COM3 e fila Windows `balanca`, editáveis na tela Equipamentos. Backend Django/SQLite, Templates/HTMX e assets locais; entrada técnica `manage.py run_local`.
 
-Não instalar, migrar ou iniciar o sistema antigo para desenvolver este projeto. Nenhum hardware físico foi homologado pela implementação atual.
+Não instalar, migrar ou iniciar o sistema antigo para desenvolver este projeto. O usuário confirmou acentos, largura de 48 caracteres e corte do teste RAW nº 7; leituras de zero e 236 g coincidiram com o visor. Homologação física completa permanece pendente.

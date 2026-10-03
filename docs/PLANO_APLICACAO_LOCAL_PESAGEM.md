@@ -2,7 +2,7 @@
 
 Data: 03/10/2026. Status: **escopo e fluxo definidos; Django e interface web touch escolhidos; estrutura técnica especificada para implementação**. Este documento planeja uma aplicação independente; não modifica o Restaurante atual.
 
-Andamento em 03/10/2026: fundação, domínio comercial, atendimento touch, captura automática simulada e documento/fila simulada implementados. Etapas físicas e distribuição ainda não concluídas. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md), [domínio](IMPLEMENTACAO_DOMINIO.md), [atendimento](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [documento](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Os requisitos abaixo continuam sendo o contrato alvo.
+Andamento em 03/10/2026: fundação, domínio comercial, atendimento touch, captura automática simulada e documento/fila simulada implementados. Captura automática real e impressão de uma comanda foram verificadas; ensaios físicos de falha, homologação completa e distribuição permanecem pendentes. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md), [domínio](IMPLEMENTACAO_DOMINIO.md), [atendimento](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [documento](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Os requisitos abaixo continuam sendo o contrato alvo.
 
 ## 1. Objetivo e limites
 
@@ -185,3 +185,8 @@ Primeiro marco demonstrável: **cadastrar produtos e configurar cabeçalho; abri
 - [WritePrinter e envio de dados RAW no Windows](https://learn.microsoft.com/en-us/windows/win32/printdocs/writeprinter).
 
 Estas fontes sustentam a viabilidade técnica; os critérios de operação e a compatibilidade física precisam da definição de produto e dos ensaios descritos acima.
+# Atualização de implementação — 03/10/2026
+
+Os adaptadores próprios COM3/Windows RAW e a tela Equipamentos foram implementados conforme [ADR-0015](adr/0015-adaptadores-seriais-e-impressao-windows-raw.md). O teste RAW nº 7 teve acentos, 48 caracteres e corte confirmados pelo usuário. Leituras de zero e 236 g corresponderam ao visor; uma nova colocação informou 234 g. Homologação metrológica, cenários físicos de falha e distribuição permanecem pendentes. O registro detalhado está em [integração real](IMPLEMENTACAO_HARDWARE_REAL.md).
+
+Continuação: captura automática de 236 g e saída completa da comanda nº 2 confirmadas; retorno ao zero, reinício sem duplicação e liberação da COM3 verificados. Consulta sem resposta admite uma repetição limitada conforme ADR-0016. Suíte: 118 testes aprovados.

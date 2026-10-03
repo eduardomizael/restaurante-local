@@ -2,7 +2,7 @@
 
 Data: 03/10/2026. Status: **escopo e fluxo definidos; Django e interface web touch escolhidos; estrutura técnica especificada para implementação**. Este documento planeja uma aplicação independente; não modifica o Restaurante atual.
 
-Andamento em 03/10/2026: primeiro recorte da etapa 1 implementado e validado com simulador; a etapa não está integralmente concluída. Consulte [registro de implementação](IMPLEMENTACAO_FUNDACAO.md) para entregas, evidências e pendências. Os requisitos abaixo continuam sendo o contrato alvo.
+Andamento em 03/10/2026: primeiro recorte da etapa 1 implementado e validado com simulador; a etapa não está integralmente concluída. Backend de produtos, medições e múltiplas comandas implementado e validado, ainda sem integração comercial com telas/worker. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md) e do [domínio](IMPLEMENTACAO_DOMINIO.md) para entregas, evidências e pendências. Os requisitos abaixo continuam sendo o contrato alvo.
 
 ## 1. Objetivo e limites
 

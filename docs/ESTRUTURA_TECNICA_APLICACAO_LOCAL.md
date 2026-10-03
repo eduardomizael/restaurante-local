@@ -1,10 +1,10 @@
 # Estrutura técnica da aplicação local de pesagem
 
-Data: 03/10/2026. Especificação de implementação conforme [plano](PLANO_APLICACAO_LOCAL_PESAGEM.md) e [ADR-0012](adr/0012-aplicacao-autonoma-django-touch.md). Fundação e recorte inicial de `run_local` implementados em simulação; estado, comandos disponíveis e limitações em [Implementação da fundação](IMPLEMENTACAO_FUNDACAO.md). As demais seções descrevem o contrato alvo, não funcionalidades já concluídas.
+Data: 03/10/2026. Especificação de implementação conforme [plano](PLANO_APLICACAO_LOCAL_PESAGEM.md) e [ADR-0012](adr/0012-aplicacao-autonoma-django-touch.md). Fundação e recorte inicial de `run_local` implementados em simulação; estado, comandos disponíveis e limitações em [Implementação da fundação](IMPLEMENTACAO_FUNDACAO.md). Models/services de produtos, medições e comandas implementados no [recorte de domínio](IMPLEMENTACAO_DOMINIO.md), conforme [ADR-0013](adr/0013-dominio-comercial-e-concorrencia-sqlite.md). Demais seções descrevem o contrato alvo, não funcionalidades já concluídas.
 
 ## 1. Projeto independente
 
-Raiz independente: `D:\restaurante-local`, distribuição Python `local-weighing`, organizada em `config`, `apps`, `runtime` e `hardware`. `manage.py`, ambiente uv, pyproject, lockfile, settings, logs e assets próprios já existem. Models e migrations comerciais ainda serão implementados.
+Raiz independente: `D:\restaurante-local`, distribuição Python `local-weighing`, organizada em `config`, `apps`, `runtime` e `hardware`. `manage.py`, ambiente uv, pyproject, lockfile, settings, logs, assets próprios e primeiro recorte de models/migrations comerciais já existem. Impressão e configuração operacional ainda serão implementadas.
 
 Estrutura prevista:
 

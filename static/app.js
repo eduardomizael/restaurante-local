@@ -3,32 +3,98 @@ document.addEventListener("htmx:configRequest", (event) => {
   const token = document.querySelector("[name=csrfmiddlewaretoken]");
   if (token) event.detail.headers["X-CSRFToken"] = token.value;
 });
-document.addEventListener("htmx:sendError", () => {
-  const message = document.getElementById("connection-message");
+function requestFeedback(event) {
+  const source = event.detail.requestConfig?.elt || event.detail.elt;
+  if (source?.closest("#catalogue-results")) return document.getElementById("catalogue-feedback");
+  if (source?.closest("#attendance-workspace") && source.id !== "shared-board") {
+    return document.getElementById("attendance-feedback");
+  }
+  return document.getElementById("connection-message");
+}
+document.addEventListener("htmx:sendError", (event) => {
+  const message = requestFeedback(event);
   if (message) {
     message.textContent = "Sem resposta do inicializador. Verifique se o programa está aberto.";
     message.classList.add("error");
   }
 });
-document.addEventListener("htmx:responseError", () => {
-  const message = document.getElementById("connection-message");
+document.addEventListener("htmx:responseError", (event) => {
+  const message = requestFeedback(event);
   if (message) message.textContent = "A ação não foi concluída. Consulte o status do inicializador.";
 });
 
 window.localPollingAllowed = () => !document.hidden
-  && !document.querySelector("dialog[open], form.htmx-request, form[data-submitting]");
+  && !document.querySelector("dialog[open], form.htmx-request, form[data-submitting], .order-card.htmx-request");
+
+const attendanceScroll = new Map();
+const syncAttendanceSelection = () => {
+  const workspace = document.getElementById("attendance-workspace");
+  if (workspace) document.body.dataset.selectedOrder = workspace.dataset.selectedOrder;
+};
+const restoreAttendanceScroll = () => {
+  document.querySelectorAll("[data-preserve-scroll]").forEach((element) => {
+    const position = attendanceScroll.get(element.id);
+    if (position) {
+      element.scrollLeft = position.left;
+      element.scrollTop = position.top;
+    }
+  });
+};
 
 document.addEventListener("htmx:beforeSwap", (event) => {
-  if (["shared-board", "runtime-status", "print-jobs"].includes(event.detail.target.id)
+  const source = event.detail.requestConfig?.elt;
+  const polling = ["shared-board", "runtime-status", "print-jobs"].includes(source?.id);
+  if (polling
       && !window.localPollingAllowed()) {
     event.detail.shouldSwap = false;
     return;
   }
-  if (event.detail.target.id === "shared-board") {
+  if (["shared-board", "catalogue-choices"].includes(event.detail.target.id)) {
     const destination = event.detail.xhr.getResponseHeader("X-Selected-Order");
     if (destination !== null && destination !== document.body.dataset.selectedOrder) {
       event.detail.shouldSwap = false;
+      return;
     }
+  }
+  // Only our explicit validation fragment may replace the local error region.
+  if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.xhr.getResponseHeader("HX-Retarget") === "#attendance-feedback") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.target.id === "catalogue-results"
+      && event.detail.xhr.getResponseHeader("X-Catalogue-Fragment") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if (event.detail.shouldSwap && document.getElementById("attendance-workspace")) {
+    document.querySelectorAll("[data-preserve-scroll]").forEach((element) => {
+      attendanceScroll.set(element.id, {left: element.scrollLeft, top: element.scrollTop});
+    });
+  }
+});
+
+document.addEventListener("htmx:beforeRequest", (event) => {
+  if (event.detail.elt.closest("#attendance-workspace") && event.detail.elt.id !== "shared-board") {
+    const feedback = document.getElementById("attendance-feedback");
+    if (feedback) feedback.replaceChildren();
+  }
+});
+document.addEventListener("htmx:afterSwap", syncAttendanceSelection);
+document.addEventListener("htmx:oobAfterSwap", restoreAttendanceScroll);
+document.addEventListener("htmx:afterSettle", restoreAttendanceScroll);
+document.addEventListener("htmx:historyRestore", syncAttendanceSelection);
+document.addEventListener("htmx:afterRequest", (event) => {
+  const source = event.detail.requestConfig?.elt || event.detail.elt;
+  if (!event.detail.successful && source?.closest("#catalogue-results")) {
+    document.querySelectorAll("#catalogue-results input[type=checkbox]").forEach((input) => {
+      input.checked = input.dataset.savedChecked === "true";
+    });
+  }
+  if (event.detail.successful) {
+    const message = document.getElementById("connection-message");
+    if (message?.classList.contains("connection-feedback")) message.textContent = "";
   }
 });
 
@@ -39,7 +105,7 @@ document.addEventListener("submit", (event) => {
     return;
   }
   // HTMX owns its own pending state; normal POSTs navigate after acceptance.
-  if (form.hasAttribute("hx-post")) return;
+  if (form.matches("[hx-post], [hx-get]")) return;
   form.dataset.submitting = "true";
   form.setAttribute("aria-busy", "true");
   setTimeout(() => form.querySelectorAll("button[type=submit]").forEach((button) => {

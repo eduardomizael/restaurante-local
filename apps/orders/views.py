@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
+from django import forms
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -118,6 +119,7 @@ def create_order(request):
 
 @require_http_methods(["GET", "POST"])
 @never_cache
+@vary_on_headers("HX-Request")
 @requires_runtime
 def manual_item(request, order_id, product_id):
     """Use product unit to parse quantity while fixing the route destination."""
@@ -126,6 +128,14 @@ def manual_item(request, order_id, product_id):
     form = ManualItemForm(request.POST if request.method == "POST" else None, unit=product.unit, initial={
         "order_id": order_id, "product_id": product_id, "request_key": uuid4(), "quantity_units": 1,
     })
+    modal = request.headers.get("HX-Request") == "true"
+    if modal:
+        field_name = "weight_grams" if product.unit == "KG" else "quantity_units"
+        precision = "3" if product.unit == "KG" else "0"
+        form.fields[field_name].widget = forms.TextInput(attrs={
+            "inputmode": "decimal" if product.unit == "KG" else "numeric",
+            "autocomplete": "off", "data-item-value": precision,
+        })
     response_status = 200
     if request.method == "POST":
         if form.is_valid():
@@ -139,12 +149,23 @@ def manual_item(request, order_id, product_id):
                     form.add_error(None, exc)
                     response_status = 409 if isinstance(exc, DomainConflict) else 400
                 else:
-                    return _attendance_redirect(order_id)
+                    response = _attendance_result(request, order_id)
+                    if modal:
+                        response["HX-Trigger-After-Swap"] = "manualItemAdded"
+                    return response
         else:
             response_status = 400
     elif order.status != "DRAFT":
         return _operation_error(request, "Comanda encerrada não aceita novos itens.", order_id)
-    return render(request, "orders/manual_item.html", {"form": form, "order": order, "product": product}, status=response_status)
+    template = "orders/manual_item_dialog.html" if modal else "orders/manual_item.html"
+    response = render(request, template, {"form": form, "order": order, "product": product}, status=response_status)
+    if modal:
+        response["X-Selected-Order"] = str(order_id)
+        response["X-Manual-Item-Fragment"] = "1"
+        if response_status != 200:
+            response["HX-Retarget"] = "#manual-item-content"
+            response["HX-Reswap"] = "innerHTML"
+    return response
 
 
 @require_POST

@@ -92,6 +92,12 @@ dialog h2 { margin: 0; }
 .keypad-grid button { min-width: 48px; min-height: 60px; font-size: 24px; }
 dialog .form-actions { flex-wrap: nowrap; }
 dialog .form-actions button { flex: 1; min-width: 48px; }
+#manual-item-dialog { max-height: calc(100dvh - 24px); overflow-y: auto; }
+#manual-item-dialog .eyebrow { margin-top: 0; }
+#manual-item-dialog .dialog-heading h2 { overflow-wrap: anywhere; }
+#manual-item-dialog input[data-item-value] { font-size: 28px; text-align: right; }
+#manual-item-dialog .item-keypad { gap: 8px; }
+#manual-item-dialog .item-keypad button { min-height: 48px; padding: 8px; }
 @media (max-width: 950px) { .product-row, .item-row { align-items: flex-start; flex-wrap: wrap; } .item-total { width: 100%; display: flex; align-items: center; justify-content: space-between; } }
 @media (max-width: 700px) { nav { flex-wrap: wrap; } .subtotal { flex-wrap: wrap; } .search-form input { width: 100%; } }
 .topbar { flex-wrap: wrap; }

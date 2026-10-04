@@ -1,4 +1,4 @@
 {% load commercial %}
 <div id="catalogue-choices" class="catalogue-choices" aria-live="polite">
-  {% if selected %}{% for product in products %}<a class="button secondary" href="{% url 'manual_item' selected.pk product.pk %}">＋ {{ product.description }} · R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</a>{% empty %}<p>Nenhum produto encontrado.</p>{% endfor %}{% endif %}
+  {% if selected %}{% for product in products %}<a class="button secondary" href="{% url 'manual_item' selected.pk product.pk %}" hx-get="{% url 'manual_item' selected.pk product.pk %}" hx-target="#manual-item-content" hx-swap="innerHTML" hx-sync="#attendance-workspace:replace">＋ {{ product.description }} · R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</a>{% empty %}<p>Nenhum produto encontrado.</p>{% endfor %}{% endif %}
 </div>

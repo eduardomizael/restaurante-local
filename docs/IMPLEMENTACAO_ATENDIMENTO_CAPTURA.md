@@ -56,3 +56,10 @@ Durante a requisição, bloquear temporariamente as tags disponíveis do catálo
 
 Sem novas migrations. Sete testes específicos cobrem seleção única, transferência, remoção de seleção, atualização isolada, filtros, candidatos inválidos, revisões obsoletas e proteção HTTP. Validação visual em dados temporários com simuladores confirmou transferência sem recarga, marcação/desmarcação, acionamento pelo teclado e recuperação após alteração em outra sessão. Nenhum equipamento real ou banco operacional foi usado.
 
+## Atualização de 04/10/2026 — Inclusão por diálogo
+
+Cards de produtos rápidos e resultados do catálogo abrem um diálogo sobre o atendimento com teclado numérico integrado. Em UN, inicia com quantidade 1 e o primeiro dígito substitui o valor; em KG, solicita peso com até três casas decimais. O teclado físico também funciona. Confirmar faz POST com CSRF, destino explícito e a mesma chave idempotente do serviço existente; retorna itens, cards e subtotal por HTMX e fecha o diálogo somente após sucesso. A URL e a comanda selecionada permanecem iguais.
+
+Validação inválida ou conflito mantém o diálogo e a chave da operação para correção. Cancelar ou Esc antes do envio não grava; durante o envio, bloquear os botões e Esc para não confundir cancelamento com uma inclusão já em processamento. Polling não substitui conteúdo enquanto o diálogo está aberto. Respostas para outra comanda são rejeitadas. A página de inclusão original permanece como alternativa HTTP sem HTMX.
+
+Cinco testes específicos cobrem fragmento com teclado, UN/KG, idempotência, atualização de totais, destino adulterado, validação, comanda encerrada e alternativa HTTP. No navegador com simuladores, incluir duas unidades de Suco atualizou o subtotal para R$ 14,00 sem sair da tela; quantidade zero manteve o diálogo com erro, e cancelar não criou outro item. Sem migrations ou alteração de dados operacionais.

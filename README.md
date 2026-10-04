@@ -111,3 +111,7 @@ Esta atualização inclui a migration `configuration/0002`. Feche o aplicativo p
 ## Atualização: tags no catálogo
 
 Em Produtos, clique nas tags **Balança**, **Aparece na comanda** ou **Acesso rápido** para salvar a opção sem recarregar a página. Tags preenchidas estão marcadas; tags com contorno estão desmarcadas. O produto da balança aparece em uma seção própria no topo. Selecionar outro produto ativo por KG transfere a seleção automaticamente, mantendo no máximo um produto da balança. Esta alteração não cria migrations; reabra o programa para carregar o código atualizado.
+
+## Atualização: inclusão por diálogo
+
+No atendimento, clicar em um produto abre um diálogo com quantidade/peso e teclado numérico. **Confirmar e adicionar** inclui na comanda selecionada e atualiza itens e subtotal sem sair da tela. Cancelar fecha sem incluir; erros mantêm o diálogo para correção. Não exige migration; reabra o programa para carregar o código atualizado.

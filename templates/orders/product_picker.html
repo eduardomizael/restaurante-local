@@ -5,7 +5,7 @@
   <details class="product-disclosure" {% if search %}open{% endif %}><summary>＋ Adicionar produtos</summary>
   <div class="product-disclosure-content">
   <div class="quick-grid" aria-label="Produtos rápidos">
-    {% for product in quick_products %}<a class="button quick-product secondary" href="{% url 'manual_item' selected.pk product.pk %}"><span>＋ {{ product.description }}</span><span>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</span></a>{% empty %}<p class="muted">Marque produtos como acesso rápido no cadastro.</p>{% endfor %}
+    {% for product in quick_products %}<a class="button quick-product secondary" href="{% url 'manual_item' selected.pk product.pk %}" hx-get="{% url 'manual_item' selected.pk product.pk %}" hx-target="#manual-item-content" hx-swap="innerHTML" hx-sync="#attendance-workspace:replace"><span>＋ {{ product.description }}</span><span>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</span></a>{% empty %}<p class="muted">Marque produtos como acesso rápido no cadastro.</p>{% endfor %}
   </div>
   <details class="catalogue-search" {% if search %}open{% endif %}><summary>Buscar no catálogo completo</summary>
     <form method="get" action="{% url 'home' %}" class="search-form" hx-get="{% url 'product_choices' %}" hx-target="#catalogue-choices" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop">

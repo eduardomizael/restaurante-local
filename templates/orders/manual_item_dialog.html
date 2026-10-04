@@ -1,0 +1,18 @@
+{% load commercial %}
+<form method="post" action="{% url 'manual_item' order.pk product.pk %}"
+      hx-post="{% url 'manual_item' order.pk product.pk %}" hx-target="#shared-board" hx-swap="outerHTML"
+      hx-sync="this:drop" hx-disabled-elt="find button:not(:disabled)" class="manual-item-form">
+  {% csrf_token %}
+  <p class="eyebrow">COMANDA {{ order.number }}</p>
+  <div class="dialog-heading"><h2 id="manual-item-title">{{ product.description }}</h2><button type="button" class="secondary compact" data-item-cancel aria-label="Cancelar inclusão">×</button></div>
+  <p>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</p>
+  <div id="manual-item-feedback" class="form-errors" role="alert"></div>
+  {% include 'core/form_fields.html' %}
+  <div class="keypad-grid item-keypad" aria-label="Teclado numérico">
+    <button type="button" data-item-digit="7">7</button><button type="button" data-item-digit="8">8</button><button type="button" data-item-digit="9">9</button>
+    <button type="button" data-item-digit="4">4</button><button type="button" data-item-digit="5">5</button><button type="button" data-item-digit="6">6</button>
+    <button type="button" data-item-digit="1">1</button><button type="button" data-item-digit="2">2</button><button type="button" data-item-digit="3">3</button>
+    <button type="button" data-item-separator{% if product.unit == 'UN' %} disabled{% endif %}>,</button><button type="button" data-item-digit="0">0</button><button type="button" data-item-backspace aria-label="Apagar último dígito">⌫</button>
+  </div>
+  <div class="form-actions"><button type="button" class="secondary" data-item-clear>Limpar</button><button type="submit">Confirmar e adicionar</button></div>
+</form>

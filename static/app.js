@@ -5,6 +5,7 @@ document.addEventListener("htmx:configRequest", (event) => {
 });
 function requestFeedback(event) {
   const source = event.detail.requestConfig?.elt || event.detail.elt;
+  if (source?.closest("#manual-item-dialog")) return document.getElementById("manual-item-feedback");
   if (source?.closest("#catalogue-results")) return document.getElementById("catalogue-feedback");
   if (source?.closest("#attendance-workspace") && source.id !== "shared-board") {
     return document.getElementById("attendance-feedback");
@@ -49,7 +50,7 @@ document.addEventListener("htmx:beforeSwap", (event) => {
     event.detail.shouldSwap = false;
     return;
   }
-  if (["shared-board", "catalogue-choices"].includes(event.detail.target.id)) {
+  if (["shared-board", "catalogue-choices", "manual-item-content"].includes(event.detail.target.id)) {
     const destination = event.detail.xhr.getResponseHeader("X-Selected-Order");
     if (destination !== null && destination !== document.body.dataset.selectedOrder) {
       event.detail.shouldSwap = false;
@@ -59,6 +60,11 @@ document.addEventListener("htmx:beforeSwap", (event) => {
   // Only our explicit validation fragment may replace the local error region.
   if ([400, 409].includes(event.detail.xhr.status)
       && event.detail.xhr.getResponseHeader("HX-Retarget") === "#attendance-feedback") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.xhr.getResponseHeader("X-Manual-Item-Fragment") === "1") {
     event.detail.shouldSwap = true;
     event.detail.isError = false;
   }
@@ -122,6 +128,47 @@ window.addEventListener("pageshow", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  const itemDialog = document.getElementById("manual-item-dialog");
+  if (itemDialog) {
+    let replaceOnDigit = true;
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id !== "manual-item-content") return;
+      const input = itemDialog.querySelector("[data-item-value]");
+      if (!input) return;
+      if (!itemDialog.open) itemDialog.showModal();
+      input.focus();
+      input.select();
+      replaceOnDigit = true;
+    });
+    document.addEventListener("manualItemAdded", () => itemDialog.close());
+    itemDialog.addEventListener("cancel", (event) => {
+      if (itemDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+    itemDialog.addEventListener("input", (event) => {
+      if (event.target.matches("[data-item-value]")) replaceOnDigit = false;
+    });
+    itemDialog.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      const input = itemDialog.querySelector("[data-item-value]");
+      if (!button || !input || button.type === "submit") return;
+      if (button.hasAttribute("data-item-cancel")) { itemDialog.close(); return; }
+      const precision = Number(input.dataset.itemValue);
+      let value = input.value.replace(".", ",");
+      if (button.hasAttribute("data-item-digit")) {
+        if (replaceOnDigit) value = "";
+        const decimals = value.includes(",") ? value.split(",")[1].length : 0;
+        if (value.length >= 18 || (value.includes(",") && decimals >= precision)) return;
+        value += button.dataset.itemDigit;
+      } else if (button.hasAttribute("data-item-separator")) {
+        if (precision && !value.includes(",")) value = (value || "0") + ",";
+      } else if (button.hasAttribute("data-item-backspace")) value = value.slice(0, -1);
+      else if (button.hasAttribute("data-item-clear")) value = "";
+      else return;
+      replaceOnDigit = false;
+      input.value = value;
+      input.dispatchEvent(new Event("input", {bubbles: true}));
+    });
+  }
   const dialog = document.getElementById("numeric-keypad");
   const output = document.getElementById("keypad-value");
   if (!dialog) return;

@@ -9,3 +9,4 @@
 {% if not scale_product %}<div class="notice" role="status">Selecione um produto ativo em KG para capturar pesagens. <a href="{% url 'catalogue' %}">Abrir produtos</a></div>{% endif %}
 {% include 'orders/workspace.html' %}
 {% endblock %}
+{% block dialogs %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog>{% endblock %}

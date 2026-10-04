@@ -1,5 +1,17 @@
 # Atendimento touch e captura simulada
 
+## Atualização de interface — 03/10/2026
+
+Atendimento reorganizado a partir da referência visual do projeto Restaurante: faixa horizontal de medições acima de duas colunas; cards de comandas à esquerda e detalhes à direita. Os cards mostram número, situação, horário de abertura, quantidade de lançamentos ativos e subtotal. A selecionada tem destaque e rótulo. Em telas estreitas, as comandas passam para uma faixa horizontal acima dos detalhes.
+
+O card **Inicializador**, seus detalhes e pausa/retomada permanecem apenas em **Status**. O atendimento apresenta peso e estado da balança em um resumo compacto. O fragmento de atualização mantém essa separação, inclusive após polling. Produtos rápidos e busca ficam em **Adicionar produtos**, expansível no painel da selecionada; subtotal e ações ficam na parte inferior, com posicionamento sticky no desktop.
+
+HTMX local atualiza seleção e abertura de comanda, busca de produtos, inclusão de medição e remoção de item. Seleção/abertura substituem a área de atendimento e atualizam a URL; inclusão/remoção e polling atualizam medições, cards e itens. A busca substitui somente os resultados. Inclusão manual com quantidade, confirmação de descarte/cancelamento e prévia/impressão continuam em telas próprias com navegação normal. As operações preservam a alternativa HTTP tradicional, CSRF, idempotência e destino explícito.
+
+Polling permanece em 500 ms, com resposta 204 quando a revisão não mudou. Campos de busca e seções abertas não são substituídos pelas atualizações automáticas. As posições de rolagem das listas são preservadas. Requisições interativas compartilham sincronização e interrompem polling pendente; respostas de outra comanda são rejeitadas. O histórico recarrega dados atuais, sem restaurar snapshots de atendimento do cache HTMX. Se a selecionada for encerrada em outra janela, seus controles de produtos são removidos sem escolher outra comanda automaticamente.
+
+Validação: 141 testes passaram, incluindo separação inicializador/balança, criação idempotente e seleção via HTMX, histórico, consumo/remoção e totais dos cards, conflitos, busca com destino explícito e encerramento concorrente observado pelo polling. `check` sem erros e `makemigrations --check --dry-run` sem alterações. Verificação no navegador com banco temporário e transportes simulados: seleção, inclusão/remoção, busca, nova comanda e histórico; layouts de 1280 × 900 e 390 × 844 sem overflow horizontal da página. Nenhum envio para COM ou spooler; toque físico não homologado por essa verificação.
+
 Implementação em 03/10/2026, independente do projeto anterior. Fluxo: implementação direta, validação e revisão; sem hardware real, impressão física ou commit implícito.
 
 ## Entrega
@@ -31,3 +43,4 @@ Verificação manual no navegador local com dados temporários separados: pausa,
 Este incremento documental foi concluído em seguida; consulte [Documento e impressão simulada](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md) para entrega, testes e pendências atuais.
 
 Configuração de cabeçalho/rodapé e DTO documental congelado; preview em bobina contínua de 80 mm, finalização isolada da selecionada e fila simulada com idempotência/recuperação de resultado incerto. Adaptadores COM/RAW, perfil de estabilidade definitivo e distribuição Windows continuam pendentes.
+

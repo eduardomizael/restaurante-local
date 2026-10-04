@@ -121,6 +121,8 @@ Estado implementado em 03/10/2026: atendimento, catálogo, numeração, teclado 
 
 Templates Django e HTMX retornam HTML e fragments; forms validam sintaxe, services calculam e persistem, selectors consultam. JavaScript cuida de teclado numérico, foco e feedback; não é autoridade de preços, comanda ou consumo da pesagem.
 
+O atendimento organiza medições compartilhadas no topo, cards de comandas à esquerda e detalhes à direita, com resumo compacto da balança. Diagnóstico do inicializador fica somente em Status. HTMX atende seleção/abertura, busca, inclusão de medição, remoção de item e polling; formulários de quantidade, confirmações e prévia/impressão conservam páginas próprias. Os contratos de atualização parcial, sincronização e rolagem estão na atualização de [Atendimento e captura](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md).
+
 Layout operacional: peso/status no topo, pesagens compartilhadas e comandas abertas à esquerda, itens da selecionada e produtos rápidos na área principal. Botões com área mínima 48 x 48 px, espaçamento, contraste, ícones locais com rótulos, estados de carregamento e foco. Configuração e cadastro também precisam funcionar por toque. Peso, quantidade e preço têm teclado numérico; textos usam o teclado touch do Windows quando necessário.
 
 Polling local inicial de aproximadamente 500 ms, pausado em página oculta, atualiza somente peso/status e fragmentos de listas quando houver mudança. Não substituir campos em edição, teclado aberto ou seleção. Lista de medições captura destino explícito da ação; resposta atrasada não altera a comanda selecionada. Nenhuma página abre COM.

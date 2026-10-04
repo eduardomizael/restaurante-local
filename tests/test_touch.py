@@ -197,6 +197,77 @@ class TouchFlowTests(TestCase):
         self.assertEqual(client.post(reverse("create_order"), {"request_key": uuid4()}, HTTP_X_CSRFTOKEN=token).status_code, 503)
         self.assertEqual(Order.objects.count(), 0)
 
+    def test_attendance_separates_launcher_from_scale_on_initial_and_polled_pages(self):
+        for url in (reverse("home"), reverse("status_fragment") + "?surface=attendance"):
+            page = self.client.get(url)
+            self.assertContains(page, 'aria-label="Balança"')
+            self.assertNotContains(page, "<h2>Inicializador</h2>")
+            self.assertNotContains(page, 'id="pause-reading"')
+        for url in (reverse("status"), reverse("status_fragment")):
+            self.assertContains(self.client.get(url), "<h2>Inicializador</h2>")
+            self.assertContains(self.client.get(url), 'id="pause-reading"')
+
+    def test_htmx_creation_selection_and_history_restore(self):
+        key = uuid4()
+        response = self.client.post(reverse("create_order"), {"request_key": key}, HTTP_HX_REQUEST="true")
+        order = Order.objects.get()
+        self.assertContains(response, 'id="attendance-workspace"')
+        self.assertNotContains(response, "<html")
+        self.assertEqual(response["HX-Push-Url"], f"/?order={order.pk}")
+        self.client.post(reverse("create_order"), {"request_key": key}, HTTP_HX_REQUEST="true")
+        self.assertEqual(Order.objects.count(), 1)
+        second = self.open_via_http()
+        response = self.client.get(f"/?order={second.pk}", HTTP_HX_REQUEST="true")
+        self.assertContains(response, f'data-selected-order="{second.pk}"')
+        self.assertContains(response, f"Itens da comanda {second.number}")
+        self.assertNotContains(response, "<html")
+        self.assertIn("HX-Request", response["Vary"])
+        restored = self.client.get(f"/?order={order.pk}", HTTP_HX_REQUEST="true", HTTP_HX_HISTORY_RESTORE_REQUEST="true")
+        self.assertContains(restored, "<html")
+        self.assertEqual(restored.context["selected"].pk, order.pk)
+
+    def test_htmx_consumption_removal_and_cards_remain_consistent(self):
+        first, second = self.open_via_http(), self.open_via_http()
+        measurement = capture_measurement(capture_key=uuid4(), net_weight_grams=252)
+        data = {"order_id": first.pk, "measurement_id": measurement.pk, "request_key": uuid4()}
+        response = self.client.post(reverse("consume_measurement"), data, HTTP_HX_REQUEST="true")
+        self.assertEqual(response["X-Selected-Order"], str(first.pk))
+        self.assertNotContains(response, "<html")
+        self.assertNotContains(response, 'id="product-search"')
+        self.assertEqual([(order.item_count, order.total_cents) for order in response.context["orders"]], [(1, 1260), (0, 0)])
+        self.assertEqual(response.context["measurements"], [])
+        self.assertTrue(response.context["open_key"])
+        self.client.post(reverse("consume_measurement"), data, HTTP_HX_REQUEST="true")
+        self.assertEqual(OrderItem.objects.count(), 1)
+        conflict = self.client.post(reverse("consume_measurement"), dict(data, order_id=second.pk), HTTP_HX_REQUEST="true")
+        self.assertEqual(conflict.status_code, 409)
+        self.assertEqual(conflict["HX-Retarget"], "#attendance-feedback")
+        self.assertNotContains(conflict, "<html", status_code=409)
+        item = OrderItem.objects.get()
+        response = self.client.post(reverse("delete_item"), {"order_id": first.pk, "item_id": item.pk}, HTTP_HX_REQUEST="true")
+        self.assertEqual([(order.item_count, order.total_cents) for order in response.context["orders"]], [(0, 0), (0, 0)])
+        self.assertEqual([capture.pk for capture in response.context["measurements"]], [measurement.pk])
+
+    def test_product_search_fragment_keeps_explicit_destination(self):
+        first, second = self.open_via_http(), self.open_via_http()
+        response = self.client.get(reverse("product_choices"), {"order": second.pk, "q": "vontade"}, HTTP_HX_REQUEST="true")
+        self.assertContains(response, reverse("manual_item", args=[second.pk, self.unit.pk]))
+        self.assertNotContains(response, reverse("manual_item", args=[first.pk, self.unit.pk]))
+        self.assertNotContains(response, self.kg.description)
+        self.assertNotContains(response, 'id="product-search"')
+        self.assertNotContains(response, "<html")
+        self.assertEqual(response["X-Selected-Order"], str(second.pk))
+
+    def test_polling_clears_product_actions_when_selected_order_is_cancelled(self):
+        first, second = self.open_via_http(), self.open_via_http()
+        page = self.client.get(f"/?order={first.pk}")
+        self.client.post(reverse("confirm_cancel", args=[first.pk]), {"confirm": "True"})
+        response = self.client.get(reverse("board_fragment"), {"order": first.pk, "revision": page.context["revision"]})
+        self.assertEqual(response["X-Selected-Order"], str(first.pk))
+        self.assertContains(response, 'id="product-picker"')
+        self.assertNotContains(response, reverse("manual_item", args=[second.pk, self.unit.pk]))
+        self.assertContains(response, "Selecione uma comanda aberta")
+
 
 class CaptureCycleTests(SimpleTestCase):
     def sample(self, cycle, weight, at, tare=0, moving=False, now=None):

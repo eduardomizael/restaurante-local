@@ -77,11 +77,12 @@ class WindowsRawPrinter:
         self.spooler_factory = spooler_factory
         self.closed = False
 
-    def send(self, text, *, header_lines=0, header_scale=1):
+    def send(self, text, *, header_lines=0, header_scale=1, bold_lines=(), logo=None):
         """Return spooler acceptance, keeping all post-start failures uncertain."""
         if self.closed:
             raise PrintFailure("Adaptador de impressão encerrado antes do envio.")
-        data = encode_document(text, header_lines=header_lines, header_scale=header_scale)
+        data = encode_document(text, header_lines=header_lines, header_scale=header_scale,
+                               bold_lines=bold_lines, logo=logo)
         handle, job_id, spooler = None, None, None
         try:
             spooler = self.spooler_factory()

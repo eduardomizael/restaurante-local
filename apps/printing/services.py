@@ -11,10 +11,11 @@ from apps.configuration.selectors import hardware_configuration
 from apps.orders.models import Order
 from apps.printing.documents import fingerprint
 from apps.printing.models import DocumentConfiguration, OrderDocument, PrintJob
+from apps.printing.logos import normalize_logo
 from apps.printing.selectors import draft_content
 
 
-def save_document_configuration(*, header, footer, expected_revision):
+def save_document_configuration(*, header, footer, expected_revision, logo=None, remove_logo=False):
     """Save document text with optimistic revision and no hardware effects."""
     if not isinstance(header, str) or not 1 <= len(header.strip()) <= 120:
         raise ValidationError("Cabeçalho deve conter de 1 a 120 caracteres.")
@@ -23,6 +24,9 @@ def save_document_configuration(*, header, footer, expected_revision):
     if any(ord(char) < 32 and char not in "\n\r" for char in header + footer):
         raise ValidationError("Texto contém caracteres de controle inválidos.")
     require_integer(expected_revision, minimum=0, maximum=2_147_483_647, label="Revisão")
+    if type(remove_logo) is not bool or (logo is not None and remove_logo):
+        raise ValidationError("Escolha uma nova logo ou marque a remoção da atual.")
+    normalized_logo = normalize_logo(logo) if logo is not None else None
     with write_transaction():
         configuration = DocumentConfiguration.objects.filter(pk=1).first()
         if (configuration.revision if configuration else 0) != expected_revision:
@@ -32,6 +36,10 @@ def save_document_configuration(*, header, footer, expected_revision):
         else:
             configuration.revision += 1
         configuration.header, configuration.footer = header.strip(), footer.strip()
+        if remove_logo:
+            configuration.logo = {}
+        elif normalized_logo is not None:
+            configuration.logo = normalized_logo
         configuration.save()
         record_event("DOCUMENT_CONFIGURATION_SAVED", configuration, revision=configuration.revision)
         return configuration

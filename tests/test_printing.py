@@ -648,7 +648,7 @@ class PrintingMigrationTests(PrintingFixture, TransactionTestCase):
         job = self.finalize()
         original = job.document.content
         previous = [("printing", "0002_remove_printjob_print_job_state_consistent_and_more")]
-        latest = [("printing", "0003_orderdocument_is_final_alter_orderdocument_order_and_more")]
+        latest = MigrationExecutor(connection).loader.graph.leaf_nodes()
         try:
             executor = MigrationExecutor(connection)
             executor.migrate(previous)
@@ -661,5 +661,9 @@ class PrintingMigrationTests(PrintingFixture, TransactionTestCase):
         self.assertEqual(document.content, original)
         self.assertEqual(document.fingerprint, fingerprint(original))
         self.assertEqual(PrintJob.objects.get(pk=job.pk).document_id, document.pk)
+        configuration = DocumentConfiguration.objects.get(pk=1)
+        self.assertEqual(configuration.logo, {})
+        self.assertEqual((configuration.header, configuration.footer, configuration.revision),
+                         ("Restaurante de teste", "Obrigado!", 1))
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, "FINALIZED")

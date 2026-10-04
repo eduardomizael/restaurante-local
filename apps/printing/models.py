@@ -8,6 +8,7 @@ class DocumentConfiguration(models.Model):
     id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
     header = models.CharField(max_length=120, default="")
     footer = models.TextField(max_length=500, default="")
+    logo = models.JSONField(default=dict, blank=True)
     revision = models.PositiveIntegerField(default=1)
 
     class Meta:

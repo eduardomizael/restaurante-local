@@ -3,8 +3,10 @@
 from copy import deepcopy
 
 from django.test import SimpleTestCase
+from django.template.loader import render_to_string
 
-from apps.printing.documents import preview_parts, render_text
+from apps.printing.documents import document_bold_lines, preview_parts, render_text
+from hardware.printer.escpos import encode_document
 
 
 class SlipLayoutTests(SimpleTestCase):
@@ -73,3 +75,24 @@ class SlipLayoutTests(SimpleTestCase):
         self.assertIn("ACRÉSCIMOS MANUSCRITOS", text)
         self.assertIn("SUBTOTAL PRÉ-INSERIDO", text)
         self.assertIn("[X] = unidade já lançada", text)
+
+    def test_version_six_emphasizes_only_meal_subtotal_in_preview_and_raw(self):
+        content = self.content()
+        legacy_text = render_text(content)
+        self.assertEqual(document_bold_lines(content), ())
+        content["version"] = 6
+        self.assertEqual(render_text(content), legacy_text)
+        for second_copy in (False, True):
+            text = render_text(content, second_copy=second_copy)
+            parts = preview_parts(content, second_copy=second_copy)
+            indexes = document_bold_lines(content, second_copy=second_copy)
+            self.assertEqual(len(indexes), 1)
+            subtotal = text.splitlines(keepends=True)[indexes[0]]
+            self.assertIn("SUBTOTAL REFEIÇÕES R$ 93,22", subtotal)
+            html = render_to_string("printing/slip.html", parts)
+            self.assertIn("<strong>" + subtotal + "</strong>", html)
+            self.assertEqual(html.count("<strong>"), 1)
+            payload = encode_document(text, header_lines=len(parts["slip_header"].splitlines()),
+                                      header_scale=2, bold_lines=indexes)
+            self.assertIn(b"\x1bE\x01" + subtotal.encode("cp860") + b"\x1bE\x00", payload)
+            self.assertEqual(payload.count(b"\x1bE\x01"), 1)

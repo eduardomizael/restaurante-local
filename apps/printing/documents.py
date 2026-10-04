@@ -4,6 +4,7 @@ import hashlib
 import json
 import textwrap
 import unicodedata
+from copy import deepcopy
 from decimal import Decimal
 from datetime import datetime
 
@@ -64,12 +65,13 @@ def build_content(order, items, products, configuration):
     price_columns = max([6] + [len(_money(variant["unit_price_cents"]))
                                for row in rows for variant in row["variants"]])
     return {
-        "version": 5, "paper_width_mm": 80, "columns": 48,
+        "version": 7, "paper_width_mm": 80, "columns": 48,
         "layout": {"header_scale": 2, "name_columns": 20, "price_columns": price_columns},
         "order_id": order.pk, "order_number": order.number,
         "opened_at": timezone.localtime(order.created_at).isoformat(),
         "header": configuration.header if configuration else "",
         "footer": configuration.footer if configuration else "",
+        "logo": deepcopy(configuration.logo) if configuration else {},
         "configuration_revision": configuration.revision if configuration else 0,
         "items": lines, "manuscript_rows": rows,
         "subtotal_cents": sum(line["total_cents"] for line in lines),
@@ -93,7 +95,7 @@ def _kilograms(grams):
 
 def render_header(content):
     """Render the frozen header at its physical character width."""
-    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3, 4, 5) else 1
+    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3, 4, 5, 6, 7) else 1
     width = content["columns"] // scale
     lines = []
     for paragraph in content["header"].split("\n"):
@@ -106,12 +108,25 @@ def preview_parts(content, *, second_copy=False):
     """Share header/body boundaries between HTML and the physical transport."""
     header = render_header(content)
     text = render_text(content, second_copy=second_copy)
+    bold_lines = document_bold_lines(content, second_copy=second_copy)
+    header_count = len(header.splitlines())
     return {"slip_text": text, "slip_header": header, "slip_body": text[len(header):],
+            "slip_logo": content.get("logo", {}) if content["version"] == 7 else {},
+            "slip_body_lines": [{"text": line, "bold": index + header_count in bold_lines}
+                                for index, line in enumerate(text[len(header):].splitlines(keepends=True))],
             "slip_header_scale": content.get("layout", {}).get("header_scale", 1)
-            if content["version"] in (2, 3, 4, 5) else 1}
+            if content["version"] in (2, 3, 4, 5, 6, 7) else 1}
 
 
-def _render_reference_layout(content, *, second_copy=False):
+def document_bold_lines(content, *, second_copy=False):
+    """Return semantic emphasis indexes for the preview and RAW transport."""
+    indexes = []
+    if content["version"] in (6, 7):
+        _render_reference_layout(content, second_copy=second_copy, bold_lines=indexes)
+    return tuple(indexes)
+
+
+def _render_reference_layout(content, *, second_copy=False, bold_lines=None):
     """Render version five with paired rows and the approved reference spacing."""
     width = content["columns"]
     output = render_header(content).splitlines()
@@ -145,7 +160,10 @@ def _render_reference_layout(content, *, second_copy=False):
         paired(quantity, f"VALOR R$ {_money(item['total_cents'])}")
         append()
     append()
+    subtotal_start = len(output)
     append(f"SUBTOTAL REFEIÇÕES R$ {_money(sum(item['total_cents'] for item in meals))}", alignment="right")
+    if bold_lines is not None:
+        bold_lines.extend(range(subtotal_start, len(output)))
     append("-" * width)
     name_columns = content["layout"]["name_columns"]
     price_columns = content["layout"]["price_columns"]
@@ -178,15 +196,15 @@ def render_text(content, *, second_copy=False):
     """Render continuous text from frozen DTO for preview and simulator.
 
     Args:
-        content: Version 1 through 5 document snapshot.
+        content: Version 1 through 7 document snapshot.
         second_copy: Add a delivery annotation without changing the document.
 
     Returns:
         str: Complete text with no page-height limit or transport commands.
     """
-    if content.get("version") not in (1, 2, 3, 4, 5):
+    if content.get("version") not in (1, 2, 3, 4, 5, 6, 7):
         raise ValueError("Versão documental não suportada.")
-    if content["version"] == 5:
+    if content["version"] in (5, 6, 7):
         return _render_reference_layout(content, second_copy=second_copy)
     width = content["columns"]
     output = []

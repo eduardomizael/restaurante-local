@@ -28,7 +28,8 @@ def _error(request, error):
 def configuration(request):
     """Edit document-only settings without touching equipment."""
     saved = document_configuration()
-    form = DocumentConfigurationForm(request.POST if request.method == "POST" else None, initial={
+    form = DocumentConfigurationForm(request.POST if request.method == "POST" else None,
+                                     request.FILES if request.method == "POST" else None, initial={
         "header": saved.header if saved else "", "footer": saved.footer if saved else "",
         "expected_revision": saved.revision if saved else 0,
     })
@@ -44,7 +45,9 @@ def configuration(request):
                 return redirect("document_configuration")
         else:
             status = 400
-    return render(request, "printing/configuration.html", {"form": form}, status=status)
+    return render(request, "printing/configuration.html", {
+        "form": form, "current_logo": saved.logo if saved else {},
+    }, status=status)
 
 
 @require_GET

@@ -14,7 +14,7 @@ from django.urls import reverse
 from apps.configuration.models import HardwareConfiguration
 from apps.configuration.services import save_hardware_configuration
 from apps.configuration.selectors import hardware_configuration
-from apps.printing.documents import fingerprint, render_text, render_header
+from apps.printing.documents import document_bold_lines, fingerprint, render_text, render_header
 from apps.printing.models import PrintJob
 from apps.printing.selectors import draft_content
 from apps.printing.services import finalize_order, complete_job, claim_next_job
@@ -192,6 +192,13 @@ class RawAdapterTests(SimpleTestCase):
             WindowsRawPrinter(spooler_factory=factory).send("Nome\n", header_lines=3, header_scale=2)
         factory.assert_not_called()
 
+    def test_invalid_bold_line_is_rejected_before_spooler_access(self):
+        for indexes in ((-1,), (1,), (True,), ("0",)):
+            factory = Mock()
+            with self.assertRaises(PrintFailure):
+                WindowsRawPrinter(spooler_factory=factory).send("Subtotal\n", bold_lines=indexes)
+            factory.assert_not_called()
+
     def test_failures_before_and_after_start_are_distinct(self):
         for stage in ("open", "start", "page", "write", "finish"):
             spooler = self.spooler()
@@ -318,7 +325,8 @@ class EquipmentAndDeliveryTests(TestCase):
         factory.assert_called_once_with("balanca")
         raw.send.assert_called_once_with(render_text(job.document.content),
                                          header_lines=len(render_header(job.document.content).splitlines()),
-                                         header_scale=2)
+                                         header_scale=2,
+                                         bold_lines=document_bold_lines(job.document.content))
         job.refresh_from_db()
         self.assertEqual((job.status, job.spooler_job_id), ("SPOOL_ACCEPTED", 7))
 

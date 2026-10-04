@@ -2,5 +2,5 @@
 {% block configuration_title %}Cabeçalho e rodapé{% endblock %}
 {% block configuration_description %}<p>Alterações valem para novas impressões. Documentos anteriores permanecem iguais.</p>{% endblock %}
 {% block configuration_content %}
-<form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Salvar configuração</button><a class="button secondary" href="{% url 'home' %}">Voltar ao atendimento</a></div></form>
+<form method="post" enctype="multipart/form-data" class="card editor-form">{% csrf_token %}{% if current_logo %}<p>Logo atual</p><img class="configured-logo" src="data:image/png;base64,{{ current_logo.png_base64 }}" alt="Logo atual do restaurante">{% endif %}{% include 'core/form_fields.html' %}<p class="muted">A logo aparece centralizada acima do cabeçalho, em preto e branco. Sem logo, nenhum espaço é reservado.</p><div class="form-actions"><button type="submit">Salvar configuração</button><a class="button secondary" href="{% url 'home' %}">Voltar ao atendimento</a></div></form>
 {% endblock %}

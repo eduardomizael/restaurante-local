@@ -9,16 +9,7 @@
   <script src="{% url 'asset' 'app.js' %}" defer></script>
 </head>
 <body class="{% block body_class %}{% endblock %}" data-selected-order="{{ selected_id|default_if_none:'' }}">
-  <header class="topbar">
-    <a class="brand" href="{% url 'home' %}">{{ application_name }}</a>
-    <nav aria-label="Navegação principal">
-      <a href="{% url 'home' %}">Atendimento</a>
-      <a href="{% url 'catalogue' %}">Produtos</a>
-      <a href="{% url 'print_history' %}">Histórico</a>
-      <a href="{% url 'application_configuration' %}"{% if is_configuration_page %} aria-current="page"{% endif %}>Configurações</a>
-      <a href="{% url 'status' %}">Status</a>
-    </nav>
-  </header>
+  {% include 'core/navbar.html' %}
   <main class="{% block main_class %}{% endblock %}">{% block content %}{% endblock %}</main>
   {% include 'core/keypad.html' %}
   {% block dialogs %}{% endblock %}

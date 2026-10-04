@@ -1,14 +1,16 @@
 :root { color-scheme: light; font-family: "Segoe UI", Arial, sans-serif; color: #183b34; background: #f2f5f2; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-.topbar { display: flex; gap: 24px; align-items: center; padding: 14px 32px; background: #173d36; color: white; flex-wrap: wrap; }
+.topbar { display: flex; gap: 16px; align-items: center; padding: 10px 24px; background: #173d36; color: white; flex-wrap: wrap; }
 a { color: inherit; }
-.brand { font-size: 21px; font-weight: 700; text-decoration: none; min-height: 48px; min-width: 48px; max-width: 400px; overflow-wrap: anywhere; display: flex; align-items: center; }
-nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
-nav a { display: flex; align-items: center; justify-content: center; min-height: 48px; min-width: 100px; padding: 12px; border: 1px solid #a3bdb4; border-radius: 8px; text-decoration: none; }
-.topbar nav a[aria-current="page"] { background: #e7f0e9; color: #173d36; border-color: #e7f0e9; }
+.brand { font-size: 18px; font-weight: 700; text-decoration: none; min-height: 48px; min-width: 48px; max-width: 400px; overflow-wrap: anywhere; display: flex; align-items: center; }
+.primary-nav, .configuration-nav { display: flex; flex-wrap: wrap; gap: 12px; }
+.primary-nav a, .configuration-nav a { display: flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px; padding: 10px; border: 1px solid #a3bdb4; border-radius: 8px; text-decoration: none; }
+.primary-nav { margin-left: auto; gap: 8px; }
+.primary-nav a { font-size: 14px; }
+.primary-nav a[aria-current="page"] { background: #e7f0e9; color: #173d36; border-color: #e7f0e9; }
 .configuration-nav { margin: 0 0 28px; gap: 12px; }
-.configuration-nav a { background: white; color: #173d36; border-color: #9db4a7; }
+.configuration-nav a { min-width: 100px; padding: 12px; background: white; color: #173d36; border-color: #9db4a7; }
 .configuration-nav a[aria-current="page"] { background: #173d36; color: white; border-color: #173d36; }
 main { max-width: 1200px; margin: auto; padding: 32px; }
 h1 { font-size: clamp(28px, 4vw, 40px); margin: 8px 0 16px; }
@@ -27,7 +29,7 @@ button.htmx-request { opacity: .65; pointer-events: none; }
 :focus-visible { outline: 3px solid #bb7100; outline-offset: 4px; }
 .muted { color: #486052; font-size: 14px; }
 .error { color: #9b2525; font-weight: 600; }
-@media (max-width: 700px) { main { padding: 20px; } .topbar { padding: 12px 20px; gap: 12px; } nav { margin-left: 0; width: 100%; } .status-grid { grid-template-columns: 1fr; } .card { padding: 22px; } }
+@media (max-width: 700px) { main { padding: 20px; } .topbar { padding: 12px 20px; gap: 12px; } .primary-nav { margin-left: 0; width: 100%; } .status-grid { grid-template-columns: 1fr; } .card { padding: 22px; } }
 .button { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 52px; min-width: 52px; padding: 14px 20px; border-radius: 8px; background: #173d36; color: white; text-decoration: none; font-weight: 600; touch-action: manipulation; }
 .secondary { background: #edf2ed; color: #173d36; border: 1px solid #baccc0; }
 .danger { background: #8c3030; color: white; }
@@ -99,8 +101,7 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 #manual-item-dialog .item-keypad { gap: 8px; }
 #manual-item-dialog .item-keypad button { min-height: 48px; padding: 8px; }
 @media (max-width: 950px) { .product-row, .item-row { align-items: flex-start; flex-wrap: wrap; } .item-total { width: 100%; display: flex; align-items: center; justify-content: space-between; } }
-@media (max-width: 700px) { nav { flex-wrap: wrap; } .subtotal { flex-wrap: wrap; } .search-form input { width: 100%; } }
-.topbar { flex-wrap: wrap; }
+@media (max-width: 700px) { .subtotal { flex-wrap: wrap; } .search-form input { width: 100%; } }
 .slip-container { overflow-x: auto; padding: 24px 0; }
 .order-slip { box-sizing: border-box; margin: 0 auto; padding: 4mm; width: 80mm; min-width: 80mm; background: white; color: #111; border: 1px solid #baccc0; font: 2.4mm/1.7 Consolas, 'Courier New', monospace; white-space: pre; }
 .order-slip pre { margin: 0; font: inherit; white-space: pre; }
@@ -110,10 +111,6 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .slip-preview:has(.slip-zoom input:checked) .order-slip { width: 160mm; min-width: 160mm; padding: 8mm; font-size: 4.8mm; }
 
 /* Attendance: shared captures above the order list and selected order. */
-.attendance-body .topbar { padding: 10px 24px; gap: 16px; }
-.attendance-body .brand { font-size: 18px; }
-.attendance-body nav { gap: 8px; }
-.attendance-body nav a { min-width: 48px; padding: 10px; font-size: 14px; }
 .attendance-page { max-width: 1600px; padding: 20px 24px; }
 .attendance-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
 .attendance-heading h1 { font-size: 30px; margin-bottom: 0; }

@@ -1,0 +1,10 @@
+<header class="topbar">
+  <a class="brand" href="{% url 'home' %}">{{ application_name }}</a>
+  <nav class="primary-nav" aria-label="Navegação principal">
+    {% include 'core/navigation_link.html' with route='home' label='Atendimento' active_route=main_navigation_area %}
+    {% include 'core/navigation_link.html' with route='catalogue' label='Produtos' active_route=main_navigation_area %}
+    {% include 'core/navigation_link.html' with route='print_history' label='Histórico' active_route=main_navigation_area %}
+    {% include 'core/navigation_link.html' with route='application_configuration' label='Configurações' active_route=main_navigation_area %}
+    {% include 'core/navigation_link.html' with route='status' label='Status' active_route=main_navigation_area %}
+  </nav>
+</header>

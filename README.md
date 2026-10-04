@@ -22,7 +22,9 @@ Integração real implementada: configuração de porta/fila, leitura COM3 e imp
 
 Com o ambiente de desenvolvimento já preparado, dê dois cliques em `Iniciar.bat` para abrir o aplicativo com os equipamentos reais. O arquivo inicia servidor, workers e bandeja e abre o navegador. Fechar o navegador não encerra o aplicativo; use **Sair** na bandeja. Não feche a janela do terminal para encerrar normalmente.
 
-Use `Atualizar.bat` na primeira instalação ou quando uma atualização exigir migrations, sempre com o aplicativo fechado. Ele executa `initialize_local`, que prepara os dados e faz backup dos dados existentes antes de atualizar o banco. A abertura diária não executa essa etapa. O arquivo não instala dependências nem atualiza o código.
+Ao detectar instalação/banco ausente ou banco desatualizado, `Iniciar.bat` pergunta se deseja atualizar com backup e iniciar. Escolha **S** para preparar os dados e continuar a abertura na mesma janela, ou **N** para sair sem atualizar. O banco atualizado abre diretamente, sem essa pergunta. Uma falha da atualização impede a abertura; não há migrations silenciosas.
+
+`Atualizar.bat` continua disponível para preparação ou atualização direta, sempre com o aplicativo fechado. Ambos os fluxos usam `initialize_local`, que faz backup dos dados existentes antes de atualizar o banco e impede atualização enquanto outra instância estiver aberta. O atualizador não instala dependências nem atualiza o código.
 
 Para criar o atalho na área de trabalho, clique com o botão direito em `Iniciar.bat` e escolha **Enviar para → Área de trabalho (criar atalho)**; no Windows 11, pode ser necessário **Mostrar mais opções**. Os arquivos usam sua própria pasta como diretório de trabalho, inclusive quando chamados por atalho.
 
@@ -51,7 +53,7 @@ A aplicação carrega o arquivo `.env` em UTF-8 da raiz deste projeto usando `dj
 
 Variáveis já definidas no ambiente do processo têm prioridade sobre o `.env`, conforme o [comportamento de django-environ](https://django-environ.readthedocs.io/en/stable/api.html). Isso permite isolar dados de testes sem alterar o arquivo local. Reinicie o programa para carregar alterações. Alterar o diretório seleciona outra instalação e não move os dados existentes. Porta HTTP e configuração de equipamentos continuam na configuração da instalação, com as etapas próprias de atualização; não são duplicadas no `.env`.
 
-`initialize_local` é a etapa explícita de instalação/atualização: gera segredo local e aplica migrations; em dados existentes, salva backup consistente de SQLite e configuração antes de atualizar. Exige o programa fechado. O início normal nunca migra o banco. Inclui as migrations nativas de `contenttypes` e as migrations geradas dos apps core, products, measurements, orders e printing.
+`initialize_local` é a etapa explícita de instalação/atualização: gera segredo local e aplica migrations; em dados existentes, salva backup consistente de SQLite e configuração antes de atualizar. Exige o programa fechado. `run_local` nunca migra o banco; `Iniciar.bat` pode executar a etapa depois da confirmação S/N e então tentar abrir novamente. Inclui as migrations nativas de `contenttypes` e as migrations geradas dos apps core, products, measurements, orders e printing.
 
 Dados padrão: `%LOCALAPPDATA%\RestauranteLocal`, fora dos arquivos do programa. Para testes ou outra instalação, definir `LOCAL_WEIGHING_DATA_DIR` antes de executar os comandos. Nunca apontar para os dados do Restaurante anterior. Porta padrão `8765`; alterar com `initialize_local --port 8766`, com programa fechado.
 
@@ -118,4 +120,8 @@ No atendimento, clicar em um produto abre um diálogo com quantidade/peso e tecl
 
 ## Atualização: posicionamento da comanda
 
-Novas impressões usam o layout versão 5 conforme a referência: número/data na mesma linha, preços e valores das refeições à direita, subtotal de refeições à direita, produtos e marcações em colunas e total manual/rodapé centralizados. Os textos adicionais retirados da referência não aparecem no novo papel. Documentos já salvos e suas segundas vias mantêm o layout original. Não exige migration; reabra o programa. Consulte a [ADR-0023](docs/adr/0023-layout-da-comanda-conforme-referencia.md).
+Novas impressões usam o layout conforme a referência: número/data na mesma linha, preços e valores das refeições à direita, subtotal de refeições em negrito à direita, produtos e marcações em colunas e total manual/rodapé centralizados. Os textos adicionais retirados da referência não aparecem no novo papel. Documentos já salvos e suas segundas vias mantêm o layout original. O reposicionamento e negrito não exigem migration; reabra o programa. Consulte a [ADR-0023](docs/adr/0023-layout-da-comanda-conforme-referencia.md).
+
+## Atualização: logo do restaurante
+
+Feche a aplicação e execute **Atualizar.bat**, ou abra **Iniciar.bat** e confirme a atualização oferecida, para aplicar a nova migration com backup. Em **Configurações → Documento**, selecione uma logo PNG ou JPG de até 2 MB e salve. A imagem aparece em preto e branco, centralizada acima do cabeçalho. Sem logo, nenhum espaço é reservado. Para trocar, envie outra imagem; para retirar, marque **Remover logo atual** e salve. Documentos salvos e segundas vias preservam sua imagem original. Prévia e envio RAW foram validados com dados de exemplo e spooler falso; confirmar a imagem na impressora instalada ainda é necessário. Consulte a [ADR-0024](docs/adr/0024-logo-opcional-na-comanda.md).

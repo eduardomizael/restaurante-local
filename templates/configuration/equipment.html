@@ -1,6 +1,7 @@
-{% extends 'core/base.html' %}
-{% block content %}
-<div class="heading"><p class="eyebrow">EQUIPAMENTOS LOCAIS</p><h1>Balança e impressora</h1><p>Perfil serial US 31/2 POP-S: 9600 8N2, consulta 0x04 e timeout de 1 s. Impressão RAW: 80 mm, 48 colunas e cp860.</p></div>
+{% extends 'configuration/base.html' %}
+{% block configuration_title %}Balança e impressora{% endblock %}
+{% block configuration_description %}<p>Configure a porta da balança e a impressora usada nas comandas.</p>{% endblock %}
+{% block configuration_content %}
 <div class="notice">Trocar a porta reinicia a comunicação entre consultas e exige retorno ao zero. Trabalhos de impressão já criados conservam a fila destinatária.</div>
 <form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Salvar equipamentos</button><a class="button secondary" href="{% url 'home' %}">Voltar ao atendimento</a></div></form>
 {% endblock %}

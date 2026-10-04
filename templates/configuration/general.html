@@ -1,0 +1,6 @@
+{% extends 'configuration/base.html' %}
+{% block configuration_title %}Geral{% endblock %}
+{% block configuration_description %}<p>Personalize o nome exibido na aplicação.</p>{% endblock %}
+{% block configuration_content %}
+<form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Salvar nome</button><a class="button secondary" href="{% url 'home' %}">Voltar ao atendimento</a></div></form>
+{% endblock %}

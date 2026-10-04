@@ -2,9 +2,30 @@ import re
 
 from django.core.exceptions import ValidationError
 
-from apps.configuration.models import HardwareConfiguration
+from apps.configuration.models import ApplicationConfiguration, HardwareConfiguration
 from apps.core.domain import DomainConflict, require_integer, write_transaction
 from apps.core.services import record_event
+
+
+def save_application_configuration(*, display_name, expected_revision):
+    """Save display identity atomically, rejecting stale edits."""
+    if (not isinstance(display_name, str) or not 1 <= len(display_name.strip()) <= 80
+            or any(ord(char) < 32 for char in display_name)):
+        raise ValidationError("Nome deve conter de 1 a 80 caracteres válidos.")
+    require_integer(expected_revision, minimum=0, maximum=2_147_483_647, label="Revisão")
+    with write_transaction():
+        current = ApplicationConfiguration.objects.filter(pk=1).first()
+        if (current.revision if current else 0) != expected_revision:
+            raise DomainConflict("Nome alterado em outra tela. Recarregue antes de salvar.")
+        if current is None:
+            current = ApplicationConfiguration(pk=1)
+        else:
+            current.revision += 1
+        current.display_name = display_name.strip()
+        current.save()
+        record_event("APPLICATION_CONFIGURATION_SAVED", current,
+                     revision=current.revision, display_name=current.display_name)
+        return current
 
 
 def save_hardware_configuration(*, scale_port, printer_name, expected_revision):

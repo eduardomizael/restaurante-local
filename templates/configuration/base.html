@@ -1,0 +1,11 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><p class="eyebrow">CONFIGURAÇÕES</p><h1>{% block configuration_title %}{% endblock %}</h1>{% block configuration_description %}{% endblock %}</div>
+<nav class="configuration-nav" aria-label="Seções de configurações">
+  <a href="{% url 'application_configuration' %}"{% if request.resolver_match.url_name == 'application_configuration' %} aria-current="page"{% endif %}>Geral</a>
+  <a href="{% url 'numbering' %}"{% if request.resolver_match.url_name == 'numbering' %} aria-current="page"{% endif %}>Numeração</a>
+  <a href="{% url 'document_configuration' %}"{% if request.resolver_match.url_name == 'document_configuration' %} aria-current="page"{% endif %}>Documento</a>
+  <a href="{% url 'equipment_configuration' %}"{% if request.resolver_match.url_name == 'equipment_configuration' %} aria-current="page"{% endif %}>Equipamentos</a>
+</nav>
+{% block configuration_content %}{% endblock %}
+{% endblock %}

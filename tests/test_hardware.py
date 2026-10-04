@@ -356,6 +356,7 @@ class EquipmentAndDeliveryTests(TestCase):
     def test_physical_ui_mode_is_explicit(self):
         state.update(scale_mode="SERIAL", print_mode="RAW")
         response = self.client.get(reverse("print_preview", args=[self.order.pk]))
-        self.assertContains(response, "Balança real")
+        self.assertNotContains(response, "Balança real")
+        self.assertContains(response, "Impressão física habilitada")
         self.assertContains(response, "Finalizar e imprimir comanda")
         self.assertNotContains(response, "Finalizar e simular impressão")

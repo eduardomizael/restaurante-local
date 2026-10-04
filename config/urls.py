@@ -21,6 +21,7 @@ urlpatterns = [
     path("orders/<int:order_id>/cancel/", order_views.confirm_cancel, name="confirm_cancel"),
     path("measurements/<int:measurement_id>/discard/", order_views.confirm_discard, name="confirm_discard"),
     path("numbering/", order_views.numbering, name="numbering"),
+    path("configuration/", configuration_views.general, name="application_configuration"),
     path("configuration/document/", print_views.configuration, name="document_configuration"),
     path("configuration/equipment/", configuration_views.equipment, name="equipment_configuration"),
     path("orders/<int:order_id>/preview/", print_views.preview, name="print_preview"),

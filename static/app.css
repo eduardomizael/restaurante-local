@@ -3,9 +3,13 @@
 body { margin: 0; }
 .topbar { display: flex; gap: 24px; align-items: center; padding: 14px 32px; background: #173d36; color: white; flex-wrap: wrap; }
 a { color: inherit; }
-.brand { font-size: 21px; font-weight: 700; text-decoration: none; min-height: 48px; display: flex; align-items: center; }
-nav { margin-left: auto; display: flex; gap: 12px; }
+.brand { font-size: 21px; font-weight: 700; text-decoration: none; min-height: 48px; min-width: 48px; max-width: 400px; overflow-wrap: anywhere; display: flex; align-items: center; }
+nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
 nav a { display: flex; align-items: center; justify-content: center; min-height: 48px; min-width: 100px; padding: 12px; border: 1px solid #a3bdb4; border-radius: 8px; text-decoration: none; }
+.topbar nav a[aria-current="page"] { background: #e7f0e9; color: #173d36; border-color: #e7f0e9; }
+.configuration-nav { margin: 0 0 28px; gap: 12px; }
+.configuration-nav a { background: white; color: #173d36; border-color: #9db4a7; }
+.configuration-nav a[aria-current="page"] { background: #173d36; color: white; border-color: #173d36; }
 main { max-width: 1200px; margin: auto; padding: 32px; }
 h1 { font-size: clamp(28px, 4vw, 40px); margin: 8px 0 16px; }
 h2 { font-size: 21px; margin: 0 0 18px; }

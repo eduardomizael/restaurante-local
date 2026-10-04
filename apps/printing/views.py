@@ -14,8 +14,8 @@ from apps.orders.models import Order
 from apps.printing.documents import fingerprint, preview_parts
 from apps.printing.forms import DocumentConfigurationForm, FinalizeForm, ReprintForm
 from apps.printing.models import OrderDocument, PrintJob
-from apps.printing.selectors import document_configuration, document_jobs, draft_content, order_document, print_history
-from apps.printing.services import finalize_order, request_reprint, save_document_configuration
+from apps.printing.selectors import document_configuration, document_jobs, draft_content, order_document, print_history, latest_order_document
+from apps.printing.services import finalize_order, print_open_order, request_reprint, save_document_configuration
 
 
 def _error(request, error):
@@ -55,6 +55,19 @@ def preview(request, order_id):
     document = order_document(order_id)
     if document is None and order.status != Order.Status.DRAFT:
         return _error(request, ValidationError("Comanda cancelada não possui documento para impressão."))
+    return _preview(request, order, document)
+
+
+@require_GET
+@never_cache
+def saved_document(request, document_id):
+    """Show the exact saved snapshot, including prints of editable orders."""
+    document = get_object_or_404(OrderDocument.objects.select_related("order"), pk=document_id)
+    return _preview(request, document.order, document)
+
+
+def _preview(request, order, document):
+    """Present an immutable saved copy or a freshly reviewed editable draft."""
     content = document.content if document else draft_content(order)
     form = FinalizeForm(initial={"request_key": uuid4(), "expected_fingerprint": fingerprint(content),
                                  "reviewed_mode": state.snapshot()["print_mode"],
@@ -63,6 +76,7 @@ def preview(request, order_id):
         "order": order, "document": document, **preview_parts(content), "form": form,
         "can_finalize": bool(content["header"] and content["items"]),
         "jobs": document_jobs(document.pk) if document else [],
+        "last_document": latest_order_document(order.pk) if document is None else None,
     })
 
 
@@ -71,6 +85,19 @@ def preview(request, order_id):
 @requires_runtime
 def finalize(request, order_id):
     """Finalize only the explicit route destination after reviewed preview."""
+    return _submit_order_print(request, order_id, close_order=True)
+
+
+@require_POST
+@never_cache
+@requires_runtime
+def print_open(request, order_id):
+    """Submit an explicitly reviewed print while keeping the order open."""
+    return _submit_order_print(request, order_id, close_order=False)
+
+
+def _submit_order_print(request, order_id, *, close_order):
+    """Validate HTTP intent before invoking the commercial print service."""
     form = FinalizeForm(request.POST)
     if not form.is_valid():
         return HttpResponse("Identificador ou revisão da prévia inválidos.", status=400)
@@ -80,11 +107,12 @@ def finalize(request, order_id):
         printer_revision = values.pop("printer_revision")
         if reviewed_mode != state.snapshot()["print_mode"]:
             raise DomainConflict("Modo de impressão mudou após a prévia. Revise novamente.")
-        finalize_order(order_id=order_id, delivery_mode=reviewed_mode,
-                       expected_printer_revision=printer_revision, **values)
+        operation = finalize_order if close_order else print_open_order
+        job = operation(order_id=order_id, delivery_mode=reviewed_mode,
+                        expected_printer_revision=printer_revision, **values)
     except ValidationError as exc:
         return _error(request, exc)
-    return redirect("print_preview", order_id=order_id)
+    return redirect("print_preview", order_id=order_id) if close_order else redirect("saved_document", document_id=job.document_id)
 
 
 @require_GET
@@ -123,7 +151,7 @@ def reprint(request, document_id):
                             expected_printer_revision=form.cleaned_data["printer_revision"])
         except ValidationError as exc:
             return _error(request, exc)
-        return redirect("print_preview", order_id=document.order_id)
+        return redirect("saved_document", document_id=document.pk)
     return render(request, "printing/reprint.html", {
         "document": document, "form": form, **preview_parts(document.content, second_copy=True),
         "uncertain": document.jobs.filter(status=PrintJob.Status.UNKNOWN).exists(),

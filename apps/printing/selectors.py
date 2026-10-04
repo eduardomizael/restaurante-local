@@ -22,7 +22,12 @@ def draft_content(order):
 
 def order_document(order_id):
     """Read a previously frozen document."""
-    return OrderDocument.objects.filter(order_id=order_id).first()
+    return OrderDocument.objects.filter(order_id=order_id, is_final=True).first()
+
+
+def latest_order_document(order_id):
+    """Read the latest print snapshot without replacing the editable draft."""
+    return OrderDocument.objects.filter(order_id=order_id).order_by("-id").first()
 
 
 def print_history():

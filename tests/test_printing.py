@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, connections, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.conf import settings
 from django.test import Client, SimpleTestCase, TestCase, TransactionTestCase
 from django.urls import reverse
@@ -28,7 +29,7 @@ from apps.printing.models import DocumentConfiguration, OrderDocument, PrintJob
 from apps.printing.selectors import draft_content
 from apps.printing.services import (
     claim_next_job, complete_job, finalize_order, recover_interrupted_jobs,
-    request_reprint, save_document_configuration,
+    request_reprint, save_document_configuration, print_open_order,
 )
 from hardware.printer.simulator import SimulatedPrinter, SimulatedPrintFailure
 from runtime.print_worker import PrintWorker
@@ -184,7 +185,8 @@ class DocumentTests(PrintingFixture, TestCase):
         self.assertNotIn("Bebida reservada", top)
         row = next(line for line in manual.splitlines() if line.startswith("Bebida reservada"))
         self.assertEqual(row[28:], "[X][X][ ][ ][ ][ ]")
-        self.assertIn("Lançado: 2 UN · R$ 14,00", manual)
+        self.assertNotIn("Lançado:", manual)
+        self.assertNotIn("14,00", manual)
         self.assertIn("SUBTOTAL REFEIÇÕES R$ 86,89", top)
         self.assertIn("SUBTOTAL PRÉ-INSERIDO R$ 100,89", manual)
 
@@ -193,7 +195,8 @@ class DocumentTests(PrintingFixture, TestCase):
         text = render_text(draft_content(self.order))
         row = next(line for line in text.splitlines() if line.startswith("Bebida reservada"))
         self.assertEqual(row[28:], "[X]" * 6)
-        self.assertIn("Lançado: 9 UN · R$ 63,00", text)
+        self.assertIn("Quantidade lançada: 9 UN", text)
+        self.assertNotIn("Lançado: 9 UN · R$ 63,00", text)
         self.assertLessEqual(max(map(len, text.splitlines())), 48)
 
     def test_version_two_retains_separate_inserted_items_and_empty_mark_boxes(self):
@@ -212,8 +215,60 @@ class DocumentTests(PrintingFixture, TestCase):
         content["version"] = 3
         self.assertIn("Lançado: 2 UN · R$ 14,00", render_text(content))
 
+    def test_open_print_is_idempotent_editable_and_can_be_followed_by_new_snapshot_and_closing(self):
+        key, reviewed = uuid4(), fingerprint(draft_content(self.order))
+        job = print_open_order(order_id=self.order.pk, request_key=key, expected_fingerprint=reviewed)
+        self.assertEqual(print_open_order(order_id=self.order.pk, request_key=key,
+                                         expected_fingerprint=reviewed).pk, job.pk)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "DRAFT")
+        self.assertIsNone(self.order.finalized_at)
+        self.assertFalse(job.document.is_final)
+        original = render_text(job.document.content)
+        self.assertIn("COMANDA ABERTA", original)
+        self.assertEqual(Measurement.objects.filter(status="AVAILABLE").count(), 2)
+        PrintWorker(Event()).process_one()
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        second = print_open_order(order_id=self.order.pk, request_key=uuid4(),
+                                  expected_fingerprint=fingerprint(draft_content(self.order)))
+        self.assertNotEqual(second.document_id, job.document_id)
+        self.assertIn("[X][X]", render_text(second.document.content))
+        job.document.refresh_from_db()
+        self.assertEqual(render_text(job.document.content), original)
+        PrintWorker(Event()).process_one()
+        final = self.finalize()
+        self.assertTrue(final.document.is_final)
+        self.assertEqual(OrderDocument.objects.filter(order=self.order).count(), 3)
+        self.assertEqual(OrderDocument.objects.filter(order=self.order, is_final=True).count(), 1)
 
+    def test_open_print_rejects_stale_preview_duplicate_action_and_pending_new_print(self):
+        reviewed = fingerprint(draft_content(self.order))
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=1, request_key=uuid4())
+        with self.assertRaises(DomainConflict):
+            print_open_order(order_id=self.order.pk, request_key=uuid4(), expected_fingerprint=reviewed)
+        key, reviewed = uuid4(), fingerprint(draft_content(self.order))
+        job = print_open_order(order_id=self.order.pk, request_key=key, expected_fingerprint=reviewed)
+        for operation in (print_open_order, finalize_order):
+            with self.assertRaises(DomainConflict):
+                operation(order_id=self.order.pk, request_key=uuid4(), expected_fingerprint=reviewed)
+        with self.assertRaises(DomainConflict):
+            finalize_order(order_id=self.order.pk, request_key=key, expected_fingerprint=reviewed)
+        self.assertEqual(PrintJob.objects.count(), 1)
+        self.assertEqual(job.document.order.status, "DRAFT")
 
+    def test_failed_open_print_transaction_rolls_back_and_order_can_cancel_after_success(self):
+        values = dict(order_id=self.order.pk, request_key=uuid4(), expected_fingerprint=fingerprint(draft_content(self.order)))
+        with patch("apps.printing.services.record_event", side_effect=RuntimeError("Falha")):
+            with self.assertRaises(RuntimeError):
+                print_open_order(**values)
+        self.assertFalse(OrderDocument.objects.exists())
+        self.assertFalse(PrintJob.objects.exists())
+        job = print_open_order(**values)
+        original = render_text(job.document.content)
+        cancel_order(self.order.pk)
+        job.document.refresh_from_db()
+        self.assertEqual(render_text(job.document.content), original)
+        self.assertEqual(Measurement.objects.get(pk=self.measurements[0].pk).status, "AVAILABLE")
 
     def test_long_name_continues_without_displacing_price_or_losing_text(self):
         save_product(description="SUCO DELL VALE LATA ESPECIAL", unit="UN", unit_price_cents=600,
@@ -304,6 +359,25 @@ class PrintHTTPTests(PrintingFixture, TestCase):
         self.assertContains(response, "mudaram após a prévia", status_code=409)
         self.assertFalse(PrintJob.objects.exists())
 
+    def test_open_print_post_preserves_draft_and_frozen_history_link(self):
+        preview = self.client.get(reverse("print_preview", args=[self.order.pk]))
+        self.assertContains(preview, "Simular impressão sem fechar")
+        url = reverse("print_open_order", args=[self.order.pk])
+        data = preview.context["form"].initial
+        self.assertEqual(self.client.get(url).status_code, 405)
+        self.assertEqual(Client(enforce_csrf_checks=True).post(url, data).status_code, 403)
+        response = self.client.post(url, data)
+        job = PrintJob.objects.get()
+        self.assertRedirects(response, reverse("saved_document", args=[job.document_id]))
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "DRAFT")
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        self.assertNotContains(self.client.get(reverse("saved_document", args=[job.document_id])), "[X][X]")
+        fresh = self.client.get(reverse("print_preview", args=[self.order.pk]))
+        self.assertContains(fresh, "[X][X]")
+        self.assertContains(fresh, "Ver última impressão")
+        self.assertContains(self.client.get(reverse("print_history")), reverse("saved_document", args=[job.document_id]))
 
     def test_configuration_form_parses_and_preserves_stale_values(self):
         url = reverse("document_configuration")
@@ -473,6 +547,17 @@ class QueueTests(PrintingFixture, TransactionTestCase):
         self.assertEqual(OrderDocument.objects.count(), 1)
         self.assertEqual(PrintJob.objects.count(), 1)
 
+    def test_open_print_racing_closing_creates_only_one_pending_snapshot(self):
+        reviewed = fingerprint(draft_content(self.order))
+        results = self.race(lambda: print_open_order(order_id=self.order.pk, request_key=uuid4(),
+                                                    expected_fingerprint=reviewed),
+                            lambda: finalize_order(order_id=self.order.pk, request_key=uuid4(),
+                                                    expected_fingerprint=reviewed))
+        self.assertEqual(sum(result is not None for result in results), 1)
+        document = OrderDocument.objects.get()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "FINALIZED" if document.is_final else "DRAFT")
+        self.assertEqual(PrintJob.objects.count(), 1)
 
     def test_finalization_racing_cancellation_never_splits_document_and_order(self):
         reviewed = fingerprint(draft_content(self.order))
@@ -554,3 +639,26 @@ adapter.close.assert_called_once()
                 result = subprocess.run([sys.executable, "-c", script], cwd=settings.BASE_DIR,
                                         env=environment, capture_output=True, text=True, timeout=15)
                 self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+
+class PrintingMigrationTests(PrintingFixture, TransactionTestCase):
+    def test_existing_final_document_and_jobs_survive_schema_update(self):
+        self.prepare()
+        job = self.finalize()
+        original = job.document.content
+        previous = [("printing", "0002_remove_printjob_print_job_state_consistent_and_more")]
+        latest = [("printing", "0003_orderdocument_is_final_alter_orderdocument_order_and_more")]
+        try:
+            executor = MigrationExecutor(connection)
+            executor.migrate(previous)
+            legacy = executor.loader.project_state(previous).apps.get_model("printing", "OrderDocument")
+            self.assertEqual(legacy.objects.get(pk=job.document_id).content, original)
+        finally:
+            MigrationExecutor(connection).migrate(latest)
+        document = OrderDocument.objects.get(pk=job.document_id)
+        self.assertTrue(document.is_final)
+        self.assertEqual(document.content, original)
+        self.assertEqual(document.fingerprint, fingerprint(original))
+        self.assertEqual(PrintJob.objects.get(pk=job.pk).document_id, document.pk)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "FINALIZED")

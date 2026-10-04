@@ -38,7 +38,7 @@ class PrintWorker(Thread):
             text = render_text(job.document.content, second_copy=job.kind == PrintJob.Kind.REPRINT)
             if job.delivery_mode == "RAW":
                 raw_adapter = WindowsRawPrinter(job.printer_name)
-            if raw_adapter and job.document.content["version"] in (2, 3):
+            if raw_adapter and job.document.content["version"] in (2, 3, 4):
                 response = raw_adapter.send(
                     text, header_lines=len(render_header(job.document.content).splitlines()),
                     header_scale=job.document.content["layout"]["header_scale"],

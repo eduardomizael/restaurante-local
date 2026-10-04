@@ -48,7 +48,7 @@ rtk proxy uv run --offline --no-sync python manage.py test --settings=config.tes
 rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-128 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+134 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 ## Documentação
 
@@ -56,6 +56,7 @@ rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --d
 - [Estrutura técnica e inicializador](docs/ESTRUTURA_TECNICA_APLICACAO_LOCAL.md).
 - [Decisão Django e interface touch](docs/adr/0012-aplicacao-autonoma-django-touch.md).
 - [Referência de balança e impressora](docs/REFERENCIA_HARDWARE.md).
+- [Impressão sem fechamento](docs/adr/0019-impressao-sem-fechamento.md).
 - [Refeições e marcações preenchidas](docs/adr/0018-refeicoes-e-marcacoes-preenchidas.md).
 - [Cabeçalho ampliado e itens alinhados](docs/adr/0017-layout-compacto-da-comanda.md).
 - [Modelo visual da comanda](docs/references/order-slip-reference.png).
@@ -68,3 +69,9 @@ Várias comandas abertas, pesagens compartilhadas, produtos rápidos, peso manua
 Equipamentos integrados: COM3 e fila Windows `balanca`, editáveis na tela Equipamentos. Backend Django/SQLite, Templates/HTMX e assets locais; entrada técnica `manage.py run_local`.
 
 Não instalar, migrar ou iniciar o sistema antigo para desenvolver este projeto. O usuário confirmou acentos, largura de 48 caracteres e corte do teste RAW nº 7; leituras de zero e 236 g coincidiram com o visor. Homologação física completa permanece pendente.
+
+## Atualização: impressão sem fechar
+
+Na prévia, **Imprimir sem fechar** mantém a comanda editável e preserva cada documento no histórico; **Finalizar e imprimir** continua disponível separadamente. Itens marcáveis usam [X] sem valor adicional abaixo da linha.
+
+Esta atualização inclui a migration printing/0003. Feche o aplicativo com **Sair** na bandeja, execute initialize_local (backup automático) e depois run_local. Nenhuma atualização automática ocorre ao abrir. Documentos já salvos mantêm seu formato original.

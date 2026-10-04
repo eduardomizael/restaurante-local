@@ -18,12 +18,17 @@ class DocumentConfiguration(models.Model):
 
 
 class OrderDocument(models.Model):
-    """One immutable versioned commercial document for a finalized order."""
+    """Immutable print snapshots, with at most one closing document per order."""
 
-    order = models.OneToOneField("orders.Order", on_delete=models.PROTECT, related_name="document")
+    order = models.ForeignKey("orders.Order", on_delete=models.PROTECT, related_name="documents")
+    is_final = models.BooleanField(default=True)
     content = models.JSONField()
     fingerprint = models.CharField(max_length=64)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["order"], condition=Q(is_final=True),
+                                               name="one_final_document_per_order")]
 
 
 class PrintJob(models.Model):

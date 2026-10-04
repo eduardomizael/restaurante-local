@@ -190,3 +190,7 @@ Estas fontes sustentam a viabilidade técnica; os critérios de operação e a c
 Os adaptadores próprios COM3/Windows RAW e a tela Equipamentos foram implementados conforme [ADR-0015](adr/0015-adaptadores-seriais-e-impressao-windows-raw.md). O teste RAW nº 7 teve acentos, 48 caracteres e corte confirmados pelo usuário. Leituras de zero e 236 g corresponderam ao visor; uma nova colocação informou 234 g. Homologação metrológica, cenários físicos de falha e distribuição permanecem pendentes. O registro detalhado está em [integração real](IMPLEMENTACAO_HARDWARE_REAL.md).
 
 Continuação: captura automática de 236 g e saída completa da comanda nº 2 confirmadas; retorno ao zero, reinício sem duplicação e liberação da COM3 verificados. Consulta sem resposta admite uma repetição limitada conforme ADR-0016. Suíte: 118 testes aprovados.
+
+## Ajustes explícitos em 03/10/2026
+
+Impressão pode ocorrer sem fechamento: a comanda permanece aberta e cada envio preserva snapshot próprio. Fechamento com impressão é ação separada. Refeições ficam somente no topo, sem marcações; outros produtos indicam unidades inseridas nos espaços [X], sem valor abaixo da linha. Quantidades acima da capacidade continuam explícitas. Estas instruções substituem os trechos anteriores que associam toda impressão ao fechamento; decisões detalhadas nas ADRs 0018 e 0019.

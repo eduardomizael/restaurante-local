@@ -38,6 +38,20 @@ def save_document_configuration(*, header, footer, expected_revision):
 
 
 def finalize_order(*, order_id, request_key, expected_fingerprint, delivery_mode="PREVIEW", expected_printer_revision=None):
+    """Print a frozen closing snapshot and close only the selected order."""
+    return _print_order(order_id=order_id, request_key=request_key, expected_fingerprint=expected_fingerprint,
+                        delivery_mode=delivery_mode, expected_printer_revision=expected_printer_revision,
+                        close_order=True)
+
+
+def print_open_order(*, order_id, request_key, expected_fingerprint, delivery_mode="PREVIEW", expected_printer_revision=None):
+    """Print a frozen snapshot while keeping the selected order editable."""
+    return _print_order(order_id=order_id, request_key=request_key, expected_fingerprint=expected_fingerprint,
+                        delivery_mode=delivery_mode, expected_printer_revision=expected_printer_revision,
+                        close_order=False)
+
+
+def _print_order(*, order_id, request_key, expected_fingerprint, delivery_mode, expected_printer_revision, close_order):
     """Freeze one order and initial job in the same short transaction.
 
     Args:
@@ -56,9 +70,11 @@ def finalize_order(*, order_id, request_key, expected_fingerprint, delivery_mode
     with write_transaction():
         existing = PrintJob.objects.filter(request_key=key).select_related("document").first()
         if existing:
-            reviewed = {name: value for name, value in existing.document.content.items() if name != "finalized_at"}
+            reviewed = {name: value for name, value in existing.document.content.items()
+                        if name not in ("finalized_at", "printed_at")}
             if (existing.document.order_id != order_id or existing.kind != PrintJob.Kind.INITIAL
-                    or fingerprint(reviewed) != expected_fingerprint or existing.delivery_mode != delivery_mode):
+                    or fingerprint(reviewed) != expected_fingerprint or existing.delivery_mode != delivery_mode
+                    or existing.document.is_final != close_order):
                 raise DomainConflict("Identificador de impressão já usado com outro destino.")
             return existing
         order = Order.objects.filter(pk=order_id).first()
@@ -66,6 +82,8 @@ def finalize_order(*, order_id, request_key, expected_fingerprint, delivery_mode
             raise ValidationError("Comanda não encontrada.")
         if order.status != Order.Status.DRAFT:
             raise DomainConflict("Comanda encerrada. Consulte o documento salvo no histórico.")
+        if PrintJob.objects.filter(document__order=order, status__in=["PENDING", "SUBMITTING"]).exists():
+            raise DomainConflict("Já há uma impressão pendente para esta comanda. Aguarde o resultado.")
         content = draft_content(order)
         if not content["header"]:
             raise ValidationError("Configure o cabeçalho antes de finalizar a comanda.")
@@ -74,17 +92,20 @@ def finalize_order(*, order_id, request_key, expected_fingerprint, delivery_mode
         if fingerprint(content) != expected_fingerprint:
             raise DomainConflict("Itens ou configuração mudaram após a prévia. Revise o documento novamente.")
         now = timezone.now()
-        content["finalized_at"] = timezone.localtime(now).isoformat(timespec="seconds")
+        content["finalized_at" if close_order else "printed_at"] = timezone.localtime(now).isoformat(timespec="seconds")
         target = hardware_configuration()
         if delivery_mode == "RAW" and expected_printer_revision is not None and target.revision != expected_printer_revision:
             raise DomainConflict("Fila de impressão mudou após a prévia. Revise novamente.")
-        document = OrderDocument.objects.create(order=order, content=content, fingerprint=fingerprint(content))
+        document = OrderDocument.objects.create(order=order, is_final=close_order,
+                                                content=content, fingerprint=fingerprint(content))
         job = PrintJob.objects.create(document=document, request_key=key, kind=PrintJob.Kind.INITIAL,
                                       delivery_mode=delivery_mode,
                                       printer_name=target.printer_name if delivery_mode == "RAW" else "")
-        order.status, order.finalized_at = Order.Status.FINALIZED, now
-        order.save(update_fields=["status", "finalized_at"])
-        record_event("ORDER_FINALIZED", order, document_id=document.pk, job_id=job.pk)
+        if close_order:
+            order.status, order.finalized_at = Order.Status.FINALIZED, now
+            order.save(update_fields=["status", "finalized_at"])
+        record_event("ORDER_FINALIZED" if close_order else "OPEN_ORDER_PRINT_REQUESTED", order,
+                     document_id=document.pk, job_id=job.pk)
         return job
 
 
@@ -102,7 +123,7 @@ def request_reprint(*, document_id, request_key, delivery_mode="PREVIEW", expect
         document = OrderDocument.objects.filter(pk=document_id).first()
         if document is None:
             raise ValidationError("Documento não encontrado.")
-        if PrintJob.objects.filter(document=document, status__in=["PENDING", "SUBMITTING"]).exists():
+        if PrintJob.objects.filter(document__order_id=document.order_id, status__in=["PENDING", "SUBMITTING"]).exists():
             raise DomainConflict("Já há um envio pendente para esta comanda. Aguarde o resultado.")
         target = hardware_configuration()
         if delivery_mode == "RAW" and expected_printer_revision is not None and target.revision != expected_printer_revision:

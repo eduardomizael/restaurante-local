@@ -41,3 +41,9 @@ Documentos versão 1 e suas segundas vias preservam o formato anterior. Nenhuma 
 ## Refeições e unidades assinaladas
 
 A versão 3 ([ADR-0018](adr/0018-refeicoes-e-marcacoes-preenchidas.md)) mostra somente refeições na área superior e exclui refeições das marcações. Produtos por unidade aparecem na área manuscrita com um [X] por unidade lançada e os demais espaços [ ] livres. Quantidade e valor lançado continuam explícitos, inclusive quando a quantidade excede os espaços. Subtotal de refeições e subtotal de todos os lançamentos têm rótulos distintos; não há cobrança dos espaços vazios. Versões 1 e 2 permanecem fiéis na reimpressão. 127 testes aprovados; sem migration ou alterações dos dados operacionais.
+
+## Impressão durante atendimento
+
+A versão 4 remove o valor abaixo dos produtos marcáveis e permite imprimir sem encerrar ([ADR-0019](adr/0019-impressao-sem-fechamento.md)). Cada impressão é um documento independente congelado, consultável por identidade no histórico. A impressão aberta não altera o estado ou os itens da comanda. Segunda via mantém o snapshot selecionado. Finalização continua sendo ação própria e conserva um único documento final. Migration printing/0003 gerada e revisada; aplicar com initialize_local somente com programa fechado, após backup. Instalação operacional não foi migrada durante desenvolvimento.
+
+A suíte completa tem 134 testes. Inclui concorrência entre impressão aberta e fechamento, preservação de documentos após migração, edição posterior e retornos HTTP. Envio sem fechamento e retorno à comanda aberta foram conferidos no navegador com dados temporários e transporte simulado; nenhum papel impresso neste recorte.

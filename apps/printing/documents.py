@@ -63,7 +63,7 @@ def build_content(order, items, products, configuration):
     price_columns = max([6] + [len(_money(variant["unit_price_cents"]))
                                for row in rows for variant in row["variants"]])
     return {
-        "version": 3, "paper_width_mm": 80, "columns": 48,
+        "version": 4, "paper_width_mm": 80, "columns": 48,
         "layout": {"header_scale": 2, "name_columns": 20, "price_columns": price_columns},
         "order_id": order.pk, "order_number": order.number,
         "opened_at": timezone.localtime(order.created_at).isoformat(),
@@ -92,7 +92,7 @@ def _kilograms(grams):
 
 def render_header(content):
     """Render the frozen header at its physical character width."""
-    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3) else 1
+    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3, 4) else 1
     width = content["columns"] // scale
     lines = []
     for paragraph in content["header"].split("\n"):
@@ -107,20 +107,20 @@ def preview_parts(content, *, second_copy=False):
     text = render_text(content, second_copy=second_copy)
     return {"slip_text": text, "slip_header": header, "slip_body": text[len(header):],
             "slip_header_scale": content.get("layout", {}).get("header_scale", 1)
-            if content["version"] in (2, 3) else 1}
+            if content["version"] in (2, 3, 4) else 1}
 
 
 def render_text(content, *, second_copy=False):
     """Render continuous text from frozen DTO for preview and simulator.
 
     Args:
-        content: Version 1, 2 or 3 document snapshot.
+        content: Version 1 through 4 document snapshot.
         second_copy: Add a delivery annotation without changing the document.
 
     Returns:
         str: Complete text with no page-height limit or transport commands.
     """
-    if content.get("version") not in (1, 2, 3):
+    if content.get("version") not in (1, 2, 3, 4):
         raise ValueError("Versão documental não suportada.")
     width = content["columns"]
     output = []
@@ -134,9 +134,13 @@ def render_text(content, *, second_copy=False):
     append(f"COMANDA {content['order_number']}", centered=True)
     if second_copy:
         append("SEGUNDA VIA", centered=True)
-    append("Finalização: " + content.get("finalized_at", "Prévia de rascunho"))
+    if content["version"] == 4 and "printed_at" in content:
+        append("COMANDA ABERTA", centered=True)
+        append("Impressão: " + content["printed_at"])
+    else:
+        append("Finalização: " + content.get("finalized_at", "Prévia de rascunho"))
     append("-" * width)
-    meal_layout = content["version"] in (3,)
+    meal_layout = content["version"] in (3, 4)
     displayed_items = [item for item in content["items"] if item["is_meal"]] if meal_layout else content["items"]
     append("REFEIÇÕES PRÉ-INSERIDAS" if meal_layout else "ITENS PRÉ-INSERIDOS")
     for item in displayed_items:
@@ -154,7 +158,7 @@ def render_text(content, *, second_copy=False):
         append(f"SUBTOTAL PRÉ-INSERIDO R$ {_money(content['subtotal_cents'])}")
     append("-" * width)
     append("ACRÉSCIMOS MANUSCRITOS")
-    compact = content["version"] in (2, 3)
+    compact = content["version"] in (2, 3, 4)
     if compact:
         name_columns = content["layout"]["name_columns"]
         price_columns = content["layout"]["price_columns"]
@@ -178,6 +182,8 @@ def render_text(content, *, second_copy=False):
                 output.extend(line.ljust(name_columns) for line in name_lines[1:])
                 if meal_layout and variant["quantity_units"] and content["version"] == 3:
                     append(f"Lançado: {variant['quantity_units']} UN · R$ {_money(variant['total_cents'])}")
+                elif content["version"] == 4 and variant["quantity_units"] > capacity:
+                    append(f"Quantidade lançada: {variant['quantity_units']} UN")
             else:
                 append(f"{variant['description']} · R$ {_money(variant['unit_price_cents'])}/{variant['unit']}")
         quantities = []

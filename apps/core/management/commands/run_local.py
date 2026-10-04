@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 
-from runtime.application import LocalApplication
+from runtime.application import InstallationUpdateRequired, LocalApplication
 
 
 class Command(BaseCommand):
@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not settings.INSTALLATION:
-            raise CommandError("Instalação ausente. Execute initialize_local.")
+            raise CommandError("Instalação ausente. Execute initialize_local.", returncode=3)
         logs = settings.DATA_DIR / "logs"
         logs.mkdir(exist_ok=True)
         handler = RotatingFileHandler(logs / "runtime.log", maxBytes=1_000_000, backupCount=3, encoding="utf-8")
@@ -47,6 +47,8 @@ class Command(BaseCommand):
                 run_tray(application)
         except KeyboardInterrupt:
             pass
+        except InstallationUpdateRequired as exc:
+            raise CommandError(str(exc), returncode=3) from exc
         except (OSError, RuntimeError) as exc:
             raise CommandError(str(exc)) from exc
         finally:

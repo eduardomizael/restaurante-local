@@ -25,6 +25,10 @@ from runtime.state import state
 logger = logging.getLogger(__name__)
 
 
+class InstallationUpdateRequired(RuntimeError):
+    """Signal that explicit installation/update is required before startup."""
+
+
 def probe_instance(url, instance_id, timeout=5):
     """Wait for HTTP identity instead of assuming a bound port is ready.
 
@@ -53,12 +57,12 @@ def probe_instance(url, instance_id, timeout=5):
 def validate_schema(data_dir):
     """Reject missing database or pending migrations without applying them."""
     if not (data_dir / "db.sqlite3").is_file():
-        raise RuntimeError("Banco ausente. Execute initialize_local antes de iniciar.")
+        raise InstallationUpdateRequired("Banco ausente. Execute initialize_local antes de iniciar.")
     connection = connections["default"]
     try:
         executor = MigrationExecutor(connection)
         if executor.migration_plan(executor.loader.graph.leaf_nodes()):
-            raise RuntimeError("Banco desatualizado. Execute initialize_local com o programa fechado.")
+            raise InstallationUpdateRequired("Banco desatualizado. Execute initialize_local com o programa fechado.")
     finally:
         connection.close()
 

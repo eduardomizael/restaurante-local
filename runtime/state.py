@@ -10,6 +10,7 @@ class RuntimeState:
         self.lock = RLock()
         self.values = {
             "running": False, "paused": False, "weight_grams": 0,
+            "live_weight_grams": 0,
             "scale_status": "STOPPED", "revision": 0,
             "mode": "SIMULATION", "error": "",
             "scale_mode": "SIMULATION", "print_mode": "PREVIEW",

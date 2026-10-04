@@ -250,6 +250,21 @@ class CaptureCycleTests(SimpleTestCase):
         cycle.acknowledge()
         self.assertIsNone(self.sample(cycle, 252, 2.5))
 
+    def test_new_capture_requires_actual_nonmoving_zero(self):
+        cycle = CaptureCycle()
+        for at, weight in enumerate((0, 252, 252, 252)):
+            candidate = self.sample(cycle, weight, at * 0.5)
+        cycle.acknowledge()
+        for at, weight in enumerate((5, 300, 300, 300), start=4):
+            self.assertIsNone(self.sample(cycle, weight, at * 0.5))
+        self.assertIsNone(self.sample(cycle, 0, 4, moving=True))
+        self.assertEqual(cycle.status, "WAITING_REMOVAL")
+        self.sample(cycle, 0, 4.5)
+        self.sample(cycle, 300, 5)
+        self.sample(cycle, 300, 5.5)
+        second = self.sample(cycle, 300, 6)
+        self.assertNotEqual(candidate.capture_key, second.capture_key)
+
     def test_stale_future_repeated_or_invalid_reading_requires_zero_again(self):
         for invalid in (ScaleSample(252, 0, -3), ScaleSample(252, 0, 2),
                         ScaleSample(-1, 0, 0), ScaleSample(252.0, 0, 0)):
@@ -319,6 +334,45 @@ class CapturePersistenceTests(TestCase):
 
 
 class WorkerPersistenceTests(TransactionTestCase):
+    def test_worker_freezes_display_and_persists_before_removal_then_rearms_at_zero(self):
+        save_product(description="Refeição", unit="KG", unit_price_cents=5000, is_scale_product=True)
+        readings = (0, 252, 252, 252, 400, 0, 300, 300, 300)
+        reached, release = [Event() for _ in range(3)], [Event() for _ in range(3)]
+
+        class HeldScale(SimulatedScale):
+            def read(self):
+                if self.index in (4, 5, 9):
+                    gate = (4, 5, 9).index(self.index)
+                    reached[gate].set()
+                    if not release[gate].wait(3):
+                        raise RuntimeError("Teste não liberou a leitura.")
+                return super().read()
+
+        adapter, runtime_state, stop = HeldScale(weights=readings), RuntimeState(), Event()
+        worker = ScaleWorker(adapter, runtime_state, stop, interval=0.001,
+                             capture_controller=ScaleCaptureController())
+        worker.start()
+        try:
+            self.assertTrue(reached[0].wait(2))
+            self.assertEqual(list(Measurement.objects.values_list("net_weight_grams", flat=True)), [252])
+            self.assertEqual(runtime_state.snapshot()["weight_grams"], 252)
+            release[0].set()
+            self.assertTrue(reached[1].wait(2))
+            snapshot = runtime_state.snapshot()
+            self.assertEqual((snapshot["weight_grams"], snapshot["live_weight_grams"]), (252, 400))
+            self.assertEqual(Measurement.objects.count(), 1)
+            release[1].set()
+            self.assertTrue(reached[2].wait(2))
+            self.assertEqual(list(Measurement.objects.values_list("net_weight_grams", flat=True)), [252, 300])
+            self.assertEqual(runtime_state.snapshot()["weight_grams"], 300)
+        finally:
+            stop.set()
+            for gate in release:
+                gate.set()
+            worker.join(timeout=3)
+        self.assertFalse(worker.is_alive())
+        self.assertTrue(adapter.closed)
+
     def test_worker_persists_without_browser_and_reconnect_requires_removal(self):
         save_product(description="Refeição", unit="KG", unit_price_cents=5000, is_scale_product=True)
         adapter = SimulatedScale(weights=(0, 252, 252, 252, None, 252, 252, 252, 0, 300, 300, 300, 300))

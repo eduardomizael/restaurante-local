@@ -46,8 +46,11 @@ class ScaleWorker(Thread):
                         if self.stop_event.is_set():
                             break
                         status = self.capture_controller.observe(sample) if self.capture_controller else "SIMULATED"
+                        candidate = self.capture_controller.cycle.candidate if self.capture_controller else None
                         self.state.update(
-                            weight_grams=sample.net_weight_grams,
+                            weight_grams=candidate.net_weight_grams if status == "WAITING_REMOVAL" and candidate
+                            else sample.net_weight_grams,
+                            live_weight_grams=sample.net_weight_grams,
                             scale_status=status, error="",
                         )
                     except ValidationError as exc:

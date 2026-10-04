@@ -193,4 +193,4 @@ Continuação: captura automática de 236 g e saída completa da comanda nº 2 c
 
 ## Ajustes explícitos em 03/10/2026
 
-Impressão pode ocorrer sem fechamento: a comanda permanece aberta e cada envio preserva snapshot próprio. Fechamento com impressão é ação separada. Refeições ficam somente no topo, sem marcações; outros produtos indicam unidades inseridas nos espaços [X], sem valor abaixo da linha. Quantidades acima da capacidade continuam explícitas. Estas instruções substituem os trechos anteriores que associam toda impressão ao fechamento; decisões detalhadas nas ADRs 0018 e 0019.
+Impressão pode ocorrer sem fechamento: a comanda permanece aberta e cada envio preserva snapshot próprio. Fechamento com impressão é ação separada. Refeições ficam somente no topo, sem marcações; outros produtos indicam unidades inseridas nos espaços [X], sem valor abaixo da linha. Quantidades acima da capacidade continuam explícitas. Peso é capturado e destacado ao estabilizar, com nova captura somente após leitura de zero sem movimento. Estas instruções substituem os trechos anteriores que associam toda impressão ao fechamento; decisões detalhadas nas ADRs 0018, 0019 e 0020.

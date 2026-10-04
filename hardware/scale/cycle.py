@@ -25,7 +25,7 @@ class CaptureCycle:
         profile: Technical profile recorded with each persisted capture.
     """
 
-    def __init__(self, sample_count=3, tolerance_grams=2, zero_grams=10,
+    def __init__(self, sample_count=3, tolerance_grams=2, zero_grams=0,
                  minimum_grams=11, maximum_age_seconds=2, profile="SIMULATION_ONLY"):
         self.sample_count = sample_count
         self.tolerance_grams = tolerance_grams
@@ -66,7 +66,7 @@ class CaptureCycle:
         if self.last_sampled_at is not None and sample.sampled_at - self.last_sampled_at > self.maximum_age_seconds:
             self.reset()
         self.last_sampled_at = sample.sampled_at
-        zero = sample.net_weight_grams <= self.zero_grams
+        zero = sample.net_weight_grams <= self.zero_grams and not sample.moving
         if self.status == "WAITING_ZERO":
             if zero:
                 self.status = "MEASURING"

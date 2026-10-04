@@ -8,7 +8,7 @@ STATUS_LABELS = {
     "WAITING_ZERO": "Aguardando retirada do prato / retorno ao zero",
     "MEASURING": "Pronta para o próximo prato",
     "STABILIZING": "Aguardando peso estável",
-    "WAITING_REMOVAL": "Pesagem salva · retire o prato",
+    "WAITING_REMOVAL": "Peso fixado · pesagem salva · aguardando zero",
     "CONFIG_REQUIRED": "Selecione um produto ativo em KG no cadastro",
 }
 

@@ -16,8 +16,7 @@ document.addEventListener("htmx:responseError", () => {
 });
 
 window.localPollingAllowed = () => !document.hidden
-  && !document.querySelector("dialog[open], form.htmx-request, form[data-submitting]")
-  && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+  && !document.querySelector("dialog[open], form.htmx-request, form[data-submitting]");
 
 document.addEventListener("htmx:beforeSwap", (event) => {
   if (["shared-board", "runtime-status", "print-jobs"].includes(event.detail.target.id)

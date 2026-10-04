@@ -115,3 +115,7 @@ Em Produtos, clique nas tags **Balança**, **Aparece na comanda** ou **Acesso r�
 ## Atualização: inclusão por diálogo
 
 No atendimento, clicar em um produto abre um diálogo com quantidade/peso e teclado numérico. **Confirmar e adicionar** inclui na comanda selecionada e atualiza itens e subtotal sem sair da tela. Cancelar fecha sem incluir; erros mantêm o diálogo para correção. Não exige migration; reabra o programa para carregar o código atualizado.
+
+## Atualização: posicionamento da comanda
+
+Novas impressões usam o layout versão 5 conforme a referência: número/data na mesma linha, preços e valores das refeições à direita, subtotal de refeições à direita, produtos e marcações em colunas e total manual/rodapé centralizados. Os textos adicionais retirados da referência não aparecem no novo papel. Documentos já salvos e suas segundas vias mantêm o layout original. Não exige migration; reabra o programa. Consulte a [ADR-0023](docs/adr/0023-layout-da-comanda-conforme-referencia.md).

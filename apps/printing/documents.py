@@ -5,6 +5,7 @@ import json
 import textwrap
 import unicodedata
 from decimal import Decimal
+from datetime import datetime
 
 from django.utils import timezone
 
@@ -63,7 +64,7 @@ def build_content(order, items, products, configuration):
     price_columns = max([6] + [len(_money(variant["unit_price_cents"]))
                                for row in rows for variant in row["variants"]])
     return {
-        "version": 4, "paper_width_mm": 80, "columns": 48,
+        "version": 5, "paper_width_mm": 80, "columns": 48,
         "layout": {"header_scale": 2, "name_columns": 20, "price_columns": price_columns},
         "order_id": order.pk, "order_number": order.number,
         "opened_at": timezone.localtime(order.created_at).isoformat(),
@@ -92,7 +93,7 @@ def _kilograms(grams):
 
 def render_header(content):
     """Render the frozen header at its physical character width."""
-    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3, 4) else 1
+    scale = content.get("layout", {}).get("header_scale", 1) if content["version"] in (2, 3, 4, 5) else 1
     width = content["columns"] // scale
     lines = []
     for paragraph in content["header"].split("\n"):
@@ -107,21 +108,86 @@ def preview_parts(content, *, second_copy=False):
     text = render_text(content, second_copy=second_copy)
     return {"slip_text": text, "slip_header": header, "slip_body": text[len(header):],
             "slip_header_scale": content.get("layout", {}).get("header_scale", 1)
-            if content["version"] in (2, 3, 4) else 1}
+            if content["version"] in (2, 3, 4, 5) else 1}
+
+
+def _render_reference_layout(content, *, second_copy=False):
+    """Render version five with paired rows and the approved reference spacing."""
+    width = content["columns"]
+    output = render_header(content).splitlines()
+
+    def paired(left, right):
+        available = max(1, width - len(right) - 1)
+        lines = textwrap.wrap(left, width=available, replace_whitespace=False) or [""]
+        output.append(lines[0].ljust(width - len(right)) + right)
+        output.extend(lines[1:])
+
+    def append(value="", *, alignment="left"):
+        for paragraph in value.split("\n"):
+            for line in textwrap.wrap(paragraph, width=width, replace_whitespace=False) or [""]:
+                output.append(line.center(width) if alignment == "center" else
+                              line.rjust(width) if alignment == "right" else line)
+
+    timestamp = content.get("printed_at", content.get("finalized_at", content["opened_at"]))
+    date = datetime.fromisoformat(timestamp).strftime("%d/%m/%Y %H:%M:%S")
+    paired(f"COMANDA #{content['order_number']}", date)
+    if second_copy:
+        append("SEGUNDA VIA", alignment="center")
+    append("-" * width)
+    append("REFEIÇÕES")
+    meals = [item for item in content["items"] if item["is_meal"]]
+    for item in meals:
+        paired(item["description"], f"R$ {_money(item['unit_price_cents'])}/{item['unit']}")
+        quantity = (f"{item['quantity_units']} UN" if item["unit"] == "UN"
+                    else f"{_kilograms(item['weight_grams'])} kg")
+        if item["measurement_id"]:
+            quantity = f"Pesagem #{item['measurement_id']} - {quantity}"
+        paired(quantity, f"VALOR R$ {_money(item['total_cents'])}")
+        append()
+    append()
+    append(f"SUBTOTAL REFEIÇÕES R$ {_money(sum(item['total_cents'] for item in meals))}", alignment="right")
+    append("-" * width)
+    name_columns = content["layout"]["name_columns"]
+    price_columns = content["layout"]["price_columns"]
+    capacity = (width - name_columns - price_columns - 2) // 3
+    append(f"{'PRODUTO':<{name_columns}} {'R$':>{price_columns}} MARCAÇÕES")
+    for row in content["manuscript_rows"]:
+        for variant in row["variants"]:
+            name = " ".join(variant["description"].split())
+            if variant["unit"] == "KG":
+                name += " (KG)"
+            name_lines = textwrap.wrap(name, width=name_columns)
+            count = variant["quantity_units"]
+            marks = "[X]" * min(count, capacity) + "[ ]" * max(capacity - count, 0)
+            append(f"{name_lines[0]:<{name_columns}} {_money(variant['unit_price_cents']):>{price_columns}} {marks}")
+            output.extend(line.ljust(name_columns) for line in name_lines[1:])
+            if count > capacity:
+                append(f"Quantidade lançada: {count} UN")
+    append("-" * width)
+    append()
+    append()
+    append("TOTAL A PAGAR R$ ______________________", alignment="center")
+    append()
+    append()
+    append()
+    append(content["footer"], alignment="center")
+    return "\n".join(output) + "\n"
 
 
 def render_text(content, *, second_copy=False):
     """Render continuous text from frozen DTO for preview and simulator.
 
     Args:
-        content: Version 1 through 4 document snapshot.
+        content: Version 1 through 5 document snapshot.
         second_copy: Add a delivery annotation without changing the document.
 
     Returns:
         str: Complete text with no page-height limit or transport commands.
     """
-    if content.get("version") not in (1, 2, 3, 4):
+    if content.get("version") not in (1, 2, 3, 4, 5):
         raise ValueError("Versão documental não suportada.")
+    if content["version"] == 5:
+        return _render_reference_layout(content, second_copy=second_copy)
     width = content["columns"]
     output = []
 

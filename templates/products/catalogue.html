@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}{% load commercial %}
+{% block main_class %}catalogue-page{% endblock %}
 {% block content %}
 <div class="heading heading-actions"><div><p class="eyebrow">CADASTRO LOCAL</p><h1>Produtos</h1></div><a class="button" href="{% url 'new_product' %}">＋ Novo produto</a></div>
 <form method="get" class="search-form"><label for="catalogue-search">Buscar produto</label><input id="catalogue-search" name="q" value="{{ search }}" placeholder="Descrição"><button type="submit" class="secondary">⌕ Buscar</button></form>

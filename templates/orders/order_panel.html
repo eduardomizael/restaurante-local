@@ -2,7 +2,7 @@
 <section id="order-panel" class="order-detail" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
   {% if selected %}
     <div class="panel-heading"><h2>Itens da comanda {{ selected.number }}</h2><span class="count">{{ items|length }} ite{{ items|length|pluralize:'m,ns' }}</span></div>
-    <div class="item-list">{% for item in items %}
+    <div class="item-list" id="order-item-list" data-preserve-scroll>{% for item in items %}
       <article class="item-row"><div><strong>{{ item.product_description }}</strong><p>{% if item.unit == 'KG' %}{{ item.weight_grams|kilograms }} kg × R$ {{ item.unit_price_cents|money }}/kg{% else %}{{ item.quantity_units }} UN × R$ {{ item.unit_price_cents|money }}{% endif %}{% if item.measurement_id %} · Pesagem #{{ item.measurement_id }}{% endif %}</p></div>
         <div class="item-total"><strong>R$ {{ item.total_cents|money }}</strong><form method="post" action="{% url 'delete_item' %}" hx-post="{% url 'delete_item' %}" hx-target="#shared-board" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="find button">{% csrf_token %}<input type="hidden" name="order_id" value="{{ selected.pk }}"><input type="hidden" name="item_id" value="{{ item.pk }}"><button type="submit" id="remove-item-{{ item.pk }}" class="secondary compact" aria-label="Remover {{ item.product_description }}">⌫ Remover</button></form></div>
       </article>

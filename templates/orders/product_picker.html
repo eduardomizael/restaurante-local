@@ -1,19 +1,17 @@
 {% load commercial %}
-<section id="product-picker" class="product-picker" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
+<section id="product-picker" class="product-picker" {% if not selected %}hidden{% endif %} {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
   {% if selected %}
-  <div class="panel-heading"><div><h2>Detalhes: Comanda {{ selected.number }}</h2><p class="muted">Aberta às {{ selected.created_at|date:'H:i' }}</p></div><span class="tag">Aberta</span></div>
-  <details class="product-disclosure" {% if search %}open{% endif %}><summary>＋ Adicionar produtos</summary>
-  <div class="product-disclosure-content">
-  <div class="quick-grid" aria-label="Produtos rápidos">
-    {% for product in quick_products %}<a class="button quick-product secondary" href="{% url 'manual_item' selected.pk product.pk %}" hx-get="{% url 'manual_item' selected.pk product.pk %}" hx-target="#manual-item-content" hx-swap="innerHTML" hx-sync="#attendance-workspace:replace"><span>＋ {{ product.description }}</span><span>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</span></a>{% empty %}<p class="muted">Marque produtos como acesso rápido no cadastro.</p>{% endfor %}
-  </div>
-  <details class="catalogue-search" {% if search %}open{% endif %}><summary>Buscar no catálogo completo</summary>
+  <div class="panel-heading"><div><h2>Adicionar produtos</h2><p class="muted">Destino: comanda {{ selected.number }}</p></div><span class="tag">Aberta</span></div>
+  <div class="product-selection">
+  <section class="quick-products-section" aria-labelledby="quick-products-title"><h3 id="quick-products-title">Acesso rápido</h3>
+    {% include 'orders/quick_products.html' %}
+  </section>
+  <section class="catalogue-search" aria-label="Catálogo completo">
     <form method="get" action="{% url 'home' %}" class="search-form" hx-get="{% url 'product_choices' %}" hx-target="#catalogue-choices" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop">
-      <input type="hidden" name="order" value="{{ selected.pk }}"><label for="product-search">Descrição</label><input id="product-search" name="q" value="{{ search }}" placeholder="Nome do produto"><button type="submit" class="secondary">⌕ Buscar</button>
+      <input type="hidden" name="order" value="{{ selected.pk }}"><label for="product-search">Buscar produto</label><input id="product-search" name="q" value="{{ search }}" placeholder="Nome do produto"><button type="submit" class="secondary compact">⌕ Buscar</button>
     </form>
     {% include 'orders/product_choices.html' %}
-  </details>
+  </section>
   </div>
-  </details>
   {% endif %}
 </section>

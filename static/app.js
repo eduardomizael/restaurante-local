@@ -30,7 +30,12 @@ window.localPollingAllowed = () => !document.hidden
 const attendanceScroll = new Map();
 const syncAttendanceSelection = () => {
   const workspace = document.getElementById("attendance-workspace");
-  if (workspace) document.body.dataset.selectedOrder = workspace.dataset.selectedOrder;
+  if (workspace) {
+    if (document.body.dataset.selectedOrder !== workspace.dataset.selectedOrder) {
+      attendanceScroll.delete("order-item-list");
+    }
+    document.body.dataset.selectedOrder = workspace.dataset.selectedOrder;
+  }
 };
 const restoreAttendanceScroll = () => {
   document.querySelectorAll("[data-preserve-scroll]").forEach((element) => {

@@ -1,0 +1,4 @@
+{% load commercial %}
+<div class="quick-grid" id="quick-product-cards" data-preserve-scroll aria-label="Produtos rápidos">
+  {% for product in quick_products %}{% include 'orders/product_choice.html' with choice_class='quick-choice' %}{% empty %}<p class="muted">Marque produtos como acesso rápido no cadastro.</p>{% endfor %}
+</div>

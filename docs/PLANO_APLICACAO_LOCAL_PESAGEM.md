@@ -110,11 +110,11 @@ Referência: fotografia fornecida pelo usuário em 03/10/2026. Elementos observa
 
 Adaptação necessária ao fluxo confirmado:
 
-- Imprimir os itens efetivamente inseridos, com descrição, quantidade, unidade, valor unitário e total do item; refeições pesadas também identificam peso e preço/kg.
+- Na área superior, imprimir somente refeições efetivamente inseridas, com descrição, quantidade, unidade, valor unitário e total; refeições pesadas também identificam peso e preço/kg. Refeições não aceitam marcação manual. Os demais produtos lançados aparecem na área manuscrita com suas unidades assinaladas.
 - Suportar várias pesagens e itens à vontade. O exemplo de uma única pesagem não limita a comanda nova a um prato.
 - Mostrar todas as refeições, por peso ou à vontade, com suas quantidades e valores; para cada pesagem, imprimir peso e preço/kg correspondentes. Substituir o destaque de uma única refeição do exemplo por uma relação de todas as refeições e respectivos valores.
-- A lista com espaços manuscritos é a união dos produtos com **Aparece na comanda** e dos produtos efetivamente inseridos. Produto inserido sem essa marcação também imprime quantidade lançada e espaços; produto marcado sem lançamento imprime preço e espaços, sem gerar cobrança ou item de domínio.
-- Evitar duplicar a linha de marcação do mesmo produto; apresentar a quantidade já lançada explicitamente, separada dos campos vazios para acréscimos. Detalhes de pesagens e preços distintos continuam preservados nas linhas de itens.
+- A lista com espaços manuscritos é a união dos produtos com **Aparece na comanda** e dos produtos efetivamente inseridos, excluindo refeições. Produto inserido sem essa marcação também imprime quantidade lançada e espaços; produto marcado sem lançamento imprime preço e espaços, sem gerar cobrança ou item de domínio.
+- Evitar duplicar a linha de marcação do mesmo produto; assinalar [X] por unidade já lançada e reservar [ ] para acréscimos. Quantidade e valor lançado ficam explícitos, mesmo acima da capacidade das marcações. Preservar variantes históricas de preços e os detalhes das refeições. Subtotal de refeições e subtotal de todos os lançamentos ficam identificados separadamente.
 - Reservar tantos espaços de marcação quanto couberem na largura útil da linha, usando oito como referência suficiente. Descrições longas podem ocupar linha adicional para preservar legibilidade e área de escrita.
 - Manter campo de total final para preenchimento manual. O subtotal pré-inserido e esse total final possuem significados diferentes.
 - Congelar também nomes, preços e ordem das linhas manuscritas, cabeçalho e rodapé no documento finalizado. Reimpressão não usa o catálogo atualizado.

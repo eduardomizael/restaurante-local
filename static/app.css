@@ -79,6 +79,8 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .topbar { flex-wrap: wrap; }
 .slip-container { overflow-x: auto; padding: 24px 0; }
 .order-slip { box-sizing: border-box; margin: 0 auto; padding: 4mm; width: 80mm; min-width: 80mm; background: white; color: #111; border: 1px solid #baccc0; font: 2.4mm/1.7 Consolas, 'Courier New', monospace; white-space: pre; }
+.order-slip pre { margin: 0; font: inherit; white-space: pre; }
+.order-slip .header-scale-2 { font-size: 2em; line-height: 1.7; }
 .job-row { border-bottom: 1px solid #d5e0d9; padding: 12px 0; margin-bottom: 16px; }
 .slip-zoom { width: fit-content; margin-top: 24px; }
 .slip-preview:has(.slip-zoom input:checked) .order-slip { width: 160mm; min-width: 160mm; padding: 8mm; font-size: 4.8mm; }

@@ -31,3 +31,13 @@ Mutex exclusivo precede recuperação. Novo runtime converte tentativas interrom
 Ensaio de navegador com dados temporários: duas comandas e três pesagens; configurar cabeçalho/rodapé; finalizar a comanda 1 com 252 g e uma refeição à vontade, subtotal R$ 50,99; simular segunda via; confirmar comanda 2 aberta com 300 g e terceira pesagem de 400 g disponível. Histórico mostra ambas as simulações. Não é homologação física de tela touch ou impressora.
 
 Pendentes: serial real e sua configuração, perfil físico da balança, configuração/transportes Windows RAW e ESC/POS, acentos/colunas/avanço/corte, distribuição e piloto. Próximo recorte sugerido: configuração operacional e parser serial testado com quadros simulados, antes de conectar equipamentos reais.
+
+## Atualização do layout em 03/10/2026
+
+Conforme [ADR-0017](adr/0017-layout-compacto-da-comanda.md), novos documentos usam a versão 2: nome no cabeçalho com largura e altura dobradas, produto e preço em colunas fixas e seis marcações manuais na mesma linha para preços usuais. Todos os nomes do catálogo da referência cabem na coluna de 20 caracteres; nomes maiores continuam nessa coluna sem truncamento. A coluna dos preços tem seis caracteres ou a largura do maior preço do documento, aplicada igualmente a todos os itens. Quantidades já lançadas continuam explícitas quando existentes.
+
+Documentos versão 1 e suas segundas vias preservam o formato anterior. Nenhuma migration ou alteração de dados operacionais. A suíte atual tem 123 testes aprovados; prévia ampliada revisada no navegador em instalação temporária simulada. O novo tamanho físico do cabeçalho ainda não foi confirmado em papel. Para carregar o código atualizado, sair pela bandeja e iniciar novamente com run_local. Os próximos passos de hardware citados na entrega original acima já foram implementados; consulte o registro de hardware e as ADRs 0015 e 0016.
+
+## Refeições e unidades assinaladas
+
+A versão 3 ([ADR-0018](adr/0018-refeicoes-e-marcacoes-preenchidas.md)) mostra somente refeições na área superior e exclui refeições das marcações. Produtos por unidade aparecem na área manuscrita com um [X] por unidade lançada e os demais espaços [ ] livres. Quantidade e valor lançado continuam explícitos, inclusive quando a quantidade excede os espaços. Subtotal de refeições e subtotal de todos os lançamentos têm rótulos distintos; não há cobrança dos espaços vazios. Versões 1 e 2 permanecem fiéis na reimpressão. 127 testes aprovados; sem migration ou alterações dos dados operacionais.

@@ -14,7 +14,7 @@ from django.urls import reverse
 from apps.configuration.models import HardwareConfiguration
 from apps.configuration.services import save_hardware_configuration
 from apps.configuration.selectors import hardware_configuration
-from apps.printing.documents import fingerprint, render_text
+from apps.printing.documents import fingerprint, render_text, render_header
 from apps.printing.models import PrintJob
 from apps.printing.selectors import draft_content
 from apps.printing.services import finalize_order, complete_job, claim_next_job
@@ -182,6 +182,16 @@ class RawAdapterTests(SimpleTestCase):
         spooler.finish.assert_called_once_with("handle")
         spooler.close.assert_called_once_with("handle")
 
+    def test_header_size_is_reset_before_body_and_legacy_payload_is_unchanged(self):
+        payload = encode_document("Nome\nCabeçalho\nCOCA 7,00 [ ]\n", header_lines=2, header_scale=2)
+        self.assertIn(b"\x1d!\x11" + "Nome\nCabeçalho\n".encode("cp860")
+                      + b"\x1d!\x00COCA 7,00 [ ]\n", payload)
+        self.assertNotIn(b"\x1d!", encode_document("Nome\nCOCA\n"))
+        factory = Mock()
+        with self.assertRaises(PrintFailure):
+            WindowsRawPrinter(spooler_factory=factory).send("Nome\n", header_lines=3, header_scale=2)
+        factory.assert_not_called()
+
     def test_failures_before_and_after_start_are_distinct(self):
         for stage in ("open", "start", "page", "write", "finish"):
             spooler = self.spooler()
@@ -306,7 +316,9 @@ class EquipmentAndDeliveryTests(TestCase):
         with patch("runtime.print_worker.WindowsRawPrinter", return_value=raw) as factory:
             self.assertTrue(PrintWorker(Event(), delivery_mode="RAW").process_one())
         factory.assert_called_once_with("balanca")
-        raw.send.assert_called_once_with(render_text(job.document.content))
+        raw.send.assert_called_once_with(render_text(job.document.content),
+                                         header_lines=len(render_header(job.document.content).splitlines()),
+                                         header_scale=2)
         job.refresh_from_db()
         self.assertEqual((job.status, job.spooler_job_id), ("SPOOL_ACCEPTED", 7))
 

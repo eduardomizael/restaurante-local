@@ -5,7 +5,7 @@ from threading import Thread
 
 from django.db import close_old_connections, connections
 
-from apps.printing.documents import render_text
+from apps.printing.documents import render_text, render_header
 from apps.printing.models import PrintJob
 from apps.printing.services import claim_next_job, complete_job
 from hardware.printer.simulator import SimulatedPrinter
@@ -38,7 +38,13 @@ class PrintWorker(Thread):
             text = render_text(job.document.content, second_copy=job.kind == PrintJob.Kind.REPRINT)
             if job.delivery_mode == "RAW":
                 raw_adapter = WindowsRawPrinter(job.printer_name)
-            response = (raw_adapter or self.adapter).send(text)
+            if raw_adapter and job.document.content["version"] in (2, 3):
+                response = raw_adapter.send(
+                    text, header_lines=len(render_header(job.document.content).splitlines()),
+                    header_scale=job.document.content["layout"]["header_scale"],
+                )
+            else:
+                response = (raw_adapter or self.adapter).send(text)
             if isinstance(response, PrintResult):
                 result, message, spooler_job_id = response.status, response.message, response.spooler_job_id
             else:

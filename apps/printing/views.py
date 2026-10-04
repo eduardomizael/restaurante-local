@@ -11,7 +11,7 @@ from apps.core.http import requires_runtime
 from apps.configuration.selectors import hardware_configuration
 from runtime.state import state
 from apps.orders.models import Order
-from apps.printing.documents import fingerprint, render_text
+from apps.printing.documents import fingerprint, preview_parts
 from apps.printing.forms import DocumentConfigurationForm, FinalizeForm, ReprintForm
 from apps.printing.models import OrderDocument, PrintJob
 from apps.printing.selectors import document_configuration, document_jobs, draft_content, order_document, print_history
@@ -60,7 +60,7 @@ def preview(request, order_id):
                                  "reviewed_mode": state.snapshot()["print_mode"],
                                  "printer_revision": hardware_configuration().revision})
     return render(request, "printing/preview.html", {
-        "order": order, "document": document, "slip_text": render_text(content), "form": form,
+        "order": order, "document": document, **preview_parts(content), "form": form,
         "can_finalize": bool(content["header"] and content["items"]),
         "jobs": document_jobs(document.pk) if document else [],
     })
@@ -125,6 +125,6 @@ def reprint(request, document_id):
             return _error(request, exc)
         return redirect("print_preview", order_id=document.order_id)
     return render(request, "printing/reprint.html", {
-        "document": document, "form": form, "slip_text": render_text(document.content, second_copy=True),
+        "document": document, "form": form, **preview_parts(document.content, second_copy=True),
         "uncertain": document.jobs.filter(status=PrintJob.Status.UNKNOWN).exists(),
     })

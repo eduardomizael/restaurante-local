@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 import os
+import socket
 import subprocess
 import sys
 import tempfile
@@ -117,24 +118,24 @@ class DocumentTests(PrintingFixture, TestCase):
             self.finalize()
 
     def test_union_manuscript_rows_and_historical_price_variants(self):
-        save_product(product_id=self.unit.pk, expected_revision=1, description="À vontade novo",
-                     unit="UN", unit_price_cents=4000)
-        add_product_item(order_id=self.order.pk, product_id=self.unit.pk, quantity_units=1, request_key=uuid4())
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        save_product(product_id=self.marked.pk, expected_revision=1, description="Bebida nova",
+                     unit="UN", unit_price_cents=800, appears_on_order_slip=True)
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=1, request_key=uuid4())
         add_measurement_item(order_id=self.order.pk, measurement_id=self.measurements[1].pk, request_key=uuid4())
         content = draft_content(self.order)
-        self.assertEqual(len(content["items"]), 4)
-        self.assertEqual(len(content["manuscript_rows"]), 3)
-        unit_row = next(row for row in content["manuscript_rows"] if row["product_id"] == self.unit.pk)
+        self.assertEqual(len(content["items"]), 5)
+        self.assertEqual(len(content["manuscript_rows"]), 1)
+        unit_row = content["manuscript_rows"][0]
         self.assertEqual(unit_row["quantity_units"], 3)
-        self.assertEqual([row["unit_price_cents"] for row in unit_row["variants"]], [3590, 4000])
-        reserved = next(row for row in content["manuscript_rows"] if row["product_id"] == self.marked.pk)
-        self.assertEqual(reserved["quantity_units"], 0)
-        self.assertEqual(content["subtotal_cents"], 1509 + 1797 + 7180 + 4000)
+        self.assertEqual([row["unit_price_cents"] for row in unit_row["variants"]], [700, 800])
+        self.assertEqual([row["quantity_units"] for row in unit_row["variants"]], [2, 1])
+        self.assertEqual(content["subtotal_cents"], 1509 + 1797 + 7180 + 1400 + 800)
         text = render_text(content)
         self.assertIn("0,252 kg", text)
         self.assertIn("0,300 kg", text)
         self.assertIn("Bebida reservada", text)
-        self.assertIn("Já lançado: nenhum", text)
+        self.assertNotIn("Já lançado: nenhum", text)
         self.assertIn("TOTAL A PAGAR", text)
 
     def test_saved_snapshot_survives_catalogue_and_configuration_edits(self):
@@ -149,6 +150,101 @@ class DocumentTests(PrintingFixture, TestCase):
         job.document.refresh_from_db()
         self.assertEqual(render_text(job.document.content), original)
         self.assertEqual(fingerprint(job.document.content), original_hash)
+
+    def test_compact_rows_keep_names_prices_and_marks_in_fixed_columns(self):
+        content = draft_content(self.order)
+        text = render_text(content)
+        rows = [line for line in text.splitlines() if "[ ]" in line and not line.startswith("[X] =")]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual({line.index("[ ]") for line in rows}, {28})
+        self.assertTrue(all(line.count("[ ]") == 6 for line in rows))
+        self.assertTrue(all(len(line) <= 48 for line in rows))
+        self.assertTrue(any(line[:20].strip() == "Bebida reservada" and line[21:27].strip() == "7,00"
+                            for line in rows))
+        self.assertNotIn("Já lançado:", text)
+
+    def test_meals_are_exclusive_to_top_section_even_when_marked_in_catalogue(self):
+        save_product(product_id=self.unit.pk, expected_revision=1, description="REFEIÇÃO À VONTADE",
+                     unit="UN", unit_price_cents=3990, appears_on_order_slip=True)
+        add_product_item(order_id=self.order.pk, product_id=self.unit.pk, quantity_units=1, request_key=uuid4())
+        content = draft_content(self.order)
+        top, manual = render_text(content).split("ACRÉSCIMOS MANUSCRITOS")
+        self.assertIn("Refeição por peso", top)
+        self.assertIn("REFEIÇÃO À VONTADE", top)
+        self.assertNotIn("Bebida reservada", top)
+        self.assertNotIn("REFEIÇÃO À VONTADE", manual)
+        self.assertNotIn("À vontade", manual)
+        self.assertNotIn("Refeição por peso", manual)
+        self.assertEqual(len(content["manuscript_rows"]), 1)
+
+    def test_inserted_units_mark_boxes_and_preserve_total_without_duplicating_top_item(self):
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        text = render_text(draft_content(self.order))
+        top, manual = text.split("ACRÉSCIMOS MANUSCRITOS")
+        self.assertNotIn("Bebida reservada", top)
+        row = next(line for line in manual.splitlines() if line.startswith("Bebida reservada"))
+        self.assertEqual(row[28:], "[X][X][ ][ ][ ][ ]")
+        self.assertIn("Lançado: 2 UN · R$ 14,00", manual)
+        self.assertIn("SUBTOTAL REFEIÇÕES R$ 86,89", top)
+        self.assertIn("SUBTOTAL PRÉ-INSERIDO R$ 100,89", manual)
+
+    def test_quantity_overflow_is_explicit_and_fits_paper_width(self):
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=9, request_key=uuid4())
+        text = render_text(draft_content(self.order))
+        row = next(line for line in text.splitlines() if line.startswith("Bebida reservada"))
+        self.assertEqual(row[28:], "[X]" * 6)
+        self.assertIn("Lançado: 9 UN · R$ 63,00", text)
+        self.assertLessEqual(max(map(len, text.splitlines())), 48)
+
+    def test_version_two_retains_separate_inserted_items_and_empty_mark_boxes(self):
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        content = draft_content(self.order)
+        content["version"] = 2
+        text = render_text(content)
+        top, manual = text.split("ACRÉSCIMOS MANUSCRITOS")
+        self.assertIn("Bebida reservada", top)
+        self.assertIn("Já lançado: 2 UN", manual)
+        self.assertNotIn("[X]", text)
+
+    def test_version_three_retains_values_below_marked_rows(self):
+        add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
+        content = draft_content(self.order)
+        content["version"] = 3
+        self.assertIn("Lançado: 2 UN · R$ 14,00", render_text(content))
+
+
+
+
+    def test_long_name_continues_without_displacing_price_or_losing_text(self):
+        save_product(description="SUCO DELL VALE LATA ESPECIAL", unit="UN", unit_price_cents=600,
+                     appears_on_order_slip=True)
+        content = draft_content(self.order)
+        lines = render_text(content).splitlines()
+        index = next(index for index, line in enumerate(lines) if line.startswith("SUCO DELL VALE"))
+        self.assertEqual(lines[index][:20].strip(), "SUCO DELL VALE LATA")
+        self.assertEqual(lines[index][21:27].strip(), "6,00")
+        self.assertIn("[ ]", lines[index])
+        self.assertEqual(lines[index + 1].strip(), "ESPECIAL")
+
+    def test_legacy_document_retains_original_header_and_separate_mark_lines(self):
+        content = draft_content(self.order)
+        content["version"] = 1
+        content.pop("layout")
+        text = render_text(content)
+        self.assertEqual(text.splitlines()[0], "Restaurante de teste".center(48))
+        self.assertIn("Bebida reservada · R$ 7,00/UN", text)
+        self.assertIn("Já lançado: nenhum", text)
+        self.assertIn("[   ]", text)
+
+    def test_large_prices_reserve_one_shared_width_without_truncation(self):
+        save_product(description="Produto caro", unit="UN", unit_price_cents=123456789,
+                     appears_on_order_slip=True)
+        content = draft_content(self.order)
+        rows = [line for line in render_text(content).splitlines() if "[ ]" in line and not line.startswith("[X] =")]
+        self.assertEqual(content["layout"]["price_columns"], 10)
+        self.assertEqual({line.index("[ ]") for line in rows}, {32})
+        self.assertTrue(any("1234567,89" in line for line in rows))
+        self.assertTrue(all(len(line) <= 48 for line in rows))
 
     def test_long_continuous_document_has_no_truncation(self):
         for index in range(70):
@@ -207,6 +303,7 @@ class PrintHTTPTests(PrintingFixture, TestCase):
         response = self.client.post(reverse("finalize_order", args=[self.order.pk]), response.context["form"].initial)
         self.assertContains(response, "mudaram após a prévia", status_code=409)
         self.assertFalse(PrintJob.objects.exists())
+
 
     def test_configuration_form_parses_and_preserves_stale_values(self):
         url = reverse("document_configuration")
@@ -376,6 +473,7 @@ class QueueTests(PrintingFixture, TransactionTestCase):
         self.assertEqual(OrderDocument.objects.count(), 1)
         self.assertEqual(PrintJob.objects.count(), 1)
 
+
     def test_finalization_racing_cancellation_never_splits_document_and_order(self):
         reviewed = fingerprint(draft_content(self.order))
         self.race(lambda: finalize_order(order_id=self.order.pk, request_key=uuid4(), expected_fingerprint=reviewed),
@@ -400,9 +498,12 @@ class QueueTests(PrintingFixture, TransactionTestCase):
 class PrintRecoveryProcessTests(SimpleTestCase):
     def test_restart_recovers_interrupted_job_without_resubmitting(self):
         with tempfile.TemporaryDirectory() as directory:
+            with socket.socket() as reservation:
+                reservation.bind(("127.0.0.1", 0))
+                port = reservation.getsockname()[1]
             environment = dict(os.environ, LOCAL_WEIGHING_DATA_DIR=directory,
                                DJANGO_SETTINGS_MODULE="config.settings")
-            install = subprocess.run([sys.executable, "manage.py", "initialize_local"],
+            install = subprocess.run([sys.executable, "manage.py", "initialize_local", "--port", str(port)],
                                      cwd=settings.BASE_DIR, env=environment, capture_output=True, text=True, timeout=15)
             self.assertEqual(install.returncode, 0, install.stderr)
             prepare = '''

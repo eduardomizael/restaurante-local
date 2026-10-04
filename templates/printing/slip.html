@@ -1,4 +1,4 @@
 <div class="slip-preview">
   <label class="check-label slip-zoom"><input type="checkbox"> Ampliar prévia para leitura</label>
-  <div class="slip-container"><pre class="order-slip" aria-label="Conteúdo completo da comanda">{{ slip_text }}</pre></div>
+  <div class="slip-container">{% if slip_header %}<div class="order-slip" aria-label="Conteúdo completo da comanda"><pre class="slip-header header-scale-{{ slip_header_scale }}">{{ slip_header }}</pre><pre class="slip-body">{{ slip_body }}</pre></div>{% else %}<pre class="order-slip" aria-label="Conteúdo completo da comanda">{{ slip_text }}</pre>{% endif %}</div>
 </div>

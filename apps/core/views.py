@@ -19,7 +19,8 @@ def status_page(request):
 @never_cache
 def status_fragment(request):
     """Return the technical polling fragment."""
-    return render(request, "core/status_fragment.html", {"runtime": runtime_snapshot()})
+    template = "core/scale_fragment.html" if request.GET.get("surface") == "attendance" else "core/status_fragment.html"
+    return render(request, template, {"runtime": runtime_snapshot()})
 
 
 @require_GET

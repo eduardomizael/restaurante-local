@@ -1,2 +1,5 @@
 {% include 'orders/board.html' %}
+{% include 'orders/measurements.html' with out_of_band=True %}
+{% include 'orders/order_list.html' with out_of_band=True %}
 {% include 'orders/order_panel.html' with out_of_band=True %}
+{% if not selected %}{% include 'orders/product_picker.html' with out_of_band=True %}{% endif %}

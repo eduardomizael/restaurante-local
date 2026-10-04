@@ -9,6 +9,7 @@ from apps.configuration import views as configuration_views
 urlpatterns = [
     path("", order_views.attendance, name="home"),
     path("board/fragment/", order_views.board_fragment, name="board_fragment"),
+    path("board/products/", order_views.product_choices, name="product_choices"),
     path("products/", product_views.catalogue, name="catalogue"),
     path("products/new/", product_views.edit_product, name="new_product"),
     path("products/<int:product_id>/edit/", product_views.edit_product, name="edit_product"),

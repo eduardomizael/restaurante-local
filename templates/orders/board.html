@@ -1,20 +1,3 @@
-{% load commercial %}
-<aside id="shared-board" class="shared-board"
+<div id="shared-board" hidden
   hx-get="{% url 'board_fragment' %}?order={{ selected_id }}&amp;revision={{ revision }}"
-  hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
-  <section class="card"><h2>Comandas abertas <span class="count">{{ orders|length }}</span></h2>
-    <div class="order-list">{% for order in orders %}<a class="button {% if order.pk == selected.pk %}selected{% else %}secondary{% endif %}" {% if order.pk == selected.pk %}aria-current="page"{% endif %} href="{% url 'home' %}?order={{ order.pk }}">Comanda {{ order.number }} {% if order.pk == selected.pk %}✓{% endif %}</a>{% empty %}<p>Toque em Nova comanda para começar.</p>{% endfor %}</div>
-  </section>
-  <section class="card"><h2>Pesagens disponíveis <span class="count">{{ measurements|length }}</span></h2>
-    <p class="muted">{% if selected %}Destino: comanda {{ selected.number }}{% else %}Selecione uma comanda para incluir uma pesagem.{% endif %}</p>
-    {% for measurement in measurements %}
-    <article class="measurement-row"><div class="measurement-heading"><strong>#{{ measurement.pk }} · {{ measurement.net_weight_grams|kilograms }} kg</strong><strong>R$ {{ measurement.total_cents|money }}</strong></div>
-      <p class="muted">{{ measurement.product_description }} · R$ {{ measurement.unit_price_cents|money }}/kg · {{ measurement.captured_at|date:'H:i:s' }}</p>
-      <div class="measurement-actions">
-        {% if selected %}<form method="post" action="{% url 'consume_measurement' %}">{% csrf_token %}<input type="hidden" name="order_id" value="{{ selected.pk }}"><input type="hidden" name="measurement_id" value="{{ measurement.pk }}"><input type="hidden" name="request_key" value="{{ measurement.action_key }}"><button type="submit">＋ Incluir na {{ selected.number }}</button></form>{% endif %}
-        <a class="button secondary" href="{% url 'confirm_discard' measurement.pk %}{% if selected %}?order={{ selected.pk }}{% endif %}">⌫ Descartar</a>
-      </div>
-    </article>
-    {% empty %}<p>Aguardando uma nova pesagem estável.</p>{% endfor %}
-  </section>
-</aside>
+  hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="#attendance-workspace:abort"></div>

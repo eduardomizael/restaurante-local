@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from django.db.models import Max, Sum
+from django.db.models import Count, Max, Q, Sum
 
 from apps.orders.models import Order, OrderItem, OrderSequence
 from apps.core.models import DomainEvent
@@ -39,6 +39,7 @@ def board_snapshot(selected_id=None):
     items = list(active_items(selected.pk)) if selected else []
     return {
         "revision": revision, "orders": orders, "selected": selected,
+        "open_key": uuid4(),
         "selected_id": selected_id if selected_id is not None else (selected.pk if selected else ""),
         "measurements": measurements,
         "items": items,
@@ -53,14 +54,16 @@ def attendance_snapshot(selected_id=None, search=""):
         "quick_products": list(quick_access_products()),
         "products": list(active_products().filter(description__icontains=search)),
         "scale_product": scale_product(), "search": search,
-        "open_key": uuid4(),
     })
     return data
 
 
 def open_orders():
     """Return all recoverable drafts in number order."""
-    return Order.objects.filter(status=Order.Status.DRAFT)
+    return Order.objects.filter(status=Order.Status.DRAFT).annotate(
+        item_count=Count("items", filter=Q(items__active=True)),
+        total_cents=Sum("items__total_cents", filter=Q(items__active=True), default=0),
+    )
 
 
 def active_items(order_id):

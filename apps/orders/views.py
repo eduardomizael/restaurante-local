@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
+from django.views.decorators.vary import vary_on_headers
 
 from apps.core.domain import DomainConflict
 from apps.core.http import requires_runtime
@@ -38,17 +39,53 @@ def _attendance_redirect(order_id=None):
 
 def _operation_error(request, error, order_id=None, status=409):
     messages = error.messages if isinstance(error, ValidationError) else [str(error)]
+    if request.headers.get("HX-Request") == "true":
+        response = render(request, "orders/action_error.html", {"errors": messages}, status=status)
+        response["HX-Retarget"] = "#attendance-feedback"
+        response["HX-Reswap"] = "innerHTML"
+        return response
     return render(request, "orders/error.html", {"errors": messages, "order_id": order_id}, status=status)
+
+
+def _board_response(request, data):
+    """Refresh the shared lists and items with their explicit destination."""
+    response = render(request, "orders/board_response.html", data)
+    response["X-Selected-Order"] = str(data["selected_id"])
+    return response
+
+
+def _attendance_result(request, order_id, *, navigate=False):
+    """Return affected fragments for HTMX and preserve ordinary form navigation."""
+    if request.headers.get("HX-Request") != "true":
+        return _attendance_redirect(order_id)
+    if navigate:
+        response = render(request, "orders/workspace.html", attendance_snapshot(order_id))
+        response["HX-Push-Url"] = f"{reverse('home')}?order={order_id}"
+        return response
+    return _board_response(request, board_snapshot(order_id))
 
 
 @require_GET
 @never_cache
+@vary_on_headers("HX-Request")
 def attendance(request):
     """Present drafts, captures and explicit catalogue/item actions."""
     search = request.GET.get("q", "").strip()[:120]
     data = attendance_snapshot(_selected_id(request), search)
     data["runtime"] = runtime_snapshot()
-    return render(request, "orders/attendance.html", data)
+    fragment = request.headers.get("HX-Request") == "true" and request.headers.get("HX-History-Restore-Request") != "true"
+    template = "orders/workspace.html" if fragment else "orders/attendance.html"
+    return render(request, template, data)
+
+
+@require_GET
+@never_cache
+def product_choices(request):
+    """Filter catalogue choices without replacing the search field or order."""
+    data = attendance_snapshot(_selected_id(request), request.GET.get("q", "").strip()[:120])
+    response = render(request, "orders/product_choices.html", data)
+    response["X-Selected-Order"] = str(data["selected_id"])
+    return response
 
 
 @require_GET
@@ -61,9 +98,7 @@ def board_fragment(request):
         data["selected_id"] = ""
     if request.GET.get("revision") == str(data["revision"]):
         return HttpResponse(status=204)
-    response = render(request, "orders/board_response.html", data)
-    response["X-Selected-Order"] = str(data["selected_id"])
-    return response
+    return _board_response(request, data)
 
 
 @require_POST
@@ -78,7 +113,7 @@ def create_order(request):
         order = open_order(**form.cleaned_data)
     except ValidationError as exc:
         return _operation_error(request, exc)
-    return _attendance_redirect(order.pk)
+    return _attendance_result(request, order.pk, navigate=True)
 
 
 @require_http_methods(["GET", "POST"])
@@ -125,7 +160,7 @@ def consume_measurement(request):
         add_measurement_item(**form.cleaned_data)
     except ValidationError as exc:
         return _operation_error(request, exc, order_id)
-    return _attendance_redirect(order_id)
+    return _attendance_result(request, order_id)
 
 
 @require_POST
@@ -141,7 +176,7 @@ def delete_item(request):
         remove_item(**form.cleaned_data)
     except ValidationError as exc:
         return _operation_error(request, exc, order_id)
-    return _attendance_redirect(order_id)
+    return _attendance_result(request, order_id)
 
 
 @require_http_methods(["GET", "POST"])

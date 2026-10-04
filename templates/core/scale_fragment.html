@@ -1,0 +1,7 @@
+<section id="runtime-status" class="scale-summary" aria-label="Balança"
+  hx-get="{% url 'status_fragment' %}?surface=attendance"
+  hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
+  <div><span class="eyebrow">PESO LÍQUIDO {% if runtime.scale_mode != 'SERIAL' %}SIMULADO{% endif %}</span>
+    <strong class="scale-weight">{{ runtime.weight_kg }} <small>kg</small></strong></div>
+  <p>{{ runtime.scale_label }}</p>
+</section>

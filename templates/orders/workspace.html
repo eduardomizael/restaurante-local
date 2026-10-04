@@ -1,0 +1,12 @@
+<div id="attendance-workspace" hx-history="false" data-selected-order="{{ selected_id|default_if_none:'' }}">
+  <div id="attendance-feedback" role="alert"></div>
+  {% include 'orders/board.html' %}
+  {% include 'orders/measurements.html' %}
+  <div class="attendance-grid">
+    {% include 'orders/order_list.html' %}
+    <div class="attendance-main">
+      {% include 'orders/product_picker.html' %}
+      {% include 'orders/order_panel.html' %}
+    </div>
+  </div>
+</div>

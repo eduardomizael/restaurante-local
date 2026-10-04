@@ -9,6 +9,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError, call_command
 
+from config.environment import env
 from runtime.instance_lock import InstanceLock
 
 
@@ -48,7 +49,7 @@ class Command(BaseCommand):
             temporary = config_path.with_suffix(".tmp")
             temporary.write_text(json.dumps(configuration, indent=2), encoding="utf-8")
             temporary.replace(config_path)
-            settings.SECRET_KEY = configuration["secret_key"]
+            settings.SECRET_KEY = env.str("SECRET_KEY", default=configuration["secret_key"])
             call_command("migrate", interactive=False, verbosity=options["verbosity"])
             self.stdout.write(self.style.SUCCESS(f"Dados locais preparados em {data_dir}"))
         finally:

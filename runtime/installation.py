@@ -1,8 +1,9 @@
 """Installation configuration, separate from commercial configuration."""
 
 import json
-import os
 from pathlib import Path
+
+from config.environment import env
 
 
 def resolve_data_dir():
@@ -11,10 +12,10 @@ def resolve_data_dir():
     Returns:
         Path: Installation data directory.
     """
-    override = os.environ.get("LOCAL_WEIGHING_DATA_DIR")
+    override = env.str("LOCAL_WEIGHING_DATA_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    base = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local" / "share"))
+    base = Path(env.str("LOCALAPPDATA"))
     return base / "RestauranteLocal"
 
 

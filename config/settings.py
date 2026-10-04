@@ -1,14 +1,12 @@
 """Read-only settings; installation is an explicit management command."""
 
-from pathlib import Path
-
+from config.environment import BASE_DIR, env
 from runtime.installation import read_installation, resolve_data_dir
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = resolve_data_dir()
 INSTALLATION = read_installation(DATA_DIR)
-SECRET_KEY = INSTALLATION.get("secret_key", "")
-DEBUG = False
+SECRET_KEY = env.str("SECRET_KEY", default=INSTALLATION.get("secret_key", ""))
+DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes", "apps.core", "apps.products",
@@ -37,7 +35,7 @@ DATABASES = {"default": {
     "OPTIONS": {"transaction_mode": "IMMEDIATE", "timeout": 5},
 }}
 LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "America/Sao_Paulo"
+TIME_ZONE = env.str("TIME_ZONE")
 USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

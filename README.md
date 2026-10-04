@@ -18,6 +18,8 @@ Integração real implementada: configuração de porta/fila, leitura COM3 e imp
 
 ## Desenvolvimento e execução
 
+O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão sempre visíveis. Listas maiores rolam dentro dos próprios painéis. O cadastro exibe produtos em três colunas. A resolução de referência é a área disponível do navegador; para aproveitar toda a tela, usar zoom de 100% e janela maximizada ou tela cheia. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md).
+
 ### Abertura por arquivos no Windows
 
 Com o ambiente de desenvolvimento já preparado, dê dois cliques em `Iniciar.bat` para abrir o aplicativo com os equipamentos reais. O arquivo inicia servidor, workers e bandeja e abre o navegador. Fechar o navegador não encerra o aplicativo; use **Sair** na bandeja. Não feche a janela do terminal para encerrar normalmente.

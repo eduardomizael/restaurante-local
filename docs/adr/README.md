@@ -10,6 +10,7 @@
 - [ADR-0023 — Layout da comanda conforme referência visual](0023-layout-da-comanda-conforme-referencia.md).
 - [ADR-0024 — Logo opcional na comanda](0024-logo-opcional-na-comanda.md).
 - [ADR-0025 — Atualização confirmada pelo inicializador](0025-atualizacao-confirmada-pelo-inicializador.md).
+- [ADR-0026 — Atendimento touch em tela horizontal](0026-atendimento-touch-em-tela-horizontal.md).
 
 A ADR-0012 foi criada para este aplicativo durante o planejamento no repositório anterior e transferida em 03/10/2026. Seu identificador foi preservado para manter rastreabilidade; as ADRs 0001–0011 do Restaurante não são decisões normativas deste projeto. Novas ADRs locais seguem a partir de 0013.
 

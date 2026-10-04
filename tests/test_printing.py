@@ -169,7 +169,7 @@ class DocumentTests(PrintingFixture, TestCase):
                      unit="UN", unit_price_cents=3990, appears_on_order_slip=True)
         add_product_item(order_id=self.order.pk, product_id=self.unit.pk, quantity_units=1, request_key=uuid4())
         content = draft_content(self.order)
-        top, manual = render_text(content).split("ACRÉSCIMOS MANUSCRITOS")
+        top, manual = render_text(content).split("PRODUTO")
         self.assertIn("Refeição por peso", top)
         self.assertIn("REFEIÇÃO À VONTADE", top)
         self.assertNotIn("Bebida reservada", top)
@@ -181,14 +181,14 @@ class DocumentTests(PrintingFixture, TestCase):
     def test_inserted_units_mark_boxes_and_preserve_total_without_duplicating_top_item(self):
         add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
         text = render_text(draft_content(self.order))
-        top, manual = text.split("ACRÉSCIMOS MANUSCRITOS")
+        top, manual = text.split("PRODUTO")
         self.assertNotIn("Bebida reservada", top)
         row = next(line for line in manual.splitlines() if line.startswith("Bebida reservada"))
         self.assertEqual(row[28:], "[X][X][ ][ ][ ][ ]")
         self.assertNotIn("Lançado:", manual)
         self.assertNotIn("14,00", manual)
         self.assertIn("SUBTOTAL REFEIÇÕES R$ 86,89", top)
-        self.assertIn("SUBTOTAL PRÉ-INSERIDO R$ 100,89", manual)
+        self.assertNotIn("SUBTOTAL PRÉ-INSERIDO", manual)
 
     def test_quantity_overflow_is_explicit_and_fits_paper_width(self):
         add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=9, request_key=uuid4())
@@ -225,7 +225,8 @@ class DocumentTests(PrintingFixture, TestCase):
         self.assertIsNone(self.order.finalized_at)
         self.assertFalse(job.document.is_final)
         original = render_text(job.document.content)
-        self.assertIn("COMANDA ABERTA", original)
+        self.assertNotIn("COMANDA ABERTA", original)
+        self.assertIn(f"COMANDA #{self.order.number}", original)
         self.assertEqual(Measurement.objects.filter(status="AVAILABLE").count(), 2)
         PrintWorker(Event()).process_one()
         add_product_item(order_id=self.order.pk, product_id=self.marked.pk, quantity_units=2, request_key=uuid4())
@@ -340,7 +341,7 @@ class PrintHTTPTests(PrintingFixture, TestCase):
 
     def test_preview_get_does_not_finalize_and_post_returns_frozen_document(self):
         response = self.client.get(reverse("print_preview", args=[self.order.pk]))
-        self.assertContains(response, "Prévia de rascunho", html=False)
+        self.assertContains(response, "PRÉVIA DE RASCUNHO", html=False)
         self.assertContains(response, "TOTAL A PAGAR")
         self.assertFalse(OrderDocument.objects.exists())
         initial = response.context["form"].initial

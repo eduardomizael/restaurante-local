@@ -1,0 +1,12 @@
+{% load commercial %}
+<article id="product-{{ product.pk }}" class="card product-row{% if product.is_scale_product %} scale-product-card{% endif %}">
+  <div class="product-details"><h2>{{ product.description }}</h2><p>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</p>
+    {% if not product.active %}<p class="muted">Inativo</p>{% endif %}
+    <div class="tags product-flags" aria-label="Opções de {{ product.description }}">
+      {% include 'products/flag.html' with flag='is_scale_product' label='Balança' checked=product.is_scale_product %}
+      {% include 'products/flag.html' with flag='appears_on_order_slip' label='Aparece na comanda' checked=product.appears_on_order_slip %}
+      {% include 'products/flag.html' with flag='is_quick_access' label='Acesso rápido' checked=product.is_quick_access %}
+    </div>
+  </div>
+  <a class="button secondary" href="{% url 'edit_product' product.pk %}">✎ Editar <span class="sr-only">{{ product.description }}</span></a>
+</article>

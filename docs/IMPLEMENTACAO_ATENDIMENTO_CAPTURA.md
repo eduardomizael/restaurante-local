@@ -44,3 +44,15 @@ Este incremento documental foi concluído em seguida; consulte [Documento e impr
 
 Configuração de cabeçalho/rodapé e DTO documental congelado; preview em bobina contínua de 80 mm, finalização isolada da selecionada e fila simulada com idempotência/recuperação de resultado incerto. Adaptadores COM/RAW, perfil de estabilidade definitivo e distribuição Windows continuam pendentes.
 
+## Atualização de 04/10/2026 — Tags editáveis no catálogo
+
+As opções **Balança**, **Aparece na comanda** e **Acesso rápido** aparecem em todos os cards como checkboxes estilizados em tags. Desmarcadas têm contorno; marcadas têm preenchimento e símbolo de confirmação. Clique ou espaço no teclado salva imediatamente por POST/HTMX e substitui somente o fragmento do catálogo, preservando a busca fora dele. Os alvos têm pelo menos 48 px e foco visível.
+
+Uma seção própria **Produto da balança** destaca a seleção atual, mesmo se não corresponder à busca. O produto não se repete entre os demais. Somente produtos ativos por KG podem assumir a função; nos demais, essa tag fica indisponível. Marcar outro produto transfere a seleção usando o serviço e a restrição única já existentes. Desmarcar o selecionado deixa a balança sem produto configurado e a captura continua respeitando a regra existente de exigir produto ativo por KG.
+
+O novo serviço `set_product_flag` aceita apenas as três opções e usa a revisão exibida, leitura e escrita na mesma transação SQLite IMMEDIATE. Preserva preço, descrição, unidade, ordenação e outras flags. O selector lê a seleção e os outros cards em um snapshot consistente. A transferência incrementa as revisões dos produtos envolvidos e não altera medições ou documentos históricos.
+
+Durante a requisição, bloquear temporariamente as tags disponíveis do catálogo para evitar ações concorrentes no fragmento; controles originalmente indisponíveis permanecem assim. Erros de validação e revisão obsoleta retornam estado confirmado e mensagem. Falhas de conexão ou HTTP sem fragmento de validação restauram os checkboxes ao último estado confirmado. Exigir POST, CSRF e runtime ativo.
+
+Sem novas migrations. Sete testes específicos cobrem seleção única, transferência, remoção de seleção, atualização isolada, filtros, candidatos inválidos, revisões obsoletas e proteção HTTP. Validação visual em dados temporários com simuladores confirmou transferência sem recarga, marcação/desmarcação, acionamento pelo teclado e recuperação após alteração em outra sessão. Nenhum equipamento real ou banco operacional foi usado.
+

@@ -1,0 +1,14 @@
+<form method="post" action="{% url 'update_product_flag' product.pk %}"
+      hx-post="{% url 'update_product_flag' product.pk %}" hx-trigger="change"
+      hx-target="#catalogue-results" hx-swap="outerHTML" hx-sync="#catalogue-results:drop"
+      hx-disabled-elt="#catalogue-results input[type='checkbox']:not(:disabled)" class="product-flag-form">
+  {% csrf_token %}
+  <input type="hidden" name="flag" value="{{ flag }}">
+  <input type="hidden" name="expected_revision" value="{{ product.revision }}">
+  <input type="hidden" name="q" value="{{ search }}">
+  <label class="product-flag">
+    <input id="product-{{ product.pk }}-{{ flag }}" type="checkbox" name="enabled" value="on"
+           data-saved-checked="{{ checked|yesno:'true,false' }}"{% if checked %} checked{% endif %}{% if flag == 'is_scale_product' and not checked %}{% if product.unit != 'KG' or not product.active %} disabled{% endif %}{% endif %}>
+    <span class="tag">{{ label }}<span class="sr-only">: {{ product.description }}{% if flag == 'is_scale_product' and not checked %}{% if product.unit != 'KG' or not product.active %} (requer produto ativo por kg){% endif %}{% endif %}</span></span>
+  </label>
+</form>

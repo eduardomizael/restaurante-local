@@ -1,9 +1,20 @@
+from django.db import transaction
+
 from apps.products.models import Product
 
 
 def catalogue_products(search=""):
     """Return editable catalogue entries, including inactive products."""
     return Product.objects.filter(description__icontains=search)
+
+
+def catalogue_snapshot(search=""):
+    """Read the scale selection and remaining cards from one database snapshot."""
+    with transaction.atomic():
+        return {
+            "selected_scale_product": scale_product(),
+            "products": list(catalogue_products(search).filter(is_scale_product=False)),
+        }
 
 
 def active_products():

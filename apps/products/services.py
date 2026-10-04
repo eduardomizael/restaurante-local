@@ -7,6 +7,38 @@ from apps.core.services import record_event
 from apps.products.models import Product
 
 
+def set_product_flag(*, product_id, flag, enabled, expected_revision):
+    """Set one catalogue flag without overwriting other product fields.
+
+    Args:
+        product_id: Product being edited.
+        flag: One of the three editable catalogue flag names.
+        enabled: Explicit desired boolean value.
+        expected_revision: Revision displayed when the action was requested.
+
+    Returns:
+        Product: Saved product, with an atomic scale selection transfer if needed.
+
+    Raises:
+        ValidationError: Invalid flag, product, value or stale revision.
+    """
+    if flag not in {"is_scale_product", "is_quick_access", "appears_on_order_slip"}:
+        raise ValidationError("Opção de produto inválida.")
+    if type(enabled) is not bool:
+        raise ValidationError("Opção do produto deve ser booleana.")
+    require_integer(expected_revision, minimum=1, label="Revisão")
+    with write_transaction():
+        product = Product.objects.filter(pk=product_id).first()
+        if product is None:
+            raise ValidationError("Produto não encontrado.")
+        values = {name: getattr(product, name) for name in (
+            "description", "unit", "unit_price_cents", "active", "is_scale_product",
+            "is_quick_access", "appears_on_order_slip", "quick_access_order", "slip_order",
+        )}
+        values[flag] = enabled
+        return save_product(product_id=product.pk, expected_revision=expected_revision, **values)
+
+
 def save_product(*, description, unit, unit_price_cents, product_id=None, expected_revision=None,
                  active=True, is_scale_product=False, is_quick_access=False,
                  appears_on_order_slip=False, quick_access_order=0, slip_order=0):

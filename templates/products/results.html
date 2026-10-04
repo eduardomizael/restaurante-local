@@ -1,0 +1,16 @@
+<div id="catalogue-results">
+  <div id="catalogue-feedback" class="form-errors" role="status" aria-live="polite">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>
+  <section class="scale-product-section" aria-labelledby="scale-product-heading">
+    <div class="panel-heading"><h2 id="scale-product-heading">Produto da balança</h2></div>
+    <p class="muted">Somente um produto ativo por kg pode ser selecionado. Marcar outro transfere a seleção.</p>
+    {% if selected_scale_product %}{% include 'products/card.html' with product=selected_scale_product %}
+    {% else %}<p>Nenhum produto selecionado para a balança. Marque a tag Balança em um produto ativo por kg.</p>{% endif %}
+  </section>
+  <section aria-labelledby="other-products-heading">
+    <h2 id="other-products-heading">{% if search %}Resultados para “{{ search }}”{% else %}Demais produtos{% endif %}</h2>
+    <div class="product-list">
+      {% for product in products %}{% include 'products/card.html' %}
+      {% empty %}<div class="card"><p>{% if search %}Nenhum outro produto encontrado para esta busca.{% else %}Nenhum outro produto cadastrado.{% endif %}</p></div>{% endfor %}
+    </div>
+  </section>
+</div>

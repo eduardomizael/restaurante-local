@@ -2,14 +2,5 @@
 {% block content %}
 <div class="heading heading-actions"><div><p class="eyebrow">CADASTRO LOCAL</p><h1>Produtos</h1></div><a class="button" href="{% url 'new_product' %}">＋ Novo produto</a></div>
 <form method="get" class="search-form"><label for="catalogue-search">Buscar produto</label><input id="catalogue-search" name="q" value="{{ search }}" placeholder="Descrição"><button type="submit" class="secondary">⌕ Buscar</button></form>
-<div class="product-list">
-{% for product in products %}
-  <article class="card product-row">
-    <div><h2>{{ product.description }}</h2><p>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</p>
-      <div class="tags">{% if not product.active %}<span class="tag">Inativo</span>{% endif %}{% if product.is_scale_product %}<span class="tag">Balança</span>{% endif %}{% if product.is_quick_access %}<span class="tag">Acesso rápido</span>{% endif %}{% if product.appears_on_order_slip %}<span class="tag">Aparece na comanda</span>{% endif %}</div>
-    </div>
-    <a class="button secondary" href="{% url 'edit_product' product.pk %}">✎ Editar <span class="sr-only">{{ product.description }}</span></a>
-  </article>
-{% empty %}<section class="card"><h2>Nenhum produto encontrado</h2><p>Cadastre a refeição por kg, à vontade e os produtos de acesso rápido.</p></section>{% endfor %}
-</div>
+{% include 'products/results.html' %}
 {% endblock %}

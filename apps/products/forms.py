@@ -34,6 +34,18 @@ class ScaledDecimalField(forms.CharField):
         return result
 
 
+class ProductFlagForm(forms.Form):
+    """Parse an explicit desired value for one catalogue flag."""
+
+    flag = forms.ChoiceField(choices=[
+        ("is_scale_product", "Balança"),
+        ("is_quick_access", "Acesso rápido"),
+        ("appears_on_order_slip", "Aparece na comanda"),
+    ])
+    enabled = forms.BooleanField(required=False)
+    expected_revision = forms.IntegerField(min_value=1)
+
+
 class ProductForm(forms.Form):
     description = forms.CharField(label="Descrição", max_length=120)
     unit = forms.ChoiceField(label="Unidade", choices=Product.Unit.choices)

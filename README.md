@@ -18,6 +18,18 @@ Integração real implementada: configuração de porta/fila, leitura COM3 e imp
 
 ## Desenvolvimento e execução
 
+### Abertura por arquivos no Windows
+
+Com o ambiente de desenvolvimento já preparado, dê dois cliques em `Iniciar.bat` para abrir o aplicativo com os equipamentos reais. O arquivo inicia servidor, workers e bandeja e abre o navegador. Fechar o navegador não encerra o aplicativo; use **Sair** na bandeja. Não feche a janela do terminal para encerrar normalmente.
+
+Use `Atualizar.bat` na primeira instalação ou quando uma atualização exigir migrations, sempre com o aplicativo fechado. Ele executa `initialize_local`, que prepara os dados e faz backup dos dados existentes antes de atualizar o banco. A abertura diária não executa essa etapa. O arquivo não instala dependências nem atualiza o código.
+
+Para criar o atalho na área de trabalho, clique com o botão direito em `Iniciar.bat` e escolha **Enviar para → Área de trabalho (criar atalho)**; no Windows 11, pode ser necessário **Mostrar mais opções**. Os arquivos usam sua própria pasta como diretório de trabalho, inclusive quando chamados por atalho.
+
+Para simulação, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. Na distribuição final, o atalho usará o inicializador sem console com runtime e dependências incluídos; esse empacotamento permanece pendente.
+
+### Comandos técnicos
+
 Requer Python 3.13 e uv para desenvolvimento. Os comandos são executados nesta raiz:
 
 ```powershell
@@ -25,6 +37,19 @@ rtk proxy uv sync --frozen --cache-dir .uv-cache
 rtk proxy uv run --offline --no-sync python manage.py initialize_local
 rtk proxy uv run --offline --no-sync python manage.py run_local --simulate --preview-print
 ```
+
+### Variáveis de ambiente
+
+A aplicação carrega o arquivo `.env` em UTF-8 da raiz deste projeto usando `django-environ`, com defaults tipados. O arquivo local está fora do Git; `.env.example` contém o modelo versionado. Em outra instalação, copie `.env.example` para `.env`. A ausência do arquivo não impede a execução. Os comandos `run_local`, `initialize_local` e os dois arquivos `.bat` usam a mesma configuração.
+
+| Variável | Default | Uso |
+| --- | --- | --- |
+| `DEBUG` | `False` | Diagnóstico Django; manter `False` na operação. |
+| `TIME_ZONE` | `America/Sao_Paulo` | Fuso horário da aplicação. |
+| `LOCAL_WEIGHING_DATA_DIR` | `%LOCALAPPDATA%\RestauranteLocal` | Diretório de banco, configuração, logs e backups, fora da pasta do programa. |
+| `SECRET_KEY` | Chave local gerada por `initialize_local` | Override opcional; omitir para manter a chave da instalação. |
+
+Variáveis já definidas no ambiente do processo têm prioridade sobre o `.env`, conforme o [comportamento de django-environ](https://django-environ.readthedocs.io/en/stable/api.html). Isso permite isolar dados de testes sem alterar o arquivo local. Reinicie o programa para carregar alterações. Alterar o diretório seleciona outra instalação e não move os dados existentes. Porta HTTP e configuração de equipamentos continuam na configuração da instalação, com as etapas próprias de atualização; não são duplicadas no `.env`.
 
 `initialize_local` é a etapa explícita de instalação/atualização: gera segredo local e aplica migrations; em dados existentes, salva backup consistente de SQLite e configuração antes de atualizar. Exige o programa fechado. O início normal nunca migra o banco. Inclui as migrations nativas de `contenttypes` e as migrations geradas dos apps core, products, measurements, orders e printing.
 
@@ -76,3 +101,13 @@ Não instalar, migrar ou iniciar o sistema antigo para desenvolver este projeto.
 Na prévia, **Imprimir sem fechar** mantém a comanda editável e preserva cada documento no histórico; **Finalizar e imprimir** continua disponível separadamente. Itens marcáveis usam [X] sem valor adicional abaixo da linha. A tela fixa o peso após a captura estável e só libera outra medição depois de zero.
 
 Esta atualização inclui a migration printing/0003. Feche o aplicativo com **Sair** na bandeja, execute initialize_local (backup automático) e depois run_local. Nenhuma atualização automática ocorre ao abrir. Documentos já salvos mantêm seu formato original.
+
+## Atualização: área de configurações
+
+A navegação superior reúne Atendimento, Produtos, Histórico, Configurações e Status. Em **Configurações**, os submenus **Geral**, **Numeração**, **Documento** e **Equipamentos** acessam os respectivos formulários. Em **Geral**, edite o nome mostrado na barra superior e no título das páginas. O cabeçalho impresso continua sendo configurado separadamente em Documento. Os indicadores real/simulado da barra e o rodapé técnico global foram removidos.
+
+Esta atualização inclui a migration `configuration/0002`. Feche o aplicativo pela bandeja, execute `Atualizar.bat` para backup e atualização do banco e depois `Iniciar.bat`. Consulte a [ADR-0022](docs/adr/0022-area-de-configuracoes-e-nome-da-aplicacao.md).
+
+## Atualização: tags no catálogo
+
+Em Produtos, clique nas tags **Balança**, **Aparece na comanda** ou **Acesso rápido** para salvar a opção sem recarregar a página. Tags preenchidas estão marcadas; tags com contorno estão desmarcadas. O produto da balança aparece em uma seção própria no topo. Selecionar outro produto ativo por KG transfere a seleção automaticamente, mantendo no máximo um produto da balança. Esta alteração não cria migrations; reabra o programa para carregar o código atualizado.

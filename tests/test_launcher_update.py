@@ -7,6 +7,7 @@ from pathlib import Path
 import socket
 import sqlite3
 import subprocess
+import sys
 import tempfile
 from unittest import skipUnless
 from unittest.mock import patch
@@ -44,7 +45,7 @@ class LauncherCommandTests(SimpleTestCase):
 class WindowsLauncherTests(SimpleTestCase):
     def launch(self, directory, answer):
         environment = dict(os.environ, LOCAL_WEIGHING_DATA_DIR=directory,
-                           DJANGO_SETTINGS_MODULE="config.settings")
+                           DJANGO_SETTINGS_MODULE="config.settings", UV_PROJECT_ENVIRONMENT=sys.prefix)
         return subprocess.run(["cmd.exe", "/d", "/c", "Iniciar.bat", "--simulate", "--preview-print",
                                "--no-tray", "--no-browser"], cwd=settings.BASE_DIR, env=environment,
                               input=answer, capture_output=True, timeout=30)

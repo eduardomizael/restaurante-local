@@ -8,10 +8,12 @@ if errorlevel 1 goto directory_error
 
 where rtk >nul 2>&1
 if errorlevel 1 goto tools_error
-if not exist ".venv\Scripts\python.exe" goto environment_error
+set "launcher_python=.venv\Scripts\python.exe"
+if defined UV_PROJECT_ENVIRONMENT set "launcher_python=%UV_PROJECT_ENVIRONMENT%\Scripts\python.exe"
+if not exist "%launcher_python%" goto environment_error
 
 :start_application
-rtk proxy ".venv\Scripts\python.exe" manage.py run_local %*
+rtk proxy "%launcher_python%" manage.py run_local %*
 set "launcher_exit_code=%errorlevel%"
 if "%launcher_exit_code%"=="3" goto offer_update
 if not "%launcher_exit_code%"=="0" (
@@ -32,7 +34,7 @@ goto update_declined
 
 :perform_update
 set "launcher_update_attempted=1"
-rtk proxy ".venv\Scripts\python.exe" manage.py initialize_local
+rtk proxy "%launcher_python%" manage.py initialize_local
 set "launcher_exit_code=%errorlevel%"
 if not "%launcher_exit_code%"=="0" goto update_failed
 echo.

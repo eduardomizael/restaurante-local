@@ -22,3 +22,4 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0029 — Distribuição Windows x86 e x64](0029-distribuicao-windows-x86-e-x64.md).
 - [ADR-0030 — Comando único para reproduzir o empacotamento](0030-comando-unico-para-empacotamento-windows.md).
 - [ADR-0031 — Desinstalação com dados opcionais](0031-desinstalacao-com-dados-opcionais.md).
+- [ADR-0032 — Atendimento em área útil reduzida](0032-atendimento-em-area-util-reduzida.md).

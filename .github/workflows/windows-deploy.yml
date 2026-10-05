@@ -12,8 +12,16 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: x64
+            python: cpython-3.13-windows-x86_64-none
+          - architecture: x86
+            python: cpython-3.13-windows-x86-none
+    env:
+      UV_PYTHON: ${{ matrix.python }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -38,31 +46,41 @@ jobs:
           BUILD_REVISION: ${{ github.sha }}
         run: uv run --no-sync python packaging/build.py --version 0.1.0 --revision $env:BUILD_REVISION
       - run: uv run --no-sync python packaging/smoke.py
-      - name: Publicar download no repositório
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RestauranteLocal-windows-${{ matrix.architecture }}
+          path: |
+            dist/RestauranteLocal-windows-${{ matrix.architecture }}.zip
+            dist/RestauranteLocal-windows-${{ matrix.architecture }}.zip.sha256
+      - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          name: update-web-${{ matrix.architecture }}
+          path: dist/update-web
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: RestauranteLocal-windows-*
+          merge-multiple: true
+          path: dist
+      - name: Publicar os dois pacotes na mesma Release
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_REVISION: ${{ github.sha }}
         run: |
-          $tag = "windows-$env:BUILD_REVISION"
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag dist/RestauranteLocal-windows-x64.zip dist/RestauranteLocal-windows-x64.zip.sha256 --target $env:BUILD_REVISION --title "Restaurante Local — Windows ($($env:BUILD_REVISION.Substring(0, 7)))" --notes-file packaging/RELEASE_NOTES.md --latest
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-      - uses: actions/upload-artifact@v4
-        with:
-          name: RestauranteLocal-windows-x64
-          path: |
-            dist/RestauranteLocal-windows-x64.zip
-            dist/RestauranteLocal-windows-x64.zip.sha256
-      - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        with:
-          name: update-web
-          path: dist/update-web
+          tag="windows-$BUILD_REVISION"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" dist/*.zip dist/*.sha256 --target "$BUILD_REVISION" --title "Restaurante Local — Windows (${BUILD_REVISION:0:7})" --notes-file packaging/RELEASE_NOTES.md --latest
+          fi
   deploy:
-    needs: build
+    needs: [build, release]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -74,7 +92,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: update-web
+          pattern: update-web-*
+          merge-multiple: true
           path: update-web
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

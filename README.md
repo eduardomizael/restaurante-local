@@ -1,5 +1,7 @@
 # Restaurante Local
 
+Atualização em desenvolvimento: encerramento touch pelo botão **Encerrar aplicação**, com confirmação, conforme [ADR-0028](docs/adr/0028-encerramento-touch-pela-interface.md). Distribuição com pacotes **x86 (Windows de 32 bits)** e **x64 (Windows de 64 bits)** e atualização por arquitetura, conforme [ADR-0029](docs/adr/0029-distribuicao-windows-x86-e-x64.md). Não inclui WebView2. A distribuição online recebe estas alterações somente após publicação na main.
+
 Aplicação autônoma de pesagem, pré-inserção de itens e impressão de comandas para um PC Windows 10/11, com interface touch em Django e operação offline.
 
 Raiz: `D:\restaurante-local`. Projeto independente de `D:\restaurante`; não compartilha ambiente, imports, banco, configuração ou agentes com ele.
@@ -17,6 +19,8 @@ Documento e fila simulada implementados: cabeçalho/rodapé, preview contínuo d
 Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). O usuário considera balança e impressão funcionais para a entrega atual. O pacote Windows e a atualização web da main estão implementados; ativação do deploy está descrita no manual. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Ensaios físicos adicionais permanecem documentados para ajustes posteriores.
 
 ## Desenvolvimento e execução
+
+O trabalho diário fica em **`codex/develop`**, a branch permanente de desenvolvimento. Commits enviados a ela não criam Releases nem atualizam a máquina final. Quando as mudanças estiverem prontas, abrir um PR de `codex/develop` para **`main`**; após revisão e validação, o merge na `main` dispara a publicação automática. Depois do release, sincronizar `codex/develop` com a `main` e continuar nela.
 
 Para a máquina final, use o pacote com executáveis e atualização web da **main** ao abrir: [instalação e atualização Windows](docs/DISTRIBUICAO_WINDOWS.md). Build: `rtk proxy uv run --no-sync --group build --cache-dir .uv-cache python packaging/build.py --version 0.1.0`. Os arquivos `.bat` na raiz abaixo continuam sendo ferramentas de desenvolvimento; os scripts distribuídos estão em `packaging/windows/`. Publicação inicial do workflow e ativação do Pages ainda são etapas externas.
 

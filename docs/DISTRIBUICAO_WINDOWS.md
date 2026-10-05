@@ -1,10 +1,14 @@
-# Instalação e atualização — Windows x64
+# Instalação e atualização — Windows de 32 ou 64 bits
+
+Para Windows de **32 bits**, use `RestauranteLocal-windows-x86.zip`. Para Windows de **64 bits**, use `RestauranteLocal-windows-x64.zip`. Confira **Configurações → Sistema → Sobre → Tipo de sistema** e escolha pelo Windows instalado, mesmo quando o processador for x64. O escopo é Windows 10/11; Windows 10 Home de 32 bits usa x86. Não é necessário reinstalar Windows.
+
+O workflow gera, testa e publica ambos os pacotes na mesma Release depois que os dois passam. Os canais de atualização são `x86/latest.json` e `x64/latest.json`. A arquitetura instalada é preservada; uma instalação x86 permanece x86 mesmo num Windows de 64 bits. O manifesto da raiz continua atendendo instalações x64 anteriores. O instalador confere a arquitetura real dos EXEs antes de preparar os dados. Veja a [ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md). Estes novos pacotes ficam disponíveis online após publicar esta alteração na main.
 
 O pacote inclui os executáveis, Python, dependências, templates e assets. A máquina final não precisa de Python, uv, npm, rtk ou Git. A operação é offline; somente o download das atualizações exige internet. Balança e impressora usam os drivers já instalados no Windows. A branch **main** é a versão de produção: cada push gera, testa e publica os executáveis em um servidor web.
 
 ## Primeira instalação
 
-1. Baixe `RestauranteLocal-windows-x64.zip` na [última versão do repositório](https://github.com/eduardomizael/restaurante-local/releases/latest) ou na [página de distribuição](https://eduardomizael.github.io/restaurante-local/) e extraia todo o ZIP. Também pode usar o ZIP gerado localmente em `dist/RestauranteLocal-windows-x64.zip`.
+1. Baixe o ZIP x86 ou x64 correspondente ao Windows na [última versão do repositório](https://github.com/eduardomizael/restaurante-local/releases/latest) ou na [página de distribuição](https://eduardomizael.github.io/restaurante-local/) e extraia todo o ZIP. Também pode usar o ZIP gerado localmente em `dist/`.
 2. Execute `Instalar.bat`. Não execute diretamente de dentro do ZIP.
 3. Abra **Restaurante Local** pelo atalho criado na área de trabalho.
 
@@ -16,7 +20,7 @@ O atalho consulta o manifesto web antes de iniciar. Havendo outro commit da main
 
 ## Atualizar manualmente
 
-1. Use **Sair** na bandeja para fechar o programa.
+1. Toque em **Encerrar aplicação** no menu superior e confirme em **Sim, encerrar aplicação**. **Continuar usando** cancela. A opção **Sair** na bandeja também funciona.
 2. Execute `%LOCALAPPDATA%\Programs\RestauranteLocal\Atualizar.bat` (pode criar um atalho para esse arquivo).
 3. Aguarde a mensagem de sucesso e reabra pelo atalho normal.
 
@@ -30,13 +34,15 @@ Uma falha antes da ativação mantém o apontador anterior. Uma migration que fa
 
 Porta COM, impressora, produtos e documento continuam nas telas da aplicação. Configuração opcional `.env` fica na raiz da instalação, fora das pastas de versões, e é copiada para a próxima versão. Não copie `.env` do ambiente de desenvolvimento. Alterar `LOCAL_WEIGHING_DATA_DIR` seleciona outro banco, sem mover dados.
 
-Logs: `%LOCALAPPDATA%\RestauranteLocal\logs`. O backup da atualização inclui banco e `installation.json`; o `.env` compartilhado é preservado na raiz do programa. Fechar o navegador não encerra o programa; use a bandeja.
+Logs: `%LOCALAPPDATA%\RestauranteLocal\logs`. O backup da atualização inclui banco e `installation.json`; o `.env` compartilhado é preservado na raiz do programa. Fechar o navegador não encerra o programa; use **Encerrar aplicação** ou a bandeja. O inicializador encerra seus componentes e libera a instalação; registros já salvos são preservados. Impressões pendentes seguem as regras de recuperação na próxima abertura.
 
 Os executáveis ainda não têm assinatura Authenticode. O Windows pode mostrar aviso de reputação ao executar o pacote baixado. Confirme a origem na página oficial; SHA-256 verifica integridade do download, não substitui assinatura do editor.
 
 ## Gerar e publicar a main
 
-Build executado em Windows x64, Python 3.13, com dependências fixadas no `uv.lock`:
+Desenvolvimento contínuo em `codex/develop`; produção em `main`. Trabalhar e concentrar alterações na `codex/develop`, abrir PR para `main` quando o conjunto estiver pronto e fazer merge somente após revisão, validação e autorização da publicação. A branch de desenvolvimento não publica Releases. Após o release, sincronizá-la com a `main` sem apagar histórico ou alterações em andamento.
+
+Build executado em Windows, Python 3.13, com dependências fixadas no `uv.lock`. A arquitetura do Python determina a dos executáveis. Use ambientes separados; para x86, prepare Python `cpython-3.13-windows-x86-none` e `UV_PROJECT_ENVIRONMENT=.venv-x86`. O exemplo abaixo usa o ambiente padrão:
 
 ```powershell
 rtk proxy uv sync --frozen --group build --cache-dir .uv-cache

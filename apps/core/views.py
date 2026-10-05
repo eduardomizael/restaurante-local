@@ -1,11 +1,12 @@
 from django.conf import settings
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.selectors import runtime_snapshot
 from runtime.state import state
+from apps.core.http import ShutdownResponse
 
 
 @require_GET
@@ -43,6 +44,28 @@ def toggle_pause(request):
     except RuntimeError as exc:
         return JsonResponse({"error": str(exc)}, status=409)
     return render(request, "core/status_fragment.html", {"runtime": runtime_snapshot()})
+
+
+@require_GET
+@never_cache
+def shutdown_confirmation(request):
+    """Ask for an explicit touch-friendly shutdown confirmation."""
+    return render(request, "core/shutdown_confirmation.html", {"runtime": runtime_snapshot()})
+
+
+@require_POST
+@never_cache
+def shutdown(request):
+    """Prepare controlled runtime shutdown after delivering the final page."""
+    if request.POST.get("confirmed") != "yes":
+        return HttpResponse("Confirme o encerramento na tela da aplicação.", status=400)
+    response = ShutdownResponse(None, "core/shutdown_requested.html")
+    response.render()
+    try:
+        response.shutdown_handler = state.prepare_shutdown()
+    except RuntimeError as exc:
+        return HttpResponse(str(exc), status=409)
+    return response
 
 
 @require_GET

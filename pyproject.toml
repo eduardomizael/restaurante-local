@@ -14,3 +14,8 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[dependency-groups]
+build = [
+    "pyinstaller==6.22.0",
+]

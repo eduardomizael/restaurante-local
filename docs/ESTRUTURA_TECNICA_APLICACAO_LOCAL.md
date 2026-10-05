@@ -1,5 +1,7 @@
 # Estrutura técnica da aplicação local de pesagem
 
+Atualização em 05/10/2026: domínio, telas, configuração e transporte físico já foram implementados nos incrementos posteriores. A distribuição agora usa PyInstaller, executáveis Windows x64 e atualização web da main pelo atalho, com dados separados, backup e ativação por apontador. O contrato atual está na [ADR-0027](adr/0027-distribuicao-windows-e-atualizacao-por-release.md) e no [manual de distribuição](DISTRIBUICAO_WINDOWS.md); descrições abaixo de etapas ainda futuras registram o planejamento original.
+
 Data: 03/10/2026. Especificação de implementação conforme [plano](PLANO_APLICACAO_LOCAL_PESAGEM.md) e [ADR-0012](adr/0012-aplicacao-autonoma-django-touch.md). Fundação e recorte inicial de `run_local` implementados em simulação; estado, comandos disponíveis e limitações em [Implementação da fundação](IMPLEMENTACAO_FUNDACAO.md). Models/services de produtos, medições e comandas implementados no [recorte de domínio](IMPLEMENTACAO_DOMINIO.md), conforme [ADR-0013](adr/0013-dominio-comercial-e-concorrencia-sqlite.md). Demais seções descrevem o contrato alvo, não funcionalidades já concluídas.
 
 ## 1. Projeto independente

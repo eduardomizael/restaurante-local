@@ -1,5 +1,7 @@
 # Plano da aplicação local de pesagem e impressão
 
+Atualização de entrega em 05/10/2026: o usuário considera balança e impressão funcionais e priorizou executáveis Windows prontos, com a main como versão de produção e atualização pelo próprio inicializador. Pacote, atualizador web e CI de build/deploy implementados conforme [ADR-0027](adr/0027-distribuicao-windows-e-atualizacao-por-release.md) e [manual](DISTRIBUICAO_WINDOWS.md). Os scripts distribuídos não dependem das ferramentas de desenvolvimento. Publicação inicial do workflow e ativação do servidor web são etapas externas, distintas da geração e validação local do pacote. Ensaios físicos adicionais ficam para ajustes posteriores conforme instrução atual.
+
 Data: 03/10/2026. Status: **escopo e fluxo definidos; Django e interface web touch escolhidos; estrutura técnica especificada para implementação**. Este documento planeja uma aplicação independente; não modifica o Restaurante atual.
 
 Andamento em 03/10/2026: fundação, domínio comercial, atendimento touch, captura automática simulada e documento/fila simulada implementados. Captura automática real e impressão de uma comanda foram verificadas; ensaios físicos de falha, homologação completa e distribuição permanecem pendentes. Consulte os registros da [fundação](IMPLEMENTACAO_FUNDACAO.md), [domínio](IMPLEMENTACAO_DOMINIO.md), [atendimento](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [documento](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Os requisitos abaixo continuam sendo o contrato alvo.

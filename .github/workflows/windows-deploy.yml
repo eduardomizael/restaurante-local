@@ -1,0 +1,74 @@
+name: Build e deploy Windows da main
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.11.26'
+      - run: uv sync --frozen --group build
+      - run: uv run --no-sync python manage.py check --settings=config.test_settings
+      - run: uv run --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
+      - run: uv run --no-sync python manage.py test --settings=config.test_settings
+      - name: Compilar
+        env:
+          BUILD_REVISION: ${{ github.sha }}
+        run: uv run --no-sync python packaging/build.py --version 0.1.0 --revision $env:BUILD_REVISION
+      - run: uv run --no-sync python packaging/smoke.py
+      - name: Publicar download no repositório
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_REVISION: ${{ github.sha }}
+        run: |
+          $tag = "windows-$env:BUILD_REVISION"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag dist/RestauranteLocal-windows-x64.zip dist/RestauranteLocal-windows-x64.zip.sha256 --target $env:BUILD_REVISION --title "Restaurante Local — Windows ($($env:BUILD_REVISION.Substring(0, 7)))" --notes-file packaging/RELEASE_NOTES.md --latest
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RestauranteLocal-windows-x64
+          path: |
+            dist/RestauranteLocal-windows-x64.zip
+            dist/RestauranteLocal-windows-x64.zip.sha256
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          name: update-web
+          path: dist/update-web
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: update-web
+          path: update-web
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: update-web
+      - uses: actions/deploy-pages@v4
+        id: deployment

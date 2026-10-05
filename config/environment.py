@@ -1,6 +1,7 @@
 """Load project environment configuration without installation side effects."""
 
 from pathlib import Path
+import sys
 
 import environ
 
@@ -27,4 +28,6 @@ def load_environment(path):
     return environment
 
 
-env = load_environment(BASE_DIR / ".env")
+# Bundled assets live in _internal; optional settings live beside the executable.
+PROGRAM_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else BASE_DIR
+env = load_environment(PROGRAM_DIR / ".env")

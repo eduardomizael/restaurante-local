@@ -14,9 +14,11 @@ Atendimento touch implementado: cadastro de produtos, múltiplas comandas, produ
 
 Documento e fila simulada implementados: cabeçalho/rodapé, preview contínuo de 80 mm, finalização somente da selecionada, snapshot congelado, histórico e segunda via confirmada. Consulte [entrega documental](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
-Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). Distribuição e homologação física completa permanecem pendentes. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Os limiares de estabilidade ainda exigem ensaio prolongado; acentos, 48 caracteres e corte foram confirmados no equipamento instalado.
+Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). O usuário considera balança e impressão funcionais para a entrega atual. O pacote Windows e a atualização web da main estão implementados; ativação do deploy está descrita no manual. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Ensaios físicos adicionais permanecem documentados para ajustes posteriores.
 
 ## Desenvolvimento e execução
+
+Para a máquina final, use o pacote com executáveis e atualização web da **main** ao abrir: [instalação e atualização Windows](docs/DISTRIBUICAO_WINDOWS.md). Build: `rtk proxy uv run --no-sync --group build --cache-dir .uv-cache python packaging/build.py --version 0.1.0`. Os arquivos `.bat` na raiz abaixo continuam sendo ferramentas de desenvolvimento; os scripts distribuídos estão em `packaging/windows/`. Publicação inicial do workflow e ativação do Pages ainda são etapas externas.
 
 O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão sempre visíveis. Listas maiores rolam dentro dos próprios painéis. O cadastro exibe produtos em três colunas. A resolução de referência é a área disponível do navegador; para aproveitar toda a tela, usar zoom de 100% e janela maximizada ou tela cheia. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md).
 
@@ -30,7 +32,7 @@ Ao detectar instalação/banco ausente ou banco desatualizado, `Iniciar.bat` per
 
 Para criar o atalho na área de trabalho, clique com o botão direito em `Iniciar.bat` e escolha **Enviar para → Área de trabalho (criar atalho)**; no Windows 11, pode ser necessário **Mostrar mais opções**. Os arquivos usam sua própria pasta como diretório de trabalho, inclusive quando chamados por atalho.
 
-Para simulação, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. Na distribuição final, o atalho usará o inicializador sem console com runtime e dependências incluídos; esse empacotamento permanece pendente.
+Para simulação no desenvolvimento, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos da raiz aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. O pacote final usa scripts próprios, inicializador sem console e runtime/dependências incluídos.
 
 ### Comandos técnicos
 
@@ -77,7 +79,7 @@ rtk proxy uv run --offline --no-sync python manage.py test --settings=config.tes
 rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-136 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+182 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. O ensaio `packaging/smoke.py` verifica adicionalmente o executável compilado, instalação e atualização web com dados temporários e transportes simulados. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 ## Documentação
 

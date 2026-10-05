@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 .venv/
 .venv-x86/
+.venv-build-*/
+.build-tools/
 .python-runtime/
 .uv-cache/
 .uv-python/

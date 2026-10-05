@@ -48,13 +48,16 @@ def build(version, revision):
                 source = distribution.locate_file(file)
                 if source.is_file():
                     shutil.copyfile(source, destination / Path(file).name)
-    for file in ("Atualizar.bat", "Instalar.bat", "Iniciar.bat", "Update.ps1", "Launch.ps1"):
+    for file in ("Atualizar.bat", "Instalar.bat", "Iniciar.bat", "Update.ps1", "Launch.ps1", "Desinstalar.bat", "Uninstall.ps1"):
         source = ROOT / "packaging" / "windows" / file
         if file.endswith(".ps1"):
             # Windows PowerShell 5.1 needs BOM for UTF-8 Portuguese messages.
-            (stage / file).write_text(source.read_text(encoding="utf-8"), encoding="utf-8-sig")
+            (stage / file).write_text(source.read_text(encoding="utf-8-sig"), encoding="utf-8-sig")
         else:
             shutil.copyfile(source, stage / file)
+        if file in ("Desinstalar.bat", "Uninstall.ps1"):
+            # Older installed updaters only copy the payload and original bootstrap.
+            shutil.copyfile(stage / file, payload / file)
     shutil.copyfile(ROOT / "docs" / "DISTRIBUICAO_WINDOWS.md", stage / "LEIA-ME.md")
     archive = ROOT / "dist" / f"RestauranteLocal-windows-{architecture}.zip"
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as output:

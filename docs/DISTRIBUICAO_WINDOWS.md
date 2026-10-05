@@ -22,7 +22,7 @@ O atalho consulta o manifesto web antes de iniciar. Havendo outro commit da main
 
 ## Atualizar manualmente
 
-1. Toque em **Encerrar aplicação** no menu superior e confirme em **Sim, encerrar aplicação**. **Continuar usando** cancela. A opção **Sair** na bandeja também funciona.
+1. Abra **Status** no menu superior, toque em **Encerrar aplicação** e confirme em **Sim, encerrar aplicação**. **Continuar usando** cancela. A opção **Sair** na bandeja também funciona.
 2. Execute `%LOCALAPPDATA%\Programs\RestauranteLocal\Atualizar.bat` (pode criar um atalho para esse arquivo).
 3. Aguarde a mensagem de sucesso e reabra pelo atalho normal.
 

@@ -16,4 +16,6 @@ Não encerrar ou finalizar comandas, descartar medições nem apagar fila. Impre
 
 ## Validação
 
+Atualização em 05/10/2026, por solicitação do usuário: **Encerrar aplicação** fica dentro da tela **Status**, na seção **Como encerrar**, com alvo mínimo de 56 px. O menu superior compartilhado mantém somente Atendimento, Produtos, Histórico, Configurações e Status. A confirmação de encerramento também destaca Status como área ativa. Esta posição substitui a decisão anterior de colocar o botão diretamente na navbar; o fluxo de confirmação e parada permanece igual.
+
 Testar confirmação/cancelamento, CSRF, POST, indisponibilidade, pedidos repetidos, sinal após entrega da resposta, bandeja com substituto e runtime HTTP real com transportes simulados. O ensaio do pacote verifica saída normal pelo POST e remoção do registro de instância. Uso físico por toque permanece para conferência na máquina final.

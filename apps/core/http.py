@@ -3,8 +3,24 @@
 from functools import wraps
 
 from django.http import HttpResponse
+from django.template.response import TemplateResponse
 
 from runtime.state import state
+
+
+class ShutdownResponse(TemplateResponse):
+    """Signal shutdown after WSGI delivers the last page to the operator."""
+
+    shutdown_handler = None
+
+    def close(self):
+        """Close the response and send the stop signal once."""
+        handler, self.shutdown_handler = self.shutdown_handler, None
+        try:
+            super().close()
+        finally:
+            if handler is not None:
+                handler()
 
 
 def requires_runtime(view):

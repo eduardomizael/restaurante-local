@@ -8,6 +8,9 @@ a { color: inherit; }
 .primary-nav a, .configuration-nav a { display: flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px; padding: 10px; border: 1px solid #a3bdb4; border-radius: 8px; text-decoration: none; }
 .primary-nav { margin-left: auto; gap: 8px; }
 .primary-nav a { font-size: 14px; }
+.primary-nav .shutdown-link { min-height: 56px; background: #8c3030; color: white; }
+.shutdown-panel { max-width: 800px; }
+.shutdown-panel .form-actions > * { min-height: 56px; min-width: 200px; }
 .primary-nav a[aria-current="page"] { background: #e7f0e9; color: #173d36; border-color: #e7f0e9; }
 .configuration-nav { margin: 0 0 28px; gap: 12px; }
 .configuration-nav a { min-width: 100px; padding: 12px; background: white; color: #173d36; border-color: #9db4a7; }

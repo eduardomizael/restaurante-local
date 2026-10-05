@@ -1,6 +1,7 @@
 """Tray integration imported only by the explicit runtime."""
 
 from runtime.state import state
+from threading import Event
 
 
 def run_tray(application):
@@ -42,7 +43,18 @@ def run_tray(application):
         pystray.MenuItem("Sair", exit_runtime),
         pystray.MenuItem("Equipamentos", open_configuration),
     ))
+    finished = Event()
+
+    def watch_shutdown(tray_icon):
+        """Let interface shutdown wake the native tray loop."""
+        tray_icon.visible = True
+        while not finished.wait(0.1):
+            if application.stop_event.is_set():
+                tray_icon.stop()
+                return
+
     try:
-        icon.run()
+        icon.run(setup=watch_shutdown)
     finally:
+        finished.set()
         icon.stop()

@@ -124,7 +124,7 @@ class TrayTests(SimpleTestCase):
         pystray.Menu.side_effect = lambda *items: items
         pystray.MenuItem.side_effect = lambda label, action, **options: (label, action)
 
-        def interact():
+        def interact(**kwargs):
             menu = pystray.Icon.call_args.args[3]
             menu[0][1](icon, None)
             menu[1][1](icon, None)
@@ -221,6 +221,36 @@ class RuntimeTests(SimpleTestCase):
         self.assertFalse((self.data_dir / "instance.json").exists())
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", application.port))
+
+    def test_http_shutdown_delivers_page_and_signals_runtime(self):
+        from http.cookiejar import CookieJar
+        from urllib.request import HTTPCookieProcessor, Request
+        from urllib.parse import urlencode
+
+        adapter = SimulatedScale()
+        application = LocalApplication(self.data_dir, free_port(), browser=False,
+                                       adapter_factory=lambda: adapter)
+        try:
+            application.start()
+            cookies = CookieJar()
+            opener = build_opener(ProxyHandler({}), HTTPCookieProcessor(cookies))
+            with patch("apps.core.context_processors.application_configuration", return_value=Mock(display_name="Teste")):
+                with opener.open(application.url + "runtime/shutdown/confirm/") as response:
+                    self.assertIn("Continuar usando", response.read().decode())
+            token = next(cookie.value for cookie in cookies if cookie.name == "csrftoken")
+            request = Request(application.url + "runtime/shutdown/",
+                              data=urlencode({"confirmed": "yes", "csrfmiddlewaretoken": token}).encode())
+            with opener.open(request) as response:
+                self.assertIn("Encerramento solicitado", response.read().decode())
+            self.assertTrue(application.stop_event.wait(2))
+            self.assertFalse(state.snapshot()["running"])
+        finally:
+            application.stop()
+        self.assertTrue(adapter.closed)
+        self.assertFalse(application.server_thread.is_alive())
+        lock = InstanceLock(self.data_dir)
+        self.assertTrue(lock.acquire())
+        lock.release()
 
     def test_port_collision_releases_mutex_and_does_not_start_adapter(self):
         adapter_factory = Mock()

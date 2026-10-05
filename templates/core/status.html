@@ -4,6 +4,6 @@
 <p>Fechar esta janela mantém o inicializador em execução.</p></div>
 {% include 'core/status_fragment.html' %}
 <section class="card"><h2>Como encerrar</h2>
-<p>Use <strong>Sair</strong> no ícone da bandeja. Em modo sem bandeja, use Ctrl+C no terminal.</p>
+<p>Toque em <strong>Encerrar aplicação</strong> no menu superior e confirme. Você também pode usar <strong>Sair</strong> na bandeja.</p>
 <p>Balança: {% if runtime_mode.scale_mode == 'SERIAL' %}porta serial real{% else %}simulador{% endif %}. Impressão: {% if runtime_mode.print_mode == 'RAW' %}Windows RAW{% else %}simulada{% endif %}.</p></section>
 {% endblock %}

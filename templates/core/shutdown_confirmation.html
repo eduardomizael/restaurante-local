@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><h1>Encerrar aplicação?</h1></div>
+<section class="card shutdown-panel">
+  <p>O atendimento, a leitura da balança e o processamento da fila de impressão serão interrompidos.</p>
+  <p>As comandas e pesagens já salvas serão mantidas. Para usar novamente, abra o atalho da aplicação.</p>
+  {% if runtime.running %}
+  <form method="post" action="{% url 'shutdown' %}">
+    {% csrf_token %}
+    <input type="hidden" name="confirmed" value="yes">
+    <div class="form-actions">
+      <a class="button secondary" href="{% url 'home' %}">Continuar usando</a>
+      <button class="danger" type="submit">Sim, encerrar aplicação</button>
+    </div>
+  </form>
+  {% else %}
+  <p role="status">A aplicação está indisponível ou encerrando. Reabra pelo atalho para continuar.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -138,6 +138,7 @@ class LocalApplication:
             }), encoding="utf-8")
             temporary.replace(record)
             self.started = True
+            state.bind_shutdown(self.request_stop)
             if self.browser:
                 self.browser_open(self.url)
             logger.info("Inicializador pronto em %s (serial=%s, impressão=%s)",
@@ -168,6 +169,7 @@ class LocalApplication:
 
     def request_stop(self):
         """Stop accepting actions before requesting component termination."""
+        state.unbind_shutdown(self.request_stop)
         state.update(running=False)
         self.stop_event.set()
 

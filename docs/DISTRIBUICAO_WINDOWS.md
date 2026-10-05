@@ -1,5 +1,7 @@
 # Instalação e atualização — Windows de 32 ou 64 bits
 
+Para gerar os pacotes com preparação automática e compreender cada etapa, consulte [Como empacotar e reproduzir](EMPACOTAMENTO_WINDOWS.md). O comando local **Empacotar.bat** usa o mesmo processo de build do GitHub.
+
 Para Windows de **32 bits**, use `RestauranteLocal-windows-x86.zip`. Para Windows de **64 bits**, use `RestauranteLocal-windows-x64.zip`. Confira **Configurações → Sistema → Sobre → Tipo de sistema** e escolha pelo Windows instalado, mesmo quando o processador for x64. O escopo é Windows 10/11; Windows 10 Home de 32 bits usa x86. Não é necessário reinstalar Windows.
 
 O workflow gera, testa e publica ambos os pacotes na mesma Release depois que os dois passam. Os canais de atualização são `x86/latest.json` e `x64/latest.json`. A arquitetura instalada é preservada; uma instalação x86 permanece x86 mesmo num Windows de 64 bits. O manifesto da raiz continua atendendo instalações x64 anteriores. O instalador confere a arquitetura real dos EXEs antes de preparar os dados. Veja a [ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md). Estes novos pacotes ficam disponíveis online após publicar esta alteração na main.
@@ -31,6 +33,18 @@ Sem internet, pode baixar e extrair o ZIP em outro computador e executar seu `In
 Uma falha antes da ativação mantém o apontador anterior. Uma migration que falha pode já ter alterado parte do schema; o backup é preservado, `update-failed.txt` bloqueia a abertura e a mensagem exige suporte antes de reabrir. Uma atualização bem-sucedida remove o bloqueio. Não há promessa de rollback automático do banco.
 
 ## Configurações e suporte
+
+Feche a aplicação por **Encerrar aplicação** e dê dois cliques em `%LOCALAPPDATA%\Programs\RestauranteLocal\Desinstalar.bat` para desinstalar. Também pode usar o `Desinstalar.bat` do ZIP extraído, mantendo seu `Uninstall.ps1` junto dele. Não precisa de RTK, Python, uv, Git ou internet.
+
+O desinstalador mostra os caminhos. Pressione Enter para preservar dados ou digite **APAGAR** para remover permanentemente banco, configurações, logs e **todos os backups**. Confirme com **S**. Ele remove versões antigas, staging, arquivos de atualização, executáveis, seu próprio BAT/PowerShell e o atalho da área de trabalho pertencente à instalação. O terminal fecha após a pausa.
+
+Ao preservar dados, os caminhos aparecem no final. `.env` e `update-url.txt` existentes são guardados em `preserved-installation` na pasta de dados atual; para reutilizá-los numa reinstalação, restaure-os manualmente na raiz do programa. Aplicação aberta ou atualização ativa impedem a remoção.
+
+Arquivos bloqueados geram falha, lista dos resíduos e relatório em `%TEMP%\RestauranteLocal-desinstalacao-<identificador>.txt`. Esse relatório, os scripts e o registro de recuperação ficam preservados e são informados; libere os arquivos e execute novamente.
+
+ZIPs e pastas de origem não são apagados: o script informa os caminhos registrados. Downloads pelo navegador, cópias manuais e atalhos de terceiros podem não ser rastreáveis; o aviso final orienta conferir esses locais. Quando executado de fora da instalação, informa também a pasta da própria ferramenta. Não há serviço, início automático ou registro em “Aplicativos instalados”.
+
+Na primeira atualização de uma instalação antiga, os scripts ficam também na pasta da versão; o novo atualizador recupera a cópia na raiz na próxima abertura. O BAT do pacote extraído pode remover instalações anteriores diretamente. Instalação personalizada exige `-InstallRoot`; dados não identificáveis exigem `-DataRoot` explícito, sem remover nada antes da identificação.
 
 Porta COM, impressora, produtos e documento continuam nas telas da aplicação. Configuração opcional `.env` fica na raiz da instalação, fora das pastas de versões, e é copiada para a próxima versão. Não copie `.env` do ambiente de desenvolvimento. Alterar `LOCAL_WEIGHING_DATA_DIR` seleciona outro banco, sem mover dados.
 

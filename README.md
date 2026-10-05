@@ -1,5 +1,7 @@
 # Restaurante Local
 
+Atualização em desenvolvimento: encerramento touch pelo botão **Encerrar aplicação**, com confirmação, conforme [ADR-0028](docs/adr/0028-encerramento-touch-pela-interface.md). Distribuição com pacotes **x86 (Windows de 32 bits)** e **x64 (Windows de 64 bits)** e atualização por arquitetura, conforme [ADR-0029](docs/adr/0029-distribuicao-windows-x86-e-x64.md). Não inclui WebView2. A distribuição online recebe estas alterações somente após publicação na main.
+
 Aplicação autônoma de pesagem, pré-inserção de itens e impressão de comandas para um PC Windows 10/11, com interface touch em Django e operação offline.
 
 Raiz: `D:\restaurante-local`. Projeto independente de `D:\restaurante`; não compartilha ambiente, imports, banco, configuração ou agentes com ele.

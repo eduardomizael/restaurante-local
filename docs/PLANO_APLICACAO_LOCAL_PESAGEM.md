@@ -1,5 +1,7 @@
 # Plano da aplicação local de pesagem e impressão
 
+Incremento em 05/10/2026: o usuário solicitou fechamento pela interface touch e informou Windows 10 Home de 32 bits com processador x64 na máquina final. Implementação na branch de desenvolvimento conforme [ADR-0028](adr/0028-encerramento-touch-pela-interface.md) e [ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md); WebView2 permanece adiado. O pacote necessário nessa máquina é x86. Publicação e conferência física continuam distintas da validação com simuladores.
+
 Atualização de entrega em 05/10/2026: o usuário considera balança e impressão funcionais e priorizou executáveis Windows prontos, com a main como versão de produção e atualização pelo próprio inicializador. Pacote, atualizador web e CI de build/deploy implementados conforme [ADR-0027](adr/0027-distribuicao-windows-e-atualizacao-por-release.md) e [manual](DISTRIBUICAO_WINDOWS.md). Os scripts distribuídos não dependem das ferramentas de desenvolvimento. Publicação inicial do workflow e ativação do servidor web são etapas externas, distintas da geração e validação local do pacote. Ensaios físicos adicionais ficam para ajustes posteriores conforme instrução atual.
 
 Data: 03/10/2026. Status: **escopo e fluxo definidos; Django e interface web touch escolhidos; estrutura técnica especificada para implementação**. Este documento planeja uma aplicação independente; não modifica o Restaurante atual.

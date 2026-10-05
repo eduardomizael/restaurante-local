@@ -3,7 +3,7 @@ param(
     [string]$PackageDirectory,
     [string]$PackagePath,
     [string]$ExpectedHash,
-    [string]$ManifestUrl = 'https://eduardomizael.github.io/restaurante-local/latest.json',
+    [string]$ManifestUrl,
     [switch]$CheckOnStart,
     [switch]$NoShortcut
 )
@@ -14,6 +14,35 @@ $work = $null
 $versionDirectory = $null
 $copiedVersion = $false
 $activated = $false
+
+function Get-RecordArchitecture($Record) {
+    # Packages and pointers published before architecture support were x64.
+    if ($Record.PSObject.Properties.Name -contains 'architecture') { $result = [string]$Record.architecture }
+    else { $result = 'x64' }
+    if ($result -notin @('x86', 'x64')) { throw 'Arquitetura inválida no pacote ou registro.' }
+    return $result
+}
+
+function Assert-CompatibleArchitecture([string]$Architecture) {
+    if ($Architecture -eq 'x64' -and -not [Environment]::Is64BitOperatingSystem) {
+        throw 'Este Windows é de 32 bits. Baixe RestauranteLocal-windows-x86.zip, mesmo que o processador seja x64.'
+    }
+}
+
+function Get-ExecutableArchitecture([string]$Path) {
+    $reader = [IO.BinaryReader]::new([IO.File]::OpenRead($Path))
+    try {
+        if ($reader.ReadUInt16() -ne 0x5A4D) { throw 'Executável inválido.' }
+        $reader.BaseStream.Position = 0x3C
+        $offset = $reader.ReadUInt32()
+        $reader.BaseStream.Position = $offset
+        if ($reader.ReadUInt32() -ne 0x4550) { throw 'Executável sem cabeçalho Windows.' }
+        $machine = $reader.ReadUInt16()
+        if ($machine -eq 0x14C) { return 'x86' }
+        if ($machine -eq 0x8664) { return 'x64' }
+        throw 'Arquitetura do executável não suportada.'
+    } finally { $reader.Dispose() }
+}
 
 function Get-PackageHash([string]$Path) {
     $sha = [Security.Cryptography.SHA256]::Create()
@@ -41,7 +70,7 @@ function Expand-VerifiedPackage([string]$Archive, [string]$Destination) {
 }
 
 try {
-    Write-Host 'Feche o Restaurante Local pela opção Sair na bandeja antes de continuar.'
+    Write-Host 'Feche o Restaurante Local por Encerrar aplicação na interface ou Sair na bandeja antes de continuar.'
     $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
     New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
     # All installers/updaters share this lock, even when started from another folder.
@@ -49,14 +78,18 @@ try {
     $urlFile = Join-Path $InstallRoot 'update-url.txt'
     if (Test-Path -LiteralPath $urlFile) { $ManifestUrl = (Get-Content -LiteralPath $urlFile -Raw).Trim() }
     $currentPath = Join-Path $InstallRoot 'current.json'
+    $channelArchitecture = if ([Environment]::Is64BitOperatingSystem) { 'x64' } else { 'x86' }
     if (Test-Path -LiteralPath $currentPath) {
         $current = Get-Content -LiteralPath $currentPath -Raw | ConvertFrom-Json
         if ($current.directory -notmatch '^versions/[a-f0-9]{64}$') { throw 'Registro de versão inválido.' }
+        $channelArchitecture = Get-RecordArchitecture $current
+        Assert-CompatibleArchitecture $channelArchitecture
         $preflight = Join-Path (Join-Path $InstallRoot $current.directory) 'Manutencao.exe'
         $check = Start-Process -FilePath $preflight -ArgumentList @('check_update_allowed') -NoNewWindow -Wait -PassThru
         if ($check.ExitCode -eq 2 -and $CheckOnStart) { exit 0 }
         if ($check.ExitCode -ne 0) { throw 'Não é possível atualizar agora. Feche o aplicativo e confira os dados locais.' }
     }
+    if (-not $ManifestUrl) { $ManifestUrl = "https://eduardomizael.github.io/restaurante-local/$channelArchitecture/latest.json" }
     $work = Join-Path $InstallRoot ('staging-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $work | Out-Null
     $expectedVersion = $null
@@ -87,6 +120,7 @@ try {
             $manifest = Invoke-RestMethod -Uri ($ManifestUrl + '?t=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -TimeoutSec 8 -Headers @{ 'Cache-Control' = 'no-cache' }
             $expectedVersion = $manifest.version
             $expectedRevision = $manifest.revision
+            if ((Get-RecordArchitecture $manifest) -ne $channelArchitecture) { throw 'O manifesto não corresponde à arquitetura instalada.' }
             if ($expectedRevision -notmatch '^[a-f0-9]{40}$') { throw 'Revisão inválida no manifesto.' }
             if (Test-Path -LiteralPath $currentPath) {
                 $current = Get-Content -LiteralPath $currentPath -Raw | ConvertFrom-Json
@@ -111,12 +145,22 @@ try {
         $version = $buildInfo.version
         $revision = $buildInfo.revision
     }
+    $architecture = Get-RecordArchitecture $buildInfo
+    Assert-CompatibleArchitecture $architecture
+    if (-not $PackageDirectory -and -not $PackagePath -and $architecture -ne $channelArchitecture) {
+        throw 'O pacote não corresponde à arquitetura instalada.'
+    }
     if ($version -notmatch '^\d+\.\d+\.\d+(?:[-.][A-Za-z0-9]+)*$') { throw 'Versão inválida.' }
     if ($expectedVersion -and $version -ne $expectedVersion) { throw 'Versão do pacote difere da release.' }
     if ($revision -notmatch '^[a-f0-9]{40}$') { throw 'Revisão inválida no pacote.' }
     if ($expectedRevision -and $revision -ne $expectedRevision) { throw 'Revisão do pacote difere do manifesto.' }
     foreach ($required in @('RestauranteLocal.exe', 'Manutencao.exe', '_internal')) {
         if (-not (Test-Path -LiteralPath (Join-Path $payload $required))) { throw "Pacote sem $required." }
+    }
+    foreach ($executable in @('RestauranteLocal.exe', 'Manutencao.exe')) {
+        if ((Get-ExecutableArchitecture (Join-Path $payload $executable)) -ne $architecture) {
+            throw 'A arquitetura declarada não corresponde aos executáveis do pacote.'
+        }
     }
     foreach ($required in @('Launch.ps1', 'Iniciar.bat', 'Atualizar.bat', 'Update.ps1')) {
         if (-not (Test-Path -LiteralPath (Join-Path $source $required))) { throw "Pacote sem $required." }
@@ -159,7 +203,7 @@ try {
     }
     $pointer = Join-Path $InstallRoot 'current.json'
     $temporary = Join-Path $InstallRoot 'current.tmp'
-    @{ version = $version; revision = $revision; directory = 'versions/' + $digest } | ConvertTo-Json | Set-Content -LiteralPath $temporary -Encoding UTF8
+    @{ version = $version; revision = $revision; architecture = $architecture; directory = 'versions/' + $digest } | ConvertTo-Json | Set-Content -LiteralPath $temporary -Encoding UTF8
     if (Test-Path -LiteralPath $pointer) { [IO.File]::Replace($temporary, $pointer, (Join-Path $InstallRoot 'previous.json'), $true) }
     else { [IO.File]::Move($temporary, $pointer) }
     $activated = $true

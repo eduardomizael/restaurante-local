@@ -9,6 +9,7 @@ import os
 import socket
 import sqlite3
 import subprocess
+import struct
 import tempfile
 import threading
 import time
@@ -16,6 +17,9 @@ import zipfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.request import build_opener, ProxyHandler
+from urllib.request import HTTPCookieProcessor, Request
+from urllib.parse import urlencode
+from http.cookiejar import CookieJar
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -39,7 +43,8 @@ def stop_process(pid):
 
 def main():
     """Exercise installation, web update, integrity and active-runtime exclusion."""
-    archive = ROOT / "dist" / "RestauranteLocal-windows-x64.zip"
+    architecture = "x64" if struct.calcsize("P") == 8 else "x86"
+    archive = ROOT / "dist" / f"RestauranteLocal-windows-{architecture}.zip"
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     script = ROOT / "packaging" / "windows" / "Update.ps1"
     opener = build_opener(ProxyHandler({}))
@@ -90,7 +95,20 @@ def main():
         update("-PackagePath", malicious, "-ExpectedHash", hashlib.sha256(malicious.read_bytes()).hexdigest(), success=False)
         assert not (install / "escaped.txt").exists()
         update("-PackagePath", archive, "-ExpectedHash", digest)
+        wrong_architecture = base / "wrong-architecture.zip"
+        with zipfile.ZipFile(archive) as original, zipfile.ZipFile(wrong_architecture, "w", zipfile.ZIP_DEFLATED) as output:
+            for entry in original.infolist():
+                content = original.read(entry)
+                if entry.filename == "app/version.json":
+                    info = json.loads(content)
+                    info["architecture"] = "x86" if architecture == "x64" else "x64"
+                    content = json.dumps(info).encode()
+                output.writestr(entry, content)
+        update("-PackagePath", wrong_architecture,
+               "-ExpectedHash", hashlib.sha256(wrong_architecture.read_bytes()).hexdigest(), success=False)
+        assert not (install / "update-failed.txt").exists()
         current = json.loads((install / "current.json").read_text(encoding="utf-8-sig"))
+        assert current["architecture"] == architecture
         bundle = install / current["directory"]
         assert (data / "db.sqlite3").is_file()
         with closing(sqlite3.connect(data / "db.sqlite3")) as connection:
@@ -127,8 +145,20 @@ def main():
             update("-PackagePath", archive, "-ExpectedHash", digest, success=False)
             assert (install / "current.json").read_bytes() == before
             assert not (install / "update-failed.txt").exists()
+            cookies = CookieJar()
+            touch = build_opener(ProxyHandler({}), HTTPCookieProcessor(cookies))
+            with touch.open(f"http://127.0.0.1:{port}/runtime/shutdown/confirm/") as response:
+                assert "Continuar usando" in response.read().decode()
+            token = next(cookie.value for cookie in cookies if cookie.name == "csrftoken")
+            request = Request(f"http://127.0.0.1:{port}/runtime/shutdown/",
+                              data=urlencode({"confirmed": "yes", "csrfmiddlewaretoken": token}).encode())
+            with touch.open(request) as response:
+                assert "Encerramento solicitado" in response.read().decode()
+            assert runtime.wait(timeout=10) == 0
+            assert not (data / "instance.json").exists()
         finally:
-            runtime.terminate()
+            if runtime.poll() is None:
+                runtime.terminate()
             runtime.wait(timeout=10)
         web = base / "web"
         web.mkdir()
@@ -147,7 +177,8 @@ def main():
         filename = f"RestauranteLocal-{next_digest}.zip"
         next_archive.rename(web / filename)
         (web / "latest.json").write_text(json.dumps({"version": current["version"], "revision": revision,
-                                                      "sha256": next_digest, "package": filename}), encoding="utf-8")
+                                                      "sha256": next_digest, "package": filename,
+                                                      "architecture": architecture}), encoding="utf-8")
         handler = functools.partial(SimpleHTTPRequestHandler, directory=str(web))
         server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -159,11 +190,19 @@ def main():
             stop_process(launched)
             updated = json.loads((install / "current.json").read_text(encoding="utf-8-sig"))
             assert updated["revision"] == revision
+            assert updated["architecture"] == architecture
             assert updated["directory"] != current["directory"]
             with closing(sqlite3.connect(data / "db.sqlite3")) as connection:
                 assert connection.execute("SELECT display_name FROM configuration_applicationconfiguration WHERE id=1").fetchone()[0] == "Teste preservado"
             assert list((data / "backups").glob("*/db.sqlite3"))
             pointer = (install / "current.json").read_bytes()
+            manifest_path = web / "latest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            wrong_manifest = dict(manifest, architecture="x86" if architecture == "x64" else "x64")
+            manifest_path.write_text(json.dumps(wrong_manifest), encoding="utf-8")
+            update("-ManifestUrl", url, success=False)
+            assert (install / "current.json").read_bytes() == pointer
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             update("-ManifestUrl", url)
             assert (install / "current.json").read_bytes() == pointer
             (install / "update-failed.txt").write_text("Ensaio de recuperação", encoding="utf-8")

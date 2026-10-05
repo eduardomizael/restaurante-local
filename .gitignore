@@ -1,6 +1,8 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-x86/
+.python-runtime/
 .uv-cache/
 .uv-python/
 .pytest_cache/

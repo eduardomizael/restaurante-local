@@ -25,6 +25,26 @@ class ShutdownHTTPTests(TransactionTestCase):
         self.stop.assert_not_called()
         self.assertTrue(state.snapshot()["running"])
 
+    def test_shutdown_action_is_inside_status_and_navigation_is_shared(self):
+        from django.urls import reverse
+
+        pages = [self.client.get(reverse(route)) for route in
+                 ("home", "catalogue", "print_history", "application_configuration", "status")]
+        for page in pages:
+            self.assertEqual(page.status_code, 200)
+            html = page.content.decode()
+            navbar = html.split('<nav class="primary-nav"', 1)[1].split('</nav>', 1)[0]
+            self.assertNotIn('shutdown-link', navbar)
+            for route in ("home", "catalogue", "print_history", "application_configuration", "status"):
+                self.assertIn(f'href="{reverse(route)}"', navbar)
+        self.assertContains(pages[-1], 'class="button danger shutdown-link"')
+        self.assertContains(pages[-1], reverse("shutdown_confirmation"))
+        for page in pages[:-1]:
+            self.assertNotContains(page, 'shutdown-link')
+        confirmation = self.client.get(reverse("shutdown_confirmation"))
+        self.assertEqual(confirmation.context['main_navigation_area'], 'status')
+        self.stop.assert_not_called()
+
     def test_post_and_csrf_are_required(self):
         client = Client(enforce_csrf_checks=True)
         self.assertEqual(client.get("/runtime/shutdown/").status_code, 405)

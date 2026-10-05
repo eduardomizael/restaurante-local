@@ -49,7 +49,9 @@ def main():
     script = ROOT / "packaging" / "windows" / "Update.ps1"
     opener = build_opener(ProxyHandler({}))
     with tempfile.TemporaryDirectory(prefix="restaurante-package-") as temporary:
-        base = Path(temporary)
+        # Windows runners may expose TEMP through an 8.3 alias (RUNNER~1),
+        # while the bundled runtime registers the resolved long path.
+        base = Path(temporary).resolve()
         install = base / "program with spaces"
         data = base / "data"
         environment = dict(os.environ, LOCAL_WEIGHING_DATA_DIR=str(data))
@@ -216,7 +218,8 @@ def main():
         launched = launch()
         stop_process(launched)
         uninstall_info = json.loads((install / "uninstall-info.json").read_text(encoding="utf-8-sig"))
-        assert uninstall_info["data_locations"][0]["data_root"] == str(data)
+        registered_data = Path(uninstall_info["data_locations"][0]["data_root"]).resolve()
+        assert registered_data == data.resolve(), f"Dados registrados: {registered_data}; esperados: {data.resolve()}"
         assert (install / "Desinstalar.bat").exists()
         # Exercise legacy discovery too, without relying on registration metadata.
         (install / "uninstall-info.json").unlink()

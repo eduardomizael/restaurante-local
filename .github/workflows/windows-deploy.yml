@@ -19,6 +19,16 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.11.26'
+      - name: Preparar RTK para testes do inicializador de desenvolvimento
+        run: |
+          $toolsDirectory = Join-Path $env:RUNNER_TEMP 'rtk-0.45.0'
+          $archive = Join-Path $env:RUNNER_TEMP 'rtk.zip'
+          Invoke-WebRequest -Uri 'https://github.com/rtk-ai/rtk/releases/download/v0.45.0/rtk-x86_64-pc-windows-msvc.zip' -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath $toolsDirectory
+          $executable = Get-ChildItem -LiteralPath $toolsDirectory -Filter rtk.exe -Recurse | Select-Object -First 1
+          if (-not $executable) { throw 'Pacote RTK sem executável.' }
+          $executable.DirectoryName >> $env:GITHUB_PATH
+          & $executable.FullName --version
       - run: uv sync --frozen --group build
       - run: uv run --no-sync python manage.py check --settings=config.test_settings
       - run: uv run --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings

@@ -82,6 +82,11 @@ try {
     if (Test-Path -LiteralPath $currentPath) {
         $current = Get-Content -LiteralPath $currentPath -Raw | ConvertFrom-Json
         if ($current.directory -notmatch '^versions/[a-f0-9]{64}$') { throw 'Registro de versão inválido.' }
+        # Repair bootstrap after an upgrade performed by an older updater.
+        foreach ($tool in @('Desinstalar.bat', 'Uninstall.ps1')) {
+            $bundledTool = Join-Path (Join-Path $InstallRoot $current.directory) $tool
+            if (Test-Path -LiteralPath $bundledTool) { Copy-Item -LiteralPath $bundledTool -Destination (Join-Path $InstallRoot $tool) -Force }
+        }
         $channelArchitecture = Get-RecordArchitecture $current
         Assert-CompatibleArchitecture $channelArchitecture
         $preflight = Join-Path (Join-Path $InstallRoot $current.directory) 'Manutencao.exe'
@@ -162,7 +167,7 @@ try {
             throw 'A arquitetura declarada não corresponde aos executáveis do pacote.'
         }
     }
-    foreach ($required in @('Launch.ps1', 'Iniciar.bat', 'Atualizar.bat', 'Update.ps1')) {
+    foreach ($required in @('Launch.ps1', 'Iniciar.bat', 'Atualizar.bat', 'Update.ps1', 'Desinstalar.bat', 'Uninstall.ps1')) {
         if (-not (Test-Path -LiteralPath (Join-Path $source $required))) { throw "Pacote sem $required." }
     }
     $versionDirectory = Join-Path $InstallRoot ('versions\' + $digest)
@@ -194,7 +199,27 @@ try {
         Set-Content -LiteralPath (Join-Path $InstallRoot 'update-failed.txt') -Value 'Preparação dos dados falhou. Execute Atualizar.bat e confira o backup.' -Encoding UTF8
         throw 'Preparação falhou. A versão ativa não foi trocada. Confira as mensagens e o backup antes de tentar novamente.'
     }
-    foreach ($file in @('Launch.ps1', 'Iniciar.bat', 'Atualizar.bat', 'Update.ps1')) {
+    $descriptionPath = Join-Path $work 'data-location.json'
+    $description = Start-Process -FilePath $maintenance -ArgumentList @('describe_installation') -NoNewWindow -Wait -PassThru -RedirectStandardOutput $descriptionPath
+    if ($description.ExitCode -ne 0) { throw 'Não foi possível registrar os dados para desinstalação.' }
+    $location = Get-Content -LiteralPath $descriptionPath -Raw | ConvertFrom-Json
+    $infoPath = Join-Path $InstallRoot 'uninstall-info.json'
+    $locations = @()
+    $origins = @()
+    if (Test-Path -LiteralPath $infoPath) {
+        $previousInfo = Get-Content -LiteralPath $infoPath -Raw | ConvertFrom-Json
+        if ($previousInfo.application -ne 'RestauranteLocal' -or $previousInfo.schema_version -ne 1 -or $previousInfo.install_root -ne $InstallRoot) { throw 'Registro de desinstalação inválido.' }
+        $locations = @($previousInfo.data_locations | Where-Object { $_.data_root -ne $location.data_root })
+        $origins = @($previousInfo.origins)
+    }
+    $locations += $location
+    if ($PackageDirectory) { $origins += [IO.Path]::GetFullPath($PackageDirectory) }
+    if ($PackagePath) { $origins += [IO.Path]::GetFullPath($PackagePath) }
+    $infoTemporary = Join-Path $InstallRoot 'uninstall-info.tmp'
+    @{ application = 'RestauranteLocal'; schema_version = 1; install_root = $InstallRoot; data_locations = @($locations); origins = @($origins | Select-Object -Unique) } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoTemporary -Encoding UTF8
+    if (Test-Path -LiteralPath $infoPath) { [IO.File]::Replace($infoTemporary, $infoPath, (Join-Path $InstallRoot 'uninstall-info.previous.json'), $true) }
+    else { [IO.File]::Move($infoTemporary, $infoPath) }
+    foreach ($file in @('Launch.ps1', 'Iniciar.bat', 'Atualizar.bat', 'Update.ps1', 'Desinstalar.bat', 'Uninstall.ps1')) {
         $original = Join-Path $source $file
         $destination = Join-Path $InstallRoot $file
         if ([IO.Path]::GetFullPath($original) -ne [IO.Path]::GetFullPath($destination)) {
@@ -220,6 +245,7 @@ try {
     }
     Write-Host "Versão $version instalada. Abra Restaurante Local pelo atalho."
     Write-Host "Para próximas atualizações, execute: $(Join-Path $InstallRoot 'Atualizar.bat')"
+    Write-Host "Para remover o programa, execute: $(Join-Path $InstallRoot 'Desinstalar.bat')"
     exit 0
 } catch {
     Write-Host ('Falha: ' + $_.Exception.Message) -ForegroundColor Red

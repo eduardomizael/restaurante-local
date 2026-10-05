@@ -20,11 +20,13 @@ Integração real implementada: configuração de porta/fila, leitura COM3 e imp
 
 ## Desenvolvimento e execução
 
+Para entender e reproduzir a distribuição, consulte [Como empacotar para Windows](docs/EMPACOTAMENTO_WINDOWS.md). Na máquina de desenvolvimento Windows x64 com Git, dê dois cliques em **Empacotar.bat**: ele prepara ferramentas locais, testa e gera os pacotes x86/x64 em `dist/`. O comando não publica no GitHub.
+
 O trabalho diário fica em **`codex/develop`**, a branch permanente de desenvolvimento. Commits enviados a ela não criam Releases nem atualizam a máquina final. Quando as mudanças estiverem prontas, abrir um PR de `codex/develop` para **`main`**; após revisão e validação, o merge na `main` dispara a publicação automática. Depois do release, sincronizar `codex/develop` com a `main` e continuar nela.
 
 Para a máquina final, use o pacote com executáveis e atualização web da **main** ao abrir: [instalação e atualização Windows](docs/DISTRIBUICAO_WINDOWS.md). Build: `rtk proxy uv run --no-sync --group build --cache-dir .uv-cache python packaging/build.py --version 0.1.0`. Os arquivos `.bat` na raiz abaixo continuam sendo ferramentas de desenvolvimento; os scripts distribuídos estão em `packaging/windows/`. Publicação inicial do workflow e ativação do Pages ainda são etapas externas.
 
-O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão sempre visíveis. Listas maiores rolam dentro dos próprios painéis. O cadastro exibe produtos em três colunas. A resolução de referência é a área disponível do navegador; para aproveitar toda a tela, usar zoom de 100% e janela maximizada ou tela cheia. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md).
+O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão visíveis. Em áreas menores, as colunas se adaptam e a página permite rolagem vertical até todos os controles. Listas maiores rolam dentro dos próprios painéis. A resolução de referência é a área disponível do navegador, afetada pela escala do Windows, zoom e barras. O cadastro exibe produtos em três colunas. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md) e sua atualização na [ADR-0032](docs/adr/0032-atendimento-em-area-util-reduzida.md).
 
 ### Abertura por arquivos no Windows
 
@@ -83,7 +85,7 @@ rtk proxy uv run --offline --no-sync python manage.py test --settings=config.tes
 rtk proxy uv run --offline --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-182 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, COM ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto e concorrência SQLite em arquivo. O ensaio `packaging/smoke.py` verifica adicionalmente o executável compilado, instalação e atualização web com dados temporários e transportes simulados. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+198 testes isolados usam diretórios/banco temporários, simuladores e backend falso de bandeja; não abrem navegador, porta serial ou spooler. Cobrem Waitress em loopback, backup, processos distintos, falhas, CSRF, encerramento, invariantes comerciais, captura, atendimento, documentos/segunda via, recuperação de envio incerto, concorrência SQLite e desinstalação Windows, incluindo atalho criado em pasta de teste pelo Windows Script Host. O ensaio `packaging/smoke.py` verifica adicionalmente o executável compilado, instalação, atualização web e desinstalação com dados temporários e transportes simulados. Consulte os registros da [fundação](docs/IMPLEMENTACAO_FUNDACAO.md), do [domínio](docs/IMPLEMENTACAO_DOMINIO.md), do [atendimento](docs/IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e da [impressão simulada](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
 ## Documentação
 

@@ -215,7 +215,19 @@ def main():
         # Server is now offline: automatic check must still open the installed build.
         launched = launch()
         stop_process(launched)
-    print("Pacote Windows validado: instalação, executável offline, HTTP, integridade, exclusão e atualização web com dados preservados.")
+        uninstall_info = json.loads((install / "uninstall-info.json").read_text(encoding="utf-8-sig"))
+        assert uninstall_info["data_locations"][0]["data_root"] == str(data)
+        assert (install / "Desinstalar.bat").exists()
+        # Exercise legacy discovery too, without relying on registration metadata.
+        (install / "uninstall-info.json").unlink()
+        result = subprocess.run([
+            "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(install / "Uninstall.ps1"),
+            "-InstallRoot", str(install), "-ShortcutPath", str(base / "unused.lnk"), "-Yes", "-DeleteData",
+        ], env=environment, capture_output=True, timeout=60)
+        assert result.returncode == 0, result.stdout.decode(errors="replace") + result.stderr.decode(errors="replace")
+        assert not install.exists()
+        assert not data.exists()
+    print("Pacote Windows validado: instalação, executável offline, HTTP, integridade, exclusão, atualização web e desinstalação completa.")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
 <p>Fechar esta janela mantém o inicializador em execução.</p></div>
 {% include 'core/status_fragment.html' %}
 <section class="card"><h2>Como encerrar</h2>
-<p>Toque em <strong>Encerrar aplicação</strong> no menu superior e confirme. Você também pode usar <strong>Sair</strong> na bandeja.</p>
+<p>Toque no botão abaixo e confirme. Você também pode usar <strong>Sair</strong> na bandeja.</p>
+<div class="form-actions"><a class="button danger shutdown-link" href="{% url 'shutdown_confirmation' %}">Encerrar aplicação</a></div>
 <p>Balança: {% if runtime_mode.scale_mode == 'SERIAL' %}porta serial real{% else %}simulador{% endif %}. Impressão: {% if runtime_mode.print_mode == 'RAW' %}Windows RAW{% else %}simulada{% endif %}.</p></section>
 {% endblock %}

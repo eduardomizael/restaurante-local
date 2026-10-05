@@ -12,7 +12,7 @@ def application_identity(request):
         "application_configuration": {
             "application_configuration", "numbering", "document_configuration", "equipment_configuration",
         },
-        "status": {"status", "status_fragment"},
+        "status": {"status", "status_fragment", "shutdown_confirmation", "shutdown"},
     }.items():
         if name in pages:
             area = route

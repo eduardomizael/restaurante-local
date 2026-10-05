@@ -21,7 +21,11 @@ $removalStarted = $false
 
 function Normalize-Directory([string]$Path) {
     if (-not [IO.Path]::IsPathRooted($Path)) { throw "Informe um caminho absoluto: $Path" }
-    return [IO.Path]::GetFullPath($Path).TrimEnd('\', '/')
+    $full = [IO.Path]::GetFullPath($Path)
+    # Existing Windows paths may use 8.3 aliases such as RUNNER~1.
+    # Compare ownership using the filesystem's full name in both cases.
+    if (Test-Path -LiteralPath $full) { $full = (Get-Item -LiteralPath $full -Force).FullName }
+    return $full.TrimEnd('\', '/')
 }
 
 function Assert-SafeDirectory([string]$Path) {
@@ -192,8 +196,9 @@ try {
         try {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($ShortcutPath)
-            $expected = '-File "' + (Join-Path $InstallRoot 'Launch.ps1') + '"'
-            if ($shortcut.Arguments.IndexOf($expected, [StringComparison]::OrdinalIgnoreCase) -ge 0) { Remove-Item -LiteralPath $ShortcutPath -Force }
+            $launchArgument = [regex]::Match($shortcut.Arguments, '(?i)(?:^|\s)-File\s+"([^"]+)"(?:\s|$)')
+            $expected = Normalize-Directory (Join-Path $InstallRoot 'Launch.ps1')
+            if ($launchArgument.Success -and (Normalize-Directory $launchArgument.Groups[1].Value) -eq $expected) { Remove-Item -LiteralPath $ShortcutPath -Force }
             else { Write-Host "Atalho preservado: $ShortcutPath (aponta para outra instalação)." -ForegroundColor Yellow }
         } catch { $problems.Add("$ShortcutPath — $($_.Exception.Message)") }
     }

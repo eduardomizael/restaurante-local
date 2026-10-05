@@ -19,7 +19,7 @@ class WindowsUninstallTests(SimpleTestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="restaurante-uninstall-test-")
         self.addCleanup(self.temporary.cleanup)
-        self.base = Path(self.temporary.name)
+        self.base = Path(self.temporary.name).resolve()
         self.install = self.base / "program with spaces"
         self.data = self.base / "data"
         self.origin = self.base / "original download"
@@ -77,14 +77,34 @@ class WindowsUninstallTests(SimpleTestCase):
         self.assertTrue((self.data / "db.sqlite3").exists())
 
     def test_removes_only_shortcut_owned_by_installation(self):
+        import ctypes
+
         shortcut = self.base / 'shortcut.lnk'
-        arguments = '-File "' + str(self.install / 'Launch.ps1') + '"'
+        launch = self.install / 'Launch.ps1'
+        launch.write_text('# isolated launcher fixture')
+        api = ctypes.WinDLL('kernel32', use_last_error=True)
+        api.GetShortPathNameW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_ulong]
+        api.GetShortPathNameW.restype = ctypes.c_ulong
+        buffer = ctypes.create_unicode_buffer(32768)
+        self.assertGreater(api.GetShortPathNameW(str(launch), buffer, len(buffer)), 0)
+        arguments = '-File "' + buffer.value + '"'
         code = "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('" + str(shortcut) + "'); $s.TargetPath = 'powershell.exe'; $s.Arguments = '" + arguments + "'; $s.Save()"
         result = subprocess.run(['powershell.exe', '-NoProfile', '-Command', code], capture_output=True, timeout=10)
         self.assert_success(result)
         self.assertTrue(shortcut.exists())
         self.assert_success(self.run_uninstall('-Yes'))
         self.assertFalse(shortcut.exists())
+
+    def test_preserves_shortcut_pointing_to_another_installation(self):
+        shortcut = self.base / 'shortcut.lnk'
+        launch = self.origin / 'Launch.ps1'
+        launch.write_text('# unrelated launcher fixture')
+        code = "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('" + str(shortcut) + "'); $s.TargetPath = 'powershell.exe'; $s.Arguments = '-File \"" + str(launch) + "\"'; $s.Save()"
+        self.assert_success(subprocess.run(['powershell.exe', '-NoProfile', '-Command', code],
+                                          capture_output=True, timeout=10))
+        self.assert_success(self.run_uninstall('-Yes'))
+        self.assertTrue(shortcut.exists())
+        self.assertTrue(launch.exists())
 
     def test_running_application_blocks_removal(self):
         lock = InstanceLock(self.data)

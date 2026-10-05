@@ -18,6 +18,8 @@ Integração real implementada: configuração de porta/fila, leitura COM3 e imp
 
 ## Desenvolvimento e execução
 
+O trabalho diário fica em **`codex/develop`**, a branch permanente de desenvolvimento. Commits enviados a ela não criam Releases nem atualizam a máquina final. Quando as mudanças estiverem prontas, abrir um PR de `codex/develop` para **`main`**; após revisão e validação, o merge na `main` dispara a publicação automática. Depois do release, sincronizar `codex/develop` com a `main` e continuar nela.
+
 Para a máquina final, use o pacote com executáveis e atualização web da **main** ao abrir: [instalação e atualização Windows](docs/DISTRIBUICAO_WINDOWS.md). Build: `rtk proxy uv run --no-sync --group build --cache-dir .uv-cache python packaging/build.py --version 0.1.0`. Os arquivos `.bat` na raiz abaixo continuam sendo ferramentas de desenvolvimento; os scripts distribuídos estão em `packaging/windows/`. Publicação inicial do workflow e ativação do Pages ainda são etapas externas.
 
 O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão sempre visíveis. Listas maiores rolam dentro dos próprios painéis. O cadastro exibe produtos em três colunas. A resolução de referência é a área disponível do navegador; para aproveitar toda a tela, usar zoom de 100% e janela maximizada ou tela cheia. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md).

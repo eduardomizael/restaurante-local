@@ -36,6 +36,8 @@ Os executáveis ainda não têm assinatura Authenticode. O Windows pode mostrar 
 
 ## Gerar e publicar a main
 
+Desenvolvimento contínuo em `codex/develop`; produção em `main`. Trabalhar e concentrar alterações na `codex/develop`, abrir PR para `main` quando o conjunto estiver pronto e fazer merge somente após revisão, validação e autorização da publicação. A branch de desenvolvimento não publica Releases. Após o release, sincronizá-la com a `main` sem apagar histórico ou alterações em andamento.
+
 Build executado em Windows x64, Python 3.13, com dependências fixadas no `uv.lock`:
 
 ```powershell

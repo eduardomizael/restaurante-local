@@ -8,6 +8,10 @@ Consultar `docs/PLANO_APLICACAO_LOCAL_PESAGEM.md`, `docs/ESTRUTURA_TECNICA_APLIC
 
 ## Fluxo
 
+- Branch permanente de desenvolvimento: `codex/develop`. Concentrar alterações nela e conferir a branch ativa antes de editar. Se estiver na `main`, trocar para `codex/develop` preservando alterações existentes.
+- `main` é produção: push/merge nela dispara build, Release e atualização das máquinas finais. Quando o conjunto de mudanças estiver revisado e validado, abrir PR de `codex/develop` para `main` e fazer merge somente com autorização de publicação. Não desenvolver diretamente na `main`.
+- Após um release, manter `codex/develop` sincronizada com a `main` e continuar o desenvolvimento nela. Commit, push e publicação continuam sujeitos à autorização abaixo.
+
 - Codex implementa, valida e revisa diretamente. Não criar ou executar harness, tasks externas ou agentes executores externos. Não usar subagentes como padrão.
 - Declarar tipo de trabalho e fluxo antes de editar; inspecionar Git e preservar alterações não relacionadas.
 - Não criar commit nem push sem pedido explícito. Quando autorizado, commits semânticos, atômicos e em pt-BR, com revisão do staged.

@@ -5,6 +5,12 @@ import hashlib
 import os
 
 
+def instance_mutex_name(data_dir):
+    """Return the process identity shared with Windows installation tools."""
+    name = hashlib.sha256(os.path.normcase(str(data_dir.resolve())).encode()).hexdigest()
+    return f"Local\\RestauranteLocal-{name}"
+
+
 class InstanceLock:
     """Keep exclusive runtime ownership for one data directory."""
 
@@ -22,13 +28,12 @@ class InstanceLock:
         if self.handle is not None or self.file is not None:
             raise RuntimeError("Mutex já adquirido por este objeto.")
         if os.name == "nt":
-            name = hashlib.sha256(os.path.normcase(str(self.data_dir.resolve())).encode()).hexdigest()
             api = ctypes.WinDLL("kernel32", use_last_error=True)
             api.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_wchar_p]
             api.CreateMutexW.restype = ctypes.c_void_p
             api.CloseHandle.argtypes = [ctypes.c_void_p]
             ctypes.set_last_error(0)
-            handle = api.CreateMutexW(None, False, f"Local\\RestauranteLocal-{name}")
+            handle = api.CreateMutexW(None, False, instance_mutex_name(self.data_dir))
             if not handle:
                 raise ctypes.WinError(ctypes.get_last_error())
             if ctypes.get_last_error() == 183:

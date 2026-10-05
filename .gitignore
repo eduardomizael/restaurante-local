@@ -34,3 +34,4 @@ staticfiles/
 .vscode/
 Thumbs.db
 .DS_Store
+.codex-remote-attachments/

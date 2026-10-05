@@ -38,7 +38,7 @@ Ao detectar instalação/banco ausente ou banco desatualizado, `Iniciar.bat` per
 
 Para criar o atalho na área de trabalho, clique com o botão direito em `Iniciar.bat` e escolha **Enviar para → Área de trabalho (criar atalho)**; no Windows 11, pode ser necessário **Mostrar mais opções**. Os arquivos usam sua própria pasta como diretório de trabalho, inclusive quando chamados por atalho.
 
-Para simulação no desenvolvimento, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos da raiz aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. O pacote final usa scripts próprios, inicializador sem console e runtime/dependências incluídos.
+Para simulação no desenvolvimento, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos da raiz aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. `Iniciar.bat` também respeita `UV_PROJECT_ENVIRONMENT` quando definido, para usar o ambiente próprio de cada arquitetura durante os testes de empacotamento. O pacote final usa scripts próprios, inicializador sem console e runtime/dependências incluídos.
 
 ### Comandos técnicos
 

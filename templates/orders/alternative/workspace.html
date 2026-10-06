@@ -1,0 +1,17 @@
+<div id="attendance-workspace" hx-history="false" data-selected-order="{{ selected_id|default_if_none:'' }}" data-layout="primary">
+  <div id="attendance-feedback" role="alert"></div>
+  {% include 'orders/board.html' %}
+  <div class="alternative-top">
+    {% include 'core/scale_fragment.html' %}
+    {% include 'orders/measurements.html' %}
+  </div>
+  <div class="alternative-grid">
+    {% include 'orders/order_list.html' %}
+    {% include 'orders/alternative/order_panel.html' %}
+    {% include 'orders/alternative/quick_picker.html' %}
+  </div>
+  <dialog id="product-picker-dialog" aria-labelledby="product-picker-title">
+    <div class="dialog-heading"><h2 id="product-picker-title">Escolher produto</h2><button type="button" class="secondary compact" data-close-products aria-label="Fechar seleção de produtos">× Fechar</button></div>
+    {% include 'orders/alternative/catalogue_picker.html' %}
+  </dialog>
+</div>

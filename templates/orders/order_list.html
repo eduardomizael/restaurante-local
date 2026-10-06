@@ -1,14 +1,14 @@
 {% load commercial %}
 <aside id="order-list-panel" class="orders-sidebar" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %} aria-labelledby="orders-title">
-  <div class="orders-heading"><div><h2 id="orders-title">Comandas abertas</h2><p class="muted">{{ orders|length }} em atendimento</p></div>
-    <form method="post" action="{% url 'create_order' %}" hx-post="{% url 'create_order' %}" hx-target="#attendance-workspace" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="find button">
+  <div class="orders-heading"><div><h2 id="orders-title">{% if compact_attendance %}COMANDAS ABERTAS{% else %}Comandas abertas{% endif %}</h2>{% if not compact_attendance %}<p class="muted">{{ orders|length }} em atendimento</p>{% endif %}</div>
+    <form method="post" action="{% url 'create_order' %}{{ attendance_layout_suffix }}" hx-post="{% url 'create_order' %}{{ attendance_layout_suffix }}" hx-target="#attendance-workspace" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="find button">
       {% csrf_token %}<input type="hidden" name="request_key" value="{{ open_key }}"><button class="compact" type="submit">＋ Nova comanda</button>
     </form>
   </div>
   <div class="order-list" id="order-cards" data-preserve-scroll>
     {% for order in orders %}
     <a class="order-card {% if order.pk == selected.pk %}selected{% endif %}" {% if order.pk == selected.pk %}aria-current="page"{% endif %}
-      href="{% url 'home' %}?order={{ order.pk }}" hx-get="{% url 'home' %}?order={{ order.pk }}" hx-target="#attendance-workspace" hx-swap="outerHTML" hx-push-url="true" hx-sync="#attendance-workspace:drop">
+      href="{{ attendance_url }}?order={{ order.pk }}" hx-get="{{ attendance_url }}?order={{ order.pk }}" hx-target="#attendance-workspace" hx-swap="outerHTML" hx-push-url="true" hx-sync="#attendance-workspace:drop">
       <span class="order-card-heading"><strong>Comanda {{ order.number }}</strong><span class="tag">Aberta</span></span>
       <span class="muted">Aberta às {{ order.created_at|date:'H:i' }} · {{ order.item_count }} ite{{ order.item_count|pluralize:'m,ns' }}</span>
       <span class="order-card-total">R$ {{ order.total_cents|money }}{% if order.pk == selected.pk %}<span class="selected-label">✓ Selecionada</span>{% endif %}</span>

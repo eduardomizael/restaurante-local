@@ -1,0 +1,14 @@
+<div class="dialog-heading"><h2 id="print-preview-title">Comanda {{ order.number }}</h2><button type="button" class="secondary compact" data-close-print-preview aria-label="Fechar prévia">× Fechar</button></div>
+{% if runtime_mode.print_mode != 'RAW' %}<p class="muted">Impressão simulada, sem papel.</p>{% endif %}
+{% if errors %}<div class="form-errors" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+<div class="print-dialog-slip">{% include 'printing/slip.html' %}</div>
+{% if can_finalize and not document %}
+<div class="print-dialog-actions">
+  <form method="post" action="{% url 'print_open_order' order.pk %}{{ attendance_layout_suffix }}" hx-post="{% url 'print_open_order' order.pk %}{{ attendance_layout_suffix }}" hx-target="#print-preview-content" hx-swap="innerHTML" hx-sync="#print-preview-dialog:drop" hx-disabled-elt="#print-preview-dialog button">
+    {% csrf_token %}{% include 'core/form_fields.html' %}<input type="hidden" name="return_to_attendance" value="1"><button type="submit">Imprimir</button>
+  </form>
+  <form method="post" action="{% url 'finalize_order' order.pk %}{{ attendance_layout_suffix }}" hx-post="{% url 'finalize_order' order.pk %}{{ attendance_layout_suffix }}" hx-target="#print-preview-content" hx-swap="innerHTML" hx-sync="#print-preview-dialog:drop" hx-disabled-elt="#print-preview-dialog button">
+    {% csrf_token %}{% include 'core/form_fields.html' %}<input type="hidden" name="return_to_attendance" value="1"><button type="submit" class="secondary">Imprimir e fechar</button>
+  </form>
+</div>
+{% else %}<p class="error">{% if document %}Esta comanda já foi encerrada. Abra a página de prévia para consultar o documento salvo.{% else %}Configure o cabeçalho e inclua pelo menos um item para imprimir.{% endif %}</p>{% endif %}

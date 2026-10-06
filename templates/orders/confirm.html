@@ -4,6 +4,6 @@
 <form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}
   <p>{{ description }}</p>{% if measurement %}<p><strong>{{ measurement.net_weight_grams|kilograms }} kg · R$ {{ measurement.total_cents|money }}</strong></p>{% endif %}
   {% if show_subtotal %}<p>Subtotal: R$ {{ subtotal|money }}</p>{% endif %}
-  <div class="form-actions"><button type="submit" class="danger">{{ button_label }}</button><a class="button secondary" href="{% url 'home' %}{% if order_id %}?order={{ order_id }}{% endif %}">Voltar sem alterar</a></div>
+  <div class="form-actions"><button type="submit" class="danger">{{ button_label }}</button><a class="button secondary" href="{{ attendance_url }}{% if order_id %}?order={{ order_id }}{% endif %}">Voltar sem alterar</a></div>
 </form>
 {% endblock %}

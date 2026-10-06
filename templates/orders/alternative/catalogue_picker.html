@@ -1,0 +1,13 @@
+<section id="product-picker" class="product-picker alternative-catalogue-picker" {% if not selected %}hidden{% endif %} {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if selected %}
+  <p class="muted">Destino: comanda {{ selected.number }}</p>
+  <section class="catalogue-search" aria-label="Catálogo completo">
+    <form method="get" action="{{ product_search_url }}" class="search-form" hx-get="{% url 'product_choices' %}" hx-trigger="input delay:200ms, submit" hx-target="#catalogue-choices" hx-swap="outerHTML" hx-sync="this:replace">
+      <input type="hidden" name="order" value="{{ selected.pk }}"><input type="hidden" name="layout" value="primary">
+      <label for="product-search">Filtrar produtos</label><input id="product-search" name="q" value="{{ search }}" placeholder="Digite o nome do produto" autocomplete="off">
+      <noscript><button type="submit" class="secondary compact">Filtrar</button></noscript>
+    </form>
+    {% include 'orders/product_choices.html' %}
+  </section>
+  {% endif %}
+</section>

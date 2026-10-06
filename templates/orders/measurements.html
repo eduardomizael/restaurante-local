@@ -1,7 +1,7 @@
 {% load commercial %}
 <section id="measurements-panel" class="measurements-panel" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %} aria-labelledby="measurements-title">
-  <div class="panel-heading"><h2 id="measurements-title">Pesagens disponíveis <span class="count">{{ measurements|length }}</span></h2>
-    <p class="muted">{% if selected %}Destino: <strong>comanda {{ selected.number }}</strong>{% else %}Selecione uma comanda para incluir uma pesagem.{% endif %}</p></div>
+  <div class="panel-heading"><h2 id="measurements-title">{% if compact_attendance %}PESAGENS DISPONÍVEIS{% else %}Pesagens disponíveis{% endif %} <span class="count">{{ measurements|length }}</span></h2>
+    {% if not compact_attendance or not selected %}<p class="muted">{% if selected %}Destino: <strong>comanda {{ selected.number }}</strong>{% else %}Selecione uma comanda para incluir uma pesagem.{% endif %}</p>{% endif %}</div>
   <div class="measurement-list" id="measurement-cards" data-preserve-scroll>
     {% for measurement in measurements %}
     <article class="measurement-card">
@@ -9,10 +9,10 @@
       <p>{{ measurement.product_description }}</p>
       <p class="muted">#{{ measurement.pk }} · {{ measurement.captured_at|date:'H:i:s' }} · R$ {{ measurement.unit_price_cents|money }}/kg</p>
       <div class="measurement-actions">
-        {% if selected %}<form method="post" action="{% url 'consume_measurement' %}" hx-post="{% url 'consume_measurement' %}" hx-target="#shared-board" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="find button">
-          {% csrf_token %}<input type="hidden" name="order_id" value="{{ selected.pk }}"><input type="hidden" name="measurement_id" value="{{ measurement.pk }}"><input type="hidden" name="request_key" value="{{ measurement.action_key }}"><button type="submit" aria-label="Incluir pesagem {{ measurement.pk }} na comanda {{ selected.number }}">＋ Incluir na {{ selected.number }}</button>
+        {% if selected %}<form method="post" action="{% url 'consume_measurement' %}{{ attendance_layout_suffix }}" hx-post="{% url 'consume_measurement' %}{{ attendance_layout_suffix }}" hx-target="#shared-board" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="find button">
+          {% csrf_token %}<input type="hidden" name="order_id" value="{{ selected.pk }}"><input type="hidden" name="measurement_id" value="{{ measurement.pk }}"><input type="hidden" name="request_key" value="{{ measurement.action_key }}"><button type="submit" aria-label="Incluir pesagem {{ measurement.pk }} na comanda {{ selected.number }}">{% if compact_attendance %}Incluir{% else %}＋ Incluir na {{ selected.number }}{% endif %}</button>
         </form>{% endif %}
-        <a class="button secondary" href="{% url 'confirm_discard' measurement.pk %}{% if selected %}?order={{ selected.pk }}{% endif %}">⌫ Descartar</a>
+        <a class="button secondary" href="{% url 'confirm_discard' measurement.pk %}{% if selected %}?order={{ selected.pk }}{{ attendance_layout_query }}{% else %}{{ attendance_layout_suffix }}{% endif %}">⌫ Descartar</a>
       </div>
     </article>
     {% empty %}<p class="empty-state">Aguardando uma nova pesagem estável.</p>{% endfor %}

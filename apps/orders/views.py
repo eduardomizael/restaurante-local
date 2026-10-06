@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django.views.decorators.vary import vary_on_headers
@@ -20,6 +19,7 @@ from apps.orders.forms import (
 from apps.orders.selectors import all_orders, attendance_snapshot, board_snapshot, next_order_number, subtotal_cents
 from apps.orders.services import add_measurement_item, add_product_item, cancel_order, open_order, remove_item, set_next_number
 from apps.products.selectors import active_products
+from apps.orders.presentation import compact_layout, attendance_url
 
 
 def _selected_id(request):
@@ -33,8 +33,8 @@ def _selected_id(request):
     return value if value > 0 else -1
 
 
-def _attendance_redirect(order_id=None):
-    url = reverse("home")
+def _attendance_redirect(request, order_id=None):
+    url = attendance_url(request)
     return redirect(f"{url}?order={order_id}" if order_id is not None else url)
 
 
@@ -58,10 +58,13 @@ def _board_response(request, data):
 def _attendance_result(request, order_id, *, navigate=False):
     """Return affected fragments for HTMX and preserve ordinary form navigation."""
     if request.headers.get("HX-Request") != "true":
-        return _attendance_redirect(order_id)
+        return _attendance_redirect(request, order_id)
     if navigate:
-        response = render(request, "orders/workspace.html", attendance_snapshot(order_id))
-        response["HX-Push-Url"] = f"{reverse('home')}?order={order_id}"
+        template = "orders/alternative/workspace.html" if compact_layout(request) else "orders/workspace.html"
+        data = attendance_snapshot(order_id)
+        data["runtime"] = runtime_snapshot()
+        response = render(request, template, data)
+        response["HX-Push-Url"] = f"{attendance_url(request)}?order={order_id}"
         return response
     return _board_response(request, board_snapshot(order_id))
 
@@ -76,6 +79,8 @@ def attendance(request):
     data["runtime"] = runtime_snapshot()
     fragment = request.headers.get("HX-Request") == "true" and request.headers.get("HX-History-Restore-Request") != "true"
     template = "orders/workspace.html" if fragment else "orders/attendance.html"
+    if compact_layout(request):
+        template = "orders/alternative/workspace.html" if fragment else "orders/alternative/attendance.html"
     return render(request, template, data)
 
 
@@ -87,6 +92,14 @@ def product_choices(request):
     response = render(request, "orders/product_choices.html", data)
     response["X-Selected-Order"] = str(data["selected_id"])
     return response
+
+
+@require_GET
+@never_cache
+def alternative_products(request):
+    """Offer a normal navigation fallback for the alternative product picker."""
+    data = attendance_snapshot(_selected_id(request), request.GET.get("q", "").strip()[:120])
+    return render(request, "orders/alternative/products.html", data)
 
 
 @require_GET
@@ -214,7 +227,7 @@ def confirm_cancel(request, order_id):
             cancel_order(order_id)
         except ValidationError as exc:
             return _operation_error(request, exc, order_id)
-        return _attendance_redirect()
+        return _attendance_redirect(request)
     return render(request, "orders/confirm.html", {
         "form": form, "title": f"Cancelar comanda {order.number}?", "order_id": order_id,
         "description": "Os itens serão removidos e as pesagens vinculadas voltarão à lista disponível.",
@@ -236,7 +249,7 @@ def confirm_discard(request, measurement_id):
             discard_measurement(measurement_id)
         except ValidationError as exc:
             return _operation_error(request, exc)
-        return _attendance_redirect(_selected_id(request))
+        return _attendance_redirect(request, _selected_id(request))
     measurement = get_object_or_404(available_measurements(), pk=measurement_id)
     return render(request, "orders/confirm.html", {
         "form": form, "title": f"Descartar medição {measurement.pk}?",
@@ -261,7 +274,7 @@ def numbering(request):
                 form.add_error(None, exc)
                 response_status = 409
             else:
-                return _attendance_redirect()
+                return _attendance_redirect(request)
         else:
             response_status = 400
     return render(request, "orders/numbering.html", {"form": form}, status=response_status)

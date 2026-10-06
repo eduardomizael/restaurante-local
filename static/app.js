@@ -69,6 +69,11 @@ document.addEventListener("htmx:beforeSwap", (event) => {
     event.detail.isError = false;
   }
   if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.xhr.getResponseHeader("X-Print-Preview-Fragment") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if ([400, 409].includes(event.detail.xhr.status)
       && event.detail.xhr.getResponseHeader("X-Manual-Item-Fragment") === "1") {
     event.detail.shouldSwap = true;
     event.detail.isError = false;
@@ -133,6 +138,36 @@ window.addEventListener("pageshow", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  const printDialog = document.getElementById("print-preview-dialog");
+  if (printDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "print-preview-content" && !printDialog.open) printDialog.showModal();
+    });
+    printDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-print-preview]") && !printDialog.querySelector("form.htmx-request")) printDialog.close();
+    });
+    printDialog.addEventListener("cancel", (event) => {
+      if (printDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+  }
+  // Alternative-only controls are delegated because HTMX replaces the workspace.
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-open-products], [data-close-products]");
+    if (!trigger) return;
+    const picker = document.getElementById("product-picker-dialog");
+    if (!picker) return;
+    event.preventDefault();
+    if (trigger.hasAttribute("data-open-products")) {
+      if (!picker.open) picker.showModal();
+    } else picker.close();
+  });
+  document.addEventListener("htmx:oobAfterSwap", () => {
+    const picker = document.getElementById("product-picker-dialog");
+    if (picker?.open && picker.querySelector("#product-picker")?.hidden) picker.close();
+  });
+  document.addEventListener("manualItemAdded", () => {
+    document.getElementById("product-picker-dialog")?.close();
+  });
   const itemDialog = document.getElementById("manual-item-dialog");
   if (itemDialog) {
     let replaceOnDigit = true;

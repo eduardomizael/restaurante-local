@@ -1,6 +1,6 @@
 {% load commercial %}
-<form method="post" action="{% url 'manual_item' order.pk product.pk %}"
-      hx-post="{% url 'manual_item' order.pk product.pk %}" hx-target="#shared-board" hx-swap="outerHTML"
+<form method="post" action="{% url 'manual_item' order.pk product.pk %}{{ attendance_layout_suffix }}"
+      hx-post="{% url 'manual_item' order.pk product.pk %}{{ attendance_layout_suffix }}" hx-target="#shared-board" hx-swap="outerHTML"
       hx-sync="this:drop" hx-disabled-elt="find button:not(:disabled)" class="manual-item-form">
   {% csrf_token %}
   <p class="eyebrow">COMANDA {{ order.number }}</p>

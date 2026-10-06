@@ -1,5 +1,7 @@
 # Estrutura técnica da aplicação local de pesagem
 
+Atualização em 06/10/2026: [ADR-0038](adr/0038-atualizacao-por-git-e-pacotes-na-release.md) acrescenta instalações por Git/uv, versões por SHA, ambientes separados e abertura offline pela venv. Main distribui código aprovado; release publica executáveis. O manual atual do novo canal é [instalação por código](INSTALACAO_POR_CODIGO.md); registros datados abaixo descrevem a arquitetura anterior quando indicam publicação de pacotes pela main.
+
 Incremento em 05/10/2026: encerramento touch pela interface sem navegador embutido ([ADR-0028](adr/0028-encerramento-touch-pela-interface.md)) e pacotes x86/x64 com atualização por arquitetura ([ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md)). Essas decisões complementam a distribuição x64 descrita anteriormente. Publicação destas alterações na main e validação no computador final ainda são etapas distintas.
 
 Atualização em 05/10/2026: domínio, telas, configuração e transporte físico já foram implementados nos incrementos posteriores. A distribuição agora usa PyInstaller, executáveis Windows x64 e atualização web da main pelo atalho, com dados separados, backup e ativação por apontador. O contrato atual está na [ADR-0027](adr/0027-distribuicao-windows-e-atualizacao-por-release.md) e no [manual de distribuição](DISTRIBUICAO_WINDOWS.md); descrições abaixo de etapas ainda futuras registram o planejamento original.

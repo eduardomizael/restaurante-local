@@ -7,8 +7,9 @@
     {% include 'orders/quick_products.html' %}
   </section>
   <section class="catalogue-search" aria-label="Catálogo completo">
-    <form method="get" action="{% url 'home' %}" class="search-form" hx-get="{% url 'product_choices' %}" hx-target="#catalogue-choices" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop">
+    <form method="get" action="{{ product_search_url }}" class="search-form" hx-get="{% url 'product_choices' %}" hx-target="#catalogue-choices" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop">
       <input type="hidden" name="order" value="{{ selected.pk }}"><label for="product-search">Buscar produto</label><input id="product-search" name="q" value="{{ search }}" placeholder="Nome do produto"><button type="submit" class="secondary compact">⌕ Buscar</button>
+      {% if not compact_attendance %}<input type="hidden" name="layout" value="alternative">{% endif %}
     </form>
     {% include 'orders/product_choices.html' %}
   </section>

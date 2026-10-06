@@ -3,6 +3,6 @@
 <div class="heading"><p class="eyebrow">COMANDA {{ order.number }}</p><h1>{{ product.description }}</h1><p>Preço: R$ {{ product.unit_price_cents|money }} / {{ product.unit }}</p></div>
 <form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}
   <p>Peso digitado ou quantidade manual não consomem pesagens da lista disponível.</p>
-  <div class="form-actions"><button type="submit">＋ Incluir na comanda {{ order.number }}</button><a class="button secondary" href="{% url 'home' %}?order={{ order.pk }}">Voltar à comanda</a></div>
+  <div class="form-actions"><button type="submit">＋ Incluir na comanda {{ order.number }}</button><a class="button secondary" href="{{ attendance_url }}?order={{ order.pk }}">Voltar à comanda</a></div>
 </form>
 {% endblock %}

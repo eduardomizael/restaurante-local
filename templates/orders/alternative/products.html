@@ -1,0 +1,5 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><h1>Escolher produto</h1><a class="button secondary" href="{{ attendance_url }}{% if selected %}?order={{ selected.pk }}{% endif %}">Voltar à comanda</a></div>
+<div hx-disable>{% if selected %}{% include 'orders/alternative/catalogue_picker.html' %}{% else %}<p>Selecione uma comanda aberta antes de incluir produtos.</p>{% endif %}</div>
+{% endblock %}

@@ -5,10 +5,29 @@ param(
     [string]$ExpectedHash,
     [string]$ManifestUrl,
     [switch]$CheckOnStart,
-    [switch]$NoShortcut
+    [switch]$NoShortcut,
+    [switch]$Source,
+    [string]$Repository
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+$sourcePointer = Join-Path $InstallRoot 'current.json'
+if (-not $Source -and -not $PackageDirectory -and -not $PackagePath -and (Test-Path -LiteralPath $sourcePointer)) {
+    $sourceRecord = Get-Content -LiteralPath $sourcePointer -Raw | ConvertFrom-Json
+    $Source = $sourceRecord.PSObject.Properties.Name -contains 'mode' -and $sourceRecord.mode -eq 'source'
+}
+if ($Source) {
+    if ($PackageDirectory -or $PackagePath -or $ManifestUrl) { throw 'Não combine atualização por código com pacote ou manifesto.' }
+    & (Join-Path $PSScriptRoot 'Update-Source.ps1') -InstallRoot $InstallRoot -Repository $Repository -CheckOnStart:$CheckOnStart -NoShortcut:$NoShortcut
+    exit $LASTEXITCODE
+}
+$existingPointer = Join-Path $InstallRoot 'current.json'
+if ((Test-Path -LiteralPath $existingPointer)) {
+    $existingRecord = Get-Content -LiteralPath $existingPointer -Raw | ConvertFrom-Json
+    if ($existingRecord.PSObject.Properties.Name -contains 'mode' -and $existingRecord.mode -eq 'source') {
+        throw 'Esta instalação usa código. Use outra InstallRoot para instalar executáveis; a troca exige avaliação de compatibilidade do banco.'
+    }
+}
 $lock = $null
 $work = $null
 $versionDirectory = $null
@@ -137,7 +156,7 @@ try {
             if ($manifest.package -notmatch '^RestauranteLocal-[a-f0-9]{64}\.zip$') { throw 'Nome de pacote inválido.' }
             $ExpectedHash = $manifest.sha256
             $packageUri = [Uri]::new($manifestUri, [string]$manifest.package)
-            Write-Host "Baixando versão $expectedVersion da main..."
+            Write-Host "Baixando versão $expectedVersion da release..."
             Invoke-WebRequest -UseBasicParsing -Uri $packageUri -OutFile $archive -TimeoutSec 120
         }
         if ($ExpectedHash -notmatch '^[a-fA-F0-9]{64}$') { throw 'Checksum inválido.' }

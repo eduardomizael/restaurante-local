@@ -13,7 +13,7 @@ flowchart TD
     E --> F[Instalar.bat na máquina final]
     F --> G[Programa em LocalAppData/Programs]
     F --> H[Dados em LocalAppData/RestauranteLocal]
-    E --> I[Release e site após merge na main]
+    E --> I[Release e site após merge na release]
     I --> J[Inicializador verifica atualização da mesma arquitetura]
 ```
 
@@ -115,7 +115,7 @@ Se uma etapa falhar, o comando retorna erro e interrompe as seguintes. Não cons
 
 O workflow `.github/workflows/windows-deploy.yml` chama `packaging/Build-Windows.ps1` para x86 e x64. O mesmo comando prepara, testa e empacota em ambos os ambientes. A publicação é uma etapa adicional do workflow: depois dos dois builds aprovados, cria a Release e publica o site.
 
-**Empacotar localmente não publica nada.** O desenvolvimento fica em `codex/develop`; PR e merge autorizado na `main` publicam a versão de produção. O build não inclui `.env`, banco, dados, logs operacionais ou RTK.
+**Empacotar localmente não publica nada.** O desenvolvimento fica em `codex/develop`; a main distribui código aprovado pelo canal Git/uv. PR e merge autorizado da main para `release` publicam os executáveis e o site. O build não inclui `.env`, banco, dados, logs operacionais ou RTK.
 
 As versões fixadas permitem repetir o processo e manter as mesmas dependências. Os ZIPs não são prometidos como idênticos byte a byte: timestamps e metadados do empacotamento podem alterar o hash. O SHA-256 identifica o ZIP efetivamente produzido em cada execução.
 

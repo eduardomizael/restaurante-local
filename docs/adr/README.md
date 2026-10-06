@@ -23,3 +23,9 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0030 — Comando único para reproduzir o empacotamento](0030-comando-unico-para-empacotamento-windows.md).
 - [ADR-0031 — Desinstalação com dados opcionais](0031-desinstalacao-com-dados-opcionais.md).
 - [ADR-0032 — Atendimento em área útil reduzida](0032-atendimento-em-area-util-reduzida.md).
+- [ADR-0033 — Atendimento na área CSS do PC integrado](0033-atendimento-na-area-css-do-pc-integrado.md).
+- [ADR-0034 — Versão alternativa do atendimento](0034-versao-alternativa-do-atendimento.md).
+- [ADR-0035 — Produtos rápidos e filtro na alternativa](0035-produtos-rapidos-e-filtro-na-alternativa.md).
+- [ADR-0036 — Prévia em diálogo na alternativa](0036-previa-em-dialogo-na-alternativa.md).
+- [ADR-0037 — Promoção do atendimento compacto](0037-promocao-do-atendimento-compacto.md).
+- [ADR-0038 — Atualização por Git e pacotes na release](0038-atualizacao-por-git-e-pacotes-na-release.md).

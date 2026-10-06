@@ -1,8 +1,9 @@
-name: Build e deploy Windows da main
+name: Build e deploy Windows da release
 on:
   push:
-    branches: [main]
+    branches: [release]
   pull_request:
+    branches: [release]
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,6 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/release'
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -27,13 +29,13 @@ jobs:
             dist/RestauranteLocal-windows-${{ matrix.architecture }}.zip
             dist/RestauranteLocal-windows-${{ matrix.architecture }}.zip.sha256
       - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request'
         with:
           name: update-web-${{ matrix.architecture }}
           path: dist/update-web
   release:
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -55,7 +57,7 @@ jobs:
           fi
   deploy:
     needs: [build, release]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write

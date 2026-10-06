@@ -1,0 +1,7 @@
+<section id="alternative-quick-picker" class="product-picker alternative-quick-picker" {% if not selected %}hidden{% endif %} {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if selected %}
+  <div class="panel-heading"><h2>PRODUTOS RÁPIDOS</h2></div>
+  {% include 'orders/quick_products.html' %}
+  <div class="alternative-add"><a class="button secondary" data-open-products href="{% url 'alternative_products' %}?order={{ selected.pk }}">＋ Adicionar produto</a></div>
+  {% endif %}
+</section>

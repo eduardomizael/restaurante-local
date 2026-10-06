@@ -16,6 +16,8 @@ O pacote inclui os executáveis, Python, dependências, templates e assets. Nest
 2. Execute `Instalar.bat`. Não execute diretamente de dentro do ZIP.
 3. Abra **Restaurante Local** pelo atalho criado na área de trabalho.
 
+Nas versões com a [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md), o atalho abre uma janela dedicada em tela cheia pelo Edge, com fallback para Chrome instalado num caminho padrão do Windows. **Status → Encerrar aplicação**, seguido de confirmação, desliga o sistema e fecha sua janela. **Continuar usando** mantém a aplicação aberta. Janelas pessoais do navegador permanecem abertas. Fechar só a janela mantém o inicializador rodando; use o atalho para reabri-la. Essa mudança precisa ser publicada na release para chegar às instalações por executável.
+
 O programa é instalado por usuário em `%LOCALAPPDATA%\Programs\RestauranteLocal`. Os dados permanecem em `%LOCALAPPDATA%\RestauranteLocal`: banco, configuração, logs e backups. A primeira instalação prepara o banco explicitamente. Não exige administrador nem configura início automático.
 
 ## Atualização ao abrir

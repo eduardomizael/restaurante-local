@@ -46,6 +46,8 @@ class WindowsLauncherTests(SimpleTestCase):
     def launch(self, directory, answer):
         environment = dict(os.environ, LOCAL_WEIGHING_DATA_DIR=directory,
                            DJANGO_SETTINGS_MODULE="config.settings", UV_PROJECT_ENVIRONMENT=sys.prefix)
+        # Exercise startup and backup with only Windows tools on PATH, without RTK.
+        environment["PATH"] = str(Path(os.environ["SystemRoot"]) / "System32")
         return subprocess.run(["cmd.exe", "/d", "/c", "Iniciar.bat", "--simulate", "--preview-print",
                                "--no-tray", "--no-browser"], cwd=settings.BASE_DIR, env=environment,
                               input=answer, capture_output=True, timeout=30)

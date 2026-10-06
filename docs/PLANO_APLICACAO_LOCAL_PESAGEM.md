@@ -1,5 +1,7 @@
 # Plano da aplicação local de pesagem e impressão
 
+Incremento em 06/10/2026: janela dedicada em tela cheia e fechamento junto com o runtime pelo botão da interface, conforme [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md). Implementação em desenvolvimento, com ensaio nativo Edge/x64 e simuladores. Publicação dessa mudança e validação no equipamento final permanecem etapas distintas.
+
 Atualização em 06/10/2026: canal por código Git/uv da main implementado conforme [ADR-0038](adr/0038-atualizacao-por-git-e-pacotes-na-release.md), preservando dados, backup e abertura offline. O usuário instalará Git e uv. Pacotes executáveis x86/x64 continuam disponíveis e sua publicação passa para release. Publicação remota e validação no Windows x86 final continuam pendentes. Consulte [instalação por código](INSTALACAO_POR_CODIGO.md); menções datadas abaixo ao build da main registram a decisão anterior.
 
 Incremento em 05/10/2026: o usuário solicitou fechamento pela interface touch e informou Windows 10 Home de 32 bits com processador x64 na máquina final. Implementação na branch de desenvolvimento conforme [ADR-0028](adr/0028-encerramento-touch-pela-interface.md) e [ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md); WebView2 permanece adiado. O pacote necessário nessa máquina é x86. Publicação e conferência física continuam distintas da validação com simuladores.

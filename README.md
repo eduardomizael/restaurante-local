@@ -1,5 +1,7 @@
 # Restaurante Local
 
+Janela dedicada em tela cheia: abertura pelo Edge/Chrome e fechamento da janela ao encerrar pela interface, conforme [ADR-0039](docs/adr/0039-janela-dedicada-em-tela-cheia.md). Validado com Edge/x64 e simuladores. O canal por código recebe a mudança pela main; pacotes executáveis exigem promoção para release. A conferência no Windows x86 final permanece pendente.
+
 Distribuição em 06/10/2026: [instalação por Git e uv](docs/INSTALACAO_POR_CODIGO.md), com atualização automática do código da `main` pelo atalho. O usuário prepara Git e uv na máquina final e executa `Instalar-codigo.bat` uma vez. Pacotes executáveis e o site são publicados somente pela branch `release`. Consulte a [ADR-0038](docs/adr/0038-atualizacao-por-git-e-pacotes-na-release.md). A validação no Windows x86 final permanece uma etapa própria.
 
 Atualização em desenvolvimento: encerramento touch pelo botão **Encerrar aplicação**, com confirmação, conforme [ADR-0028](docs/adr/0028-encerramento-touch-pela-interface.md). Distribuição com pacotes **x86 (Windows de 32 bits)** e **x64 (Windows de 64 bits)** e atualização por arquitetura, conforme [ADR-0029](docs/adr/0029-distribuicao-windows-x86-e-x64.md). Não inclui WebView2. O código é disponibilizado pela main; executáveis e site, pela release.
@@ -40,7 +42,7 @@ Ao detectar instalação/banco ausente ou banco desatualizado, `Iniciar.bat` per
 
 Para criar o atalho na área de trabalho, clique com o botão direito em `Iniciar.bat` e escolha **Enviar para → Área de trabalho (criar atalho)**; no Windows 11, pode ser necessário **Mostrar mais opções**. Os arquivos usam sua própria pasta como diretório de trabalho, inclusive quando chamados por atalho.
 
-Para simulação no desenvolvimento, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos da raiz aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e exigem `rtk` no PATH; a abertura não depende de uv, cache ou internet. `Iniciar.bat` também respeita `UV_PROJECT_ENVIRONMENT` quando definido, para usar o ambiente próprio de cada arquitetura durante os testes de empacotamento. O pacote final usa scripts próprios, inicializador sem console e runtime/dependências incluídos.
+Para simulação no desenvolvimento, execute `Iniciar.bat --simulate --preview-print` em um terminal. Os dois arquivos da raiz aceitam os argumentos de seus respectivos comandos e mantêm a mensagem de erro visível em caso de falha. Eles usam diretamente o Python da `.venv` deste projeto, preparada com uv, e dispensam RTK na execução; a abertura não depende de uv, cache ou internet. `Iniciar.bat` também respeita `UV_PROJECT_ENVIRONMENT` quando definido, para usar o ambiente próprio de cada arquitetura durante os testes de empacotamento. Na máquina final, execute `Instalar-codigo.bat` uma vez e abra pelo atalho **Restaurante Local**. O pacote final usa scripts próprios, inicializador sem console e runtime/dependências incluídos.
 
 ### Comandos técnicos
 

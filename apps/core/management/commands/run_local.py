@@ -16,6 +16,8 @@ class Command(BaseCommand):
         parser.add_argument("--preview-print", action="store_true")
         parser.add_argument("--no-tray", action="store_true")
         parser.add_argument("--no-browser", action="store_true")
+        parser.add_argument("--browser-mode", choices=("fullscreen", "maximized"),
+                            default=settings.INSTALLATION.get("browser_mode", "fullscreen"))
 
     def handle(self, *args, **options):
         if not settings.INSTALLATION:
@@ -31,6 +33,7 @@ class Command(BaseCommand):
         application = LocalApplication(
             settings.DATA_DIR, settings.INSTALLATION["port"], browser=not options["no_browser"],
             simulate=options["simulate"], preview_print=options["preview_print"],
+            browser_mode=options["browser_mode"],
         )
         try:
             if not application.start():

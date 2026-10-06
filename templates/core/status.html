@@ -5,6 +5,7 @@
 {% include 'core/status_fragment.html' %}
 <section class="card"><h2>Como encerrar</h2>
 <p>Toque no botão abaixo e confirme. Você também pode usar <strong>Sair</strong> na bandeja.</p>
+<p>A janela dedicada do Restaurante Local será fechada ao concluir o encerramento.</p>
 <div class="form-actions"><a class="button danger shutdown-link" href="{% url 'shutdown_confirmation' %}">Encerrar aplicação</a></div>
 <p>Balança: {% if runtime_mode.scale_mode == 'SERIAL' %}porta serial real{% else %}simulador{% endif %}. Impressão: {% if runtime_mode.print_mode == 'RAW' %}Windows RAW{% else %}simulada{% endif %}.</p></section>
 <section class="card"><h2>Comparar telas de atendimento</h2><p>O atendimento principal usa produtos rápidos e prévia em diálogo. A versão anterior continua disponível como alternativa.</p><div class="form-actions"><a class="button secondary" href="{% url 'home' %}">Atendimento principal</a><a class="button" href="{% url 'attendance_alternative' %}">Versão alternativa</a></div></section>

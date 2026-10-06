@@ -15,6 +15,10 @@ Canal para os computadores administrados internamente. Código aprovado vem da `
 
 3. Aguarde a preparação do Python 3.13, dependências e banco. Abra pelo atalho **Restaurante Local** na área de trabalho.
 
+O atalho abre uma janela dedicada em tela cheia usando Edge ou, na sua ausência, Chrome, instalado num caminho padrão do Windows. Para sair, use **Status → Encerrar aplicação**, confirme e aguarde: o sistema e sua janela serão fechados. **Continuar usando** mantém o atendimento aberto. Outras janelas do navegador permanecem abertas. Se você fechou somente a janela, reabra pelo atalho; o atendimento continua em execução. Consulte a [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md).
+
+Para preferir janela maximizada, com o programa fechado configure `"browser_mode": "maximized"` em `installation.json` na pasta de dados, preservando os campos existentes. O padrão é `"fullscreen"`. Essa opção só funciona após instalar a versão que implementa a ADR-0039. Perfil temporário do navegador fica em `dados/browser/<sessão>` e é removido ao sair normalmente; perfis de sessões interrompidas podem permanecer. Banco e backups não ficam nesse perfil.
+
 Python é baixado pelo uv quando necessário. Internet é necessária na preparação e nas atualizações. O computador final informado usa Windows de 32 bits: Git/uv e Python precisam funcionar em x86, independentemente do processador x64. Esse caminho ainda precisa de validação nessa máquina; o uv classifica Windows x86 como suporte de melhor esforço.
 
 Programa: `%LOCALAPPDATA%\Programs\RestauranteLocal`. Dados: `%LOCALAPPDATA%\RestauranteLocal`, salvo configuração explícita. O clone inicial pode ser guardado para suporte; o atalho não depende dele. Não execute o `Iniciar.bat` de desenvolvimento desse clone como atalho operacional.

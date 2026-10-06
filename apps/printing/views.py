@@ -3,6 +3,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
@@ -11,6 +12,7 @@ from apps.core.http import requires_runtime
 from apps.configuration.selectors import hardware_configuration
 from runtime.state import state
 from apps.orders.models import Order
+from apps.orders.presentation import compact_layout, attendance_url, layout_url
 from apps.printing.documents import fingerprint, preview_parts
 from apps.printing.forms import DocumentConfigurationForm, FinalizeForm, ReprintForm
 from apps.printing.models import OrderDocument, PrintJob
@@ -69,18 +71,28 @@ def saved_document(request, document_id):
     return _preview(request, document.order, document)
 
 
-def _preview(request, order, document):
+def _preview(request, order, document, *, errors=None, status=200):
     """Present an immutable saved copy or a freshly reviewed editable draft."""
     content = document.content if document else draft_content(order)
-    form = FinalizeForm(initial={"request_key": uuid4(), "expected_fingerprint": fingerprint(content),
-                                 "reviewed_mode": state.snapshot()["print_mode"],
-                                 "printer_revision": hardware_configuration().revision})
-    return render(request, "printing/preview.html", {
+    dialog = compact_layout(request) and request.headers.get("HX-Request") == "true" and (
+        request.GET.get("dialog") == "print" or request.POST.get("return_to_attendance") == "1"
+    )
+    form = FinalizeForm(auto_id=False if dialog else "id_%s", initial={
+        "request_key": uuid4(), "expected_fingerprint": fingerprint(content),
+        "reviewed_mode": state.snapshot()["print_mode"],
+        "printer_revision": hardware_configuration().revision,
+    })
+    response = render(request, "printing/preview_dialog.html" if dialog else "printing/preview.html", {
         "order": order, "document": document, **preview_parts(content), "form": form,
+        "errors": errors or [],
         "can_finalize": bool(content["header"] and content["items"]),
         "jobs": document_jobs(document.pk) if document else [],
         "last_document": latest_order_document(order.pk) if document is None else None,
-    })
+    }, status=status)
+    if dialog:
+        response["X-Print-Preview-Fragment"] = "1"
+        response["HX-Retarget"] = "#print-preview-content"
+    return response
 
 
 @require_POST
@@ -103,6 +115,9 @@ def _submit_order_print(request, order_id, *, close_order):
     """Validate HTTP intent before invoking the commercial print service."""
     form = FinalizeForm(request.POST)
     if not form.is_valid():
+        if compact_layout(request) and request.POST.get("return_to_attendance") == "1" and request.headers.get("HX-Request") == "true":
+            return _preview(request, get_object_or_404(Order, pk=order_id), None,
+                            errors=["Prévia inválida. Revise novamente antes de imprimir."], status=400)
         return HttpResponse("Identificador ou revisão da prévia inválidos.", status=400)
     try:
         values = dict(form.cleaned_data)
@@ -114,8 +129,19 @@ def _submit_order_print(request, order_id, *, close_order):
         job = operation(order_id=order_id, delivery_mode=reviewed_mode,
                         expected_printer_revision=printer_revision, **values)
     except ValidationError as exc:
+        if compact_layout(request) and request.POST.get("return_to_attendance") == "1" and request.headers.get("HX-Request") == "true":
+            order = get_object_or_404(Order, pk=order_id)
+            return _preview(request, order, order_document(order_id), errors=exc.messages, status=409)
         return _error(request, exc)
-    return redirect("print_preview", order_id=order_id) if close_order else redirect("saved_document", document_id=job.document_id)
+    if compact_layout(request) and request.POST.get("return_to_attendance") == "1":
+        url = attendance_url(request) + (f"?order={order_id}" if not close_order else "")
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse()
+            response["HX-Redirect"] = url
+            return response
+        return redirect(url)
+    url = reverse("print_preview", args=[order_id]) if close_order else reverse("saved_document", args=[job.document_id])
+    return redirect(layout_url(request, url))
 
 
 @require_GET

@@ -27,6 +27,7 @@ TEMPLATES = [{
         "django.template.context_processors.request",
         "apps.core.context_processors.runtime_mode",
         "apps.core.context_processors.application_identity",
+        "apps.orders.context_processors.attendance_layout",
     ]},
 }]
 WSGI_APPLICATION = "config.wsgi.application"

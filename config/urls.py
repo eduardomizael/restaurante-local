@@ -8,6 +8,8 @@ from apps.configuration import views as configuration_views
 
 urlpatterns = [
     path("", order_views.attendance, name="home"),
+    path("attendance/alternative/", order_views.attendance, name="attendance_alternative"),
+    path("attendance/products/", order_views.alternative_products, name="alternative_products"),
     path("board/fragment/", order_views.board_fragment, name="board_fragment"),
     path("board/products/", order_views.product_choices, name="product_choices"),
     path("products/", product_views.catalogue, name="catalogue"),

@@ -127,7 +127,7 @@ try {
     Write-Host "`nConcluído. Pacotes em: $(Join-Path $projectRoot 'dist')" -ForegroundColor Green
     Write-Host "Relatório: $reportPath"
     Write-Host "Log: $log"
-    Write-Host 'Este comando gera arquivos locais. Publicação ocorre pelo fluxo de PR e merge na main.'
+    Write-Host 'Este comando gera arquivos locais. Publicação dos executáveis ocorre pelo fluxo de PR e merge na release.'
     exit 0
 } catch {
     Write-Host ('Empacotamento falhou: ' + $_.Exception.Message) -ForegroundColor Red

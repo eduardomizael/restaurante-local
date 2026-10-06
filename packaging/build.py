@@ -21,7 +21,7 @@ def build(version, revision):
     if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-.][A-Za-z0-9]+)*", version):
         raise ValueError("Use uma versão como 0.1.0 ou 0.1.0-rc1.")
     if not re.fullmatch(r"[a-f0-9]{40}", revision):
-        raise ValueError("Informe o SHA completo do commit da main.")
+        raise ValueError("Informe o SHA completo do commit da release.")
     architecture = "x64" if struct.calcsize("P") == 8 else "x86"
     subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
                     "--distpath", str(ROOT / "dist" / architecture),
@@ -83,7 +83,7 @@ def build(version, revision):
     (web / "index.html").write_text(
         '<!doctype html><html lang="pt-BR"><meta charset="utf-8">'
         '<title>Restaurante Local</title><h1>Restaurante Local</h1>'
-        f'<p>Versão {version} — main {revision[:12]}</p>'
+        f'<p>Versão {version} — release {revision[:12]}</p>'
         f'<p><a href="{filename}">Baixar pacote Windows {architecture}</a></p>'
         '<p>Extraia o ZIP e execute Instalar.bat. Para atualizar, basta abrir o aplicativo.</p></html>',
         encoding="utf-8",

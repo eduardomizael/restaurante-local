@@ -1,0 +1,37 @@
+name: Validar código da main
+on:
+  push:
+    branches: [main, codex/develop]
+  pull_request:
+    branches: [main, codex/develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.11.26'
+      - name: Preparar ambiente
+        run: uv sync --locked --no-default-groups --python 3.13
+      - name: Preparar RTK para testes dos scripts de desenvolvimento
+        shell: pwsh
+        run: |
+          $definition = (Get-Content packaging/toolchain.json -Raw | ConvertFrom-Json).rtk
+          $archive = Join-Path $env:RUNNER_TEMP 'rtk.zip'
+          $directory = Join-Path $env:RUNNER_TEMP 'rtk'
+          Invoke-WebRequest -Uri $definition.url -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $definition.sha256) { throw 'Checksum RTK inválido.' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $directory
+          $tool = @(Get-ChildItem $directory -Filter rtk.exe -Recurse)
+          if ($tool.Count -ne 1) { throw 'RTK não identificado.' }
+          $tool[0].DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+      - name: Conferir aplicação e migrations
+        run: |
+          uv run --no-sync python manage.py check --settings=config.test_settings
+          uv run --no-sync python manage.py makemigrations --check --dry-run --settings=config.test_settings
+      - name: Testar
+        run: uv run --no-sync python manage.py test --settings=config.test_settings

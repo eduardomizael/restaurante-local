@@ -2,11 +2,14 @@
 
 import json
 import logging
+import re
+import secrets
 import time
 import uuid
 import webbrowser
+from http.cookiejar import CookieJar
 from threading import Event, Thread
-from urllib.request import ProxyHandler, build_opener
+from urllib.request import HTTPCookieProcessor, ProxyHandler, Request, build_opener
 
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
@@ -21,6 +24,7 @@ from runtime.configured_scale import ConfiguredSerialScale
 from hardware.scale.cycle import CaptureCycle
 from apps.printing.services import recover_interrupted_jobs
 from runtime.state import state
+from runtime.browser import ApplicationBrowser
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +75,12 @@ class LocalApplication:
     """Own one installation, server and explicit real/simulated transports."""
 
     def __init__(self, data_dir, port, *, browser=True, server_factory=LocalHTTPServer,
-                 adapter_factory=None, browser_open=webbrowser.open, capture_factory=None,
-                 print_worker_factory=None, simulate=True, preview_print=True):
+                 adapter_factory=None, browser_open=None, capture_factory=None,
+                 print_worker_factory=None, simulate=True, preview_print=True, browser_mode="fullscreen"):
         self.data_dir = data_dir
         self.port = port
         self.url = f"http://127.0.0.1:{port}/"
         self.browser = browser
-        self.browser_open = browser_open
         self.server_factory = server_factory
         self.simulate, self.preview_print = simulate, preview_print
         self.adapter_factory = adapter_factory or (SimulatedScale if simulate else ConfiguredSerialScale)
@@ -92,6 +95,9 @@ class LocalApplication:
         self.worker = None
         self.print_worker = None
         self.instance_id = uuid.uuid4().hex
+        self.browser_token = secrets.token_hex(32)
+        self.browser_window = ApplicationBrowser(data_dir, self.instance_id, browser_mode) if browser and browser_open is None else None
+        self.browser_open = browser_open or (self.browser_window.open if self.browser_window else lambda url: None)
         self.owns_lock = False
         self.started = False
 
@@ -135,10 +141,14 @@ class LocalApplication:
             temporary = record.with_suffix(".tmp")
             temporary.write_text(json.dumps({
                 "port": self.port, "instance_id": self.instance_id,
+                "browser_mode": self.browser_window.mode if self.browser_window else None,
+                "browser_token": self.browser_token if self.browser_window else None,
             }), encoding="utf-8")
             temporary.replace(record)
             self.started = True
             state.bind_shutdown(self.request_stop)
+            if self.browser_window is not None:
+                state.bind_browser(lambda: self.browser_open(self.url), self.browser_token)
             if self.browser:
                 self.browser_open(self.url)
             logger.info("Inicializador pronto em %s (serial=%s, impressão=%s)",
@@ -161,15 +171,35 @@ class LocalApplication:
                 url = f"http://127.0.0.1:{port}/"
                 probe_instance(url, identity, timeout=0.5)
                 if self.browser:
-                    self.browser_open(url)
+                    if self.browser_window and data.get("browser_mode"):
+                        token = data.get("browser_token", "")
+                        if not isinstance(token, str) or not re.fullmatch(r"[a-f0-9]{64}", token):
+                            raise ValueError("Identidade de controle da janela inválida")
+                        cookies = CookieJar()
+                        opener = build_opener(ProxyHandler({}), HTTPCookieProcessor(cookies))
+                        with opener.open(url + "health/", timeout=1) as response:
+                            if json.load(response).get("instance_id") != identity:
+                                raise ValueError("Instância mudou durante a abertura")
+                        csrf = next(cookie.value for cookie in cookies if cookie.name == "csrftoken")
+                        request = Request(url + "runtime/window/open/", data=b"", headers={
+                            "X-CSRFToken": csrf, "X-Local-Browser-Token": token,
+                        })
+                        with opener.open(request, timeout=3):
+                            pass
+                    elif self.browser_window:
+                        # Older or --no-browser runtimes do not own a dedicated window.
+                        webbrowser.open(url)
+                    else:
+                        self.browser_open(url)
                 return
-            except (OSError, ValueError, KeyError, RuntimeError):
+            except (OSError, ValueError, KeyError, RuntimeError, StopIteration):
                 time.sleep(0.1)
         raise RuntimeError("Instância ocupada; não foi possível confirmar o servidor existente.")
 
     def request_stop(self):
         """Stop accepting actions before requesting component termination."""
         state.unbind_shutdown(self.request_stop)
+        state.unbind_browser(self.browser_token)
         state.update(running=False)
         self.stop_event.set()
 
@@ -196,6 +226,8 @@ class LocalApplication:
             self.server_thread.join(timeout=3)
             if self.server_thread.is_alive():
                 raise RuntimeError("HTTP não encerrou; mutex mantido até a saída do processo.")
+        if self.browser_window is not None:
+            self.browser_window.close()
         (self.data_dir / "instance.json").unlink(missing_ok=True)
         self.lock.release()
         self.owns_lock = False

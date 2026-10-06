@@ -4,6 +4,7 @@
 <section class="card shutdown-panel">
   <p>O atendimento, a leitura da balança e o processamento da fila de impressão serão interrompidos.</p>
   <p>As comandas e pesagens já salvas serão mantidas. Para usar novamente, abra o atalho da aplicação.</p>
+  <p>A janela dedicada do Restaurante Local será fechada. Outras janelas do navegador permanecerão abertas.</p>
   {% if runtime.running %}
   <form method="post" action="{% url 'shutdown' %}">
     {% csrf_token %}

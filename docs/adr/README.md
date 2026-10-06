@@ -29,3 +29,4 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0036 — Prévia em diálogo na alternativa](0036-previa-em-dialogo-na-alternativa.md).
 - [ADR-0037 — Promoção do atendimento compacto](0037-promocao-do-atendimento-compacto.md).
 - [ADR-0038 — Atualização por Git e pacotes na release](0038-atualizacao-por-git-e-pacotes-na-release.md).
+- [ADR-0039 — Janela dedicada em tela cheia](0039-janela-dedicada-em-tela-cheia.md).

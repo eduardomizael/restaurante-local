@@ -1,5 +1,7 @@
 # Estrutura técnica da aplicação local de pesagem
 
+Incremento em 06/10/2026: janela dedicada em tela cheia no Windows, com Edge/Chrome e perfil próprio por sessão. O encerramento pela interface fecha também a janela controlada após a parada dos componentes, conforme [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md). Reaberturas pelo atalho são encaminhadas ao runtime dono. Validação nativa x64 com Edge e simuladores; conferência no Windows x86 final permanece separada.
+
 Atualização em 06/10/2026: [ADR-0038](adr/0038-atualizacao-por-git-e-pacotes-na-release.md) acrescenta instalações por Git/uv, versões por SHA, ambientes separados e abertura offline pela venv. Main distribui código aprovado; release publica executáveis. O manual atual do novo canal é [instalação por código](INSTALACAO_POR_CODIGO.md); registros datados abaixo descrevem a arquitetura anterior quando indicam publicação de pacotes pela main.
 
 Incremento em 05/10/2026: encerramento touch pela interface sem navegador embutido ([ADR-0028](adr/0028-encerramento-touch-pela-interface.md)) e pacotes x86/x64 com atualização por arquitetura ([ADR-0029](adr/0029-distribuicao-windows-x86-e-x64.md)). Essas decisões complementam a distribuição x64 descrita anteriormente. Publicação destas alterações na main e validação no computador final ainda são etapas distintas.

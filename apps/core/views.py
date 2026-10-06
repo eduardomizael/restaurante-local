@@ -3,6 +3,7 @@ from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from apps.core.selectors import runtime_snapshot
 from runtime.state import state
@@ -26,6 +27,7 @@ def status_fragment(request):
 
 @require_GET
 @never_cache
+@ensure_csrf_cookie
 def health(request):
     """Identify the explicitly started process and its readiness."""
     snapshot = state.snapshot()
@@ -33,6 +35,19 @@ def health(request):
         "application": "local-weighing", "ready": snapshot["running"],
         "instance_id": snapshot.get("instance_id"),
     }, status=200 if snapshot["running"] else 503)
+
+
+@require_POST
+@never_cache
+def open_window(request):
+    """Accept local launcher control with CSRF and a private runtime capability."""
+    try:
+        state.open_browser(request.headers.get("X-Local-Browser-Token", ""))
+    except PermissionError as exc:
+        return HttpResponse(str(exc), status=403)
+    except (OSError, RuntimeError) as exc:
+        return HttpResponse(str(exc), status=409)
+    return HttpResponse(status=204)
 
 
 @require_POST

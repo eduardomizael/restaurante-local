@@ -252,6 +252,27 @@ class RuntimeTests(SimpleTestCase):
         self.assertTrue(lock.acquire())
         lock.release()
 
+    def test_duplicate_reopens_via_owner_and_shutdown_closes_dedicated_browser(self):
+        owner_window, duplicate_window = Mock(mode="fullscreen"), Mock(mode="fullscreen")
+        with patch("runtime.application.ApplicationBrowser", side_effect=[owner_window, duplicate_window]):
+            application = LocalApplication(self.data_dir, free_port())
+            duplicate = LocalApplication(self.data_dir, application.port)
+        try:
+            application.start()
+            owner_window.open.assert_called_once_with(application.url)
+            # Simulate closing the window manually; only its runtime can reopen it.
+            self.assertFalse(duplicate.start())
+            self.assertEqual(owner_window.open.call_count, 2)
+            duplicate_window.open.assert_not_called()
+            duplicate.stop()
+            duplicate_window.close.assert_not_called()
+            owner_window.close.assert_not_called()
+            state.prepare_shutdown()()
+        finally:
+            application.stop()
+        owner_window.close.assert_called_once()
+        self.assertFalse(application.owns_lock)
+
     def test_port_collision_releases_mutex_and_does_not_start_adapter(self):
         adapter_factory = Mock()
         with socket.socket() as occupied:

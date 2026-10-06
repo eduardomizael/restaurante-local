@@ -42,4 +42,6 @@ def read_installation(data_dir):
         raise ValueError("Porta HTTP deve estar entre 1024 e 65535.")
     if not isinstance(data.get("secret_key"), str) or len(data["secret_key"]) < 50:
         raise ValueError("Segredo local ausente ou inválido. Execute initialize_local.")
+    if data.get("browser_mode", "fullscreen") not in ("fullscreen", "maximized"):
+        raise ValueError("Modo do navegador deve ser fullscreen ou maximized.")
     return data

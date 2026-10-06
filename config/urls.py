@@ -37,6 +37,7 @@ urlpatterns = [
     path("status/fragment/", views.status_fragment, name="status_fragment"),
     path("health/", views.health, name="health"),
     path("runtime/pause/", views.toggle_pause, name="toggle_pause"),
+    path("runtime/window/open/", views.open_window, name="open_window"),
     path("runtime/shutdown/confirm/", views.shutdown_confirmation, name="shutdown_confirmation"),
     path("runtime/shutdown/", views.shutdown, name="shutdown"),
     path("assets/<str:name>", views.asset, name="asset"),

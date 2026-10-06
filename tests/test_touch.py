@@ -95,7 +95,7 @@ class TouchFlowTests(TestCase):
         self.assertEqual(Measurement.objects.filter(status="AVAILABLE").get().pk, measurements[2].pk)
         page = self.client.get(f"/?order={first.pk}")
         self.assertContains(page, "R$ 53,50")
-        self.assertContains(page, "Prévia e impressão simulada")
+        self.assertContains(page, "Prévia e impressão")
         self.assertEqual(OrderItem.objects.filter(order=first).count(), 3)
 
     def test_manual_form_has_only_unit_relevant_quantity_and_rejects_route_tampering(self):
@@ -219,7 +219,7 @@ class TouchFlowTests(TestCase):
         second = self.open_via_http()
         response = self.client.get(f"/?order={second.pk}", HTTP_HX_REQUEST="true")
         self.assertContains(response, f'data-selected-order="{second.pk}"')
-        self.assertContains(response, f"Itens da comanda {second.number}")
+        self.assertContains(response, f"Itens da comanda #{second.number}")
         self.assertNotContains(response, "<html")
         self.assertIn("HX-Request", response["Vary"])
         restored = self.client.get(f"/?order={order.pk}", HTTP_HX_REQUEST="true", HTTP_HX_HISTORY_RESTORE_REQUEST="true")

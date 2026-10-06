@@ -89,7 +89,7 @@ class HTTPTests(TestCase):
 
     def test_home_and_local_assets(self):
         response = self.client.get("/")
-        self.assertContains(response, "Comandas e pesagens")
+        self.assertContains(response, "COMANDAS ABERTAS")
         for name in ("app.css", "app.js", "htmx.min.js"):
             response = self.client.get(f"/assets/{name}")
             self.assertEqual(response.status_code, 200)

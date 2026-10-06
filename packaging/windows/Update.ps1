@@ -6,17 +6,17 @@ param(
     [string]$ManifestUrl,
     [switch]$CheckOnStart,
     [switch]$NoShortcut,
-    [switch]$Source,
+    [Alias('Source')][switch]$FromSource,
     [string]$Repository
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $sourcePointer = Join-Path $InstallRoot 'current.json'
-if (-not $Source -and -not $PackageDirectory -and -not $PackagePath -and (Test-Path -LiteralPath $sourcePointer)) {
+if (-not $FromSource -and -not $PackageDirectory -and -not $PackagePath -and (Test-Path -LiteralPath $sourcePointer)) {
     $sourceRecord = Get-Content -LiteralPath $sourcePointer -Raw | ConvertFrom-Json
-    $Source = $sourceRecord.PSObject.Properties.Name -contains 'mode' -and $sourceRecord.mode -eq 'source'
+    $FromSource = $sourceRecord.PSObject.Properties.Name -contains 'mode' -and $sourceRecord.mode -eq 'source'
 }
-if ($Source) {
+if ($FromSource) {
     if ($PackageDirectory -or $PackagePath -or $ManifestUrl) { throw 'Não combine atualização por código com pacote ou manifesto.' }
     & (Join-Path $PSScriptRoot 'Update-Source.ps1') -InstallRoot $InstallRoot -Repository $Repository -CheckOnStart:$CheckOnStart -NoShortcut:$NoShortcut
     exit $LASTEXITCODE

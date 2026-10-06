@@ -2,7 +2,7 @@
 
 Distribuição em 06/10/2026: [instalação por Git e uv](docs/INSTALACAO_POR_CODIGO.md), com atualização automática do código da `main` pelo atalho. O usuário prepara Git e uv na máquina final e executa `Instalar-codigo.bat` uma vez. Pacotes executáveis e o site são publicados somente pela branch `release`. Consulte a [ADR-0038](docs/adr/0038-atualizacao-por-git-e-pacotes-na-release.md). A validação no Windows x86 final permanece uma etapa própria.
 
-Atualização em desenvolvimento: encerramento touch pelo botão **Encerrar aplicação**, com confirmação, conforme [ADR-0028](docs/adr/0028-encerramento-touch-pela-interface.md). Distribuição com pacotes **x86 (Windows de 32 bits)** e **x64 (Windows de 64 bits)** e atualização por arquitetura, conforme [ADR-0029](docs/adr/0029-distribuicao-windows-x86-e-x64.md). Não inclui WebView2. A distribuição online recebe estas alterações somente após publicação na main.
+Atualização em desenvolvimento: encerramento touch pelo botão **Encerrar aplicação**, com confirmação, conforme [ADR-0028](docs/adr/0028-encerramento-touch-pela-interface.md). Distribuição com pacotes **x86 (Windows de 32 bits)** e **x64 (Windows de 64 bits)** e atualização por arquitetura, conforme [ADR-0029](docs/adr/0029-distribuicao-windows-x86-e-x64.md). Não inclui WebView2. O código é disponibilizado pela main; executáveis e site, pela release.
 
 Aplicação autônoma de pesagem, pré-inserção de itens e impressão de comandas para um PC Windows 10/11, com interface touch em Django e operação offline.
 
@@ -18,7 +18,7 @@ Atendimento touch implementado: cadastro de produtos, múltiplas comandas, produ
 
 Documento e fila simulada implementados: cabeçalho/rodapé, preview contínuo de 80 mm, finalização somente da selecionada, snapshot congelado, histórico e segunda via confirmada. Consulte [entrega documental](docs/IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
 
-Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). O usuário considera balança e impressão funcionais para a entrega atual. O pacote Windows e a atualização web da main estão implementados; ativação do deploy está descrita no manual. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Ensaios físicos adicionais permanecem documentados para ajustes posteriores.
+Integração real implementada: configuração de porta/fila, leitura COM3 e impressão Windows RAW em balanca. Consulte [entrega de hardware](docs/IMPLEMENTACAO_HARDWARE_REAL.md). O usuário considera balança e impressão funcionais para a entrega atual. O pacote Windows e a atualização web pela release estão implementados; configuração do deploy está descrita no manual. `--preview-print` utiliza somente simulador, sem papel ou spooler. Captura automática de 236 g e impressão da comanda nº 2 foram confirmadas neste ciclo. Ensaios físicos adicionais permanecem documentados para ajustes posteriores.
 
 ## Desenvolvimento e execução
 

@@ -9,8 +9,9 @@ Consultar `docs/PLANO_APLICACAO_LOCAL_PESAGEM.md`, `docs/ESTRUTURA_TECNICA_APLIC
 ## Fluxo
 
 - Branch permanente de desenvolvimento: `codex/develop`. Concentrar alterações nela e conferir a branch ativa antes de editar. Se estiver na `main`, trocar para `codex/develop` preservando alterações existentes.
-- `main` é produção: push/merge nela dispara build, Release e atualização das máquinas finais. Quando o conjunto de mudanças estiver revisado e validado, abrir PR de `codex/develop` para `main` e fazer merge somente com autorização de publicação. Não desenvolver diretamente na `main`.
-- Após um release, manter `codex/develop` sincronizada com a `main` e continuar o desenvolvimento nela. Commit, push e publicação continuam sujeitos à autorização abaixo.
+- `main` é produção para instalações por código: o atualizador Git/uv consulta seus commits ao abrir. Promover somente código revisado e validado, por PR de `codex/develop`, com autorização de publicação. Não desenvolver diretamente na `main`.
+- `release` publica pacotes executáveis x86/x64 e o canal web. Promover versões da `main` para ela somente com autorização de publicação; mudanças na main não empacotam automaticamente.
+- Após promoção, manter `codex/develop` sincronizada com a `main` e continuar nela. Commit, push e publicação continuam sujeitos à autorização abaixo.
 
 - Codex implementa, valida e revisa diretamente. Não criar ou executar harness, tasks externas ou agentes executores externos. Não usar subagentes como padrão.
 - Declarar tipo de trabalho e fluxo antes de editar; inspecionar Git e preservar alterações não relacionadas.
@@ -29,7 +30,7 @@ Consultar `docs/PLANO_APLICACAO_LOCAL_PESAGEM.md`, `docs/ESTRUTURA_TECNICA_APLIC
 ## Ferramentas, validação e operação
 
 - uv para Python/dependências; ambiente e lockfile próprios. Não usar pip manual ou dependências do projeto anterior.
-- npm somente para assets se necessário; versões fixadas e lockfile. Distribuição funciona sem uv/npm/internet.
+- npm somente para assets se necessário; versões fixadas e lockfile. Pacotes executáveis funcionam sem uv/npm/internet. O canal por código exige Git/uv na instalação e atualização; a aplicação instalada funciona offline e abre diretamente pela venv. Consulte a ADR-0038.
 - Código e nomes técnicos em inglês; UI e documentação em pt-BR; docstrings no padrão Google.
 - Migrations nunca são escritas manualmente: Codex revisa models, gera com makemigrations e revisa arquivos gerados. Não aplicar migrations automaticamente na abertura; instalação/atualização tem etapa própria e backup.
 - Não copiar .env, segredos, bancos, filas, logs ou configuração de produção. Dados locais ficam fora do Git e separados do executável.

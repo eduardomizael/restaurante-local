@@ -28,3 +28,4 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0035 — Produtos rápidos e filtro na alternativa](0035-produtos-rapidos-e-filtro-na-alternativa.md).
 - [ADR-0036 — Prévia em diálogo na alternativa](0036-previa-em-dialogo-na-alternativa.md).
 - [ADR-0037 — Promoção do atendimento compacto](0037-promocao-do-atendimento-compacto.md).
+- [ADR-0038 — Atualização por Git e pacotes na release](0038-atualizacao-por-git-e-pacotes-na-release.md).

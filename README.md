@@ -26,7 +26,7 @@ O trabalho diário fica em **`codex/develop`**, a branch permanente de desenvolv
 
 Para a máquina final, use o pacote com executáveis e atualização web da **main** ao abrir: [instalação e atualização Windows](docs/DISTRIBUICAO_WINDOWS.md). Build: `rtk proxy uv run --no-sync --group build --cache-dir .uv-cache python packaging/build.py --version 0.1.0`. Os arquivos `.bat` na raiz abaixo continuam sendo ferramentas de desenvolvimento; os scripts distribuídos estão em `packaging/windows/`. Publicação inicial do workflow e ativação do Pages ainda são etapas externas.
 
-O atendimento é otimizado para monitor touch horizontal de **1920 × 1200**, com comandas, produtos e itens lado a lado, pesagens no topo e subtotal/impressão visíveis. Em áreas menores, as colunas se adaptam e a página permite rolagem vertical até todos os controles. Listas maiores rolam dentro dos próprios painéis. A resolução de referência é a área disponível do navegador, afetada pela escala do Windows, zoom e barras. O cadastro exibe produtos em três colunas. Não exige migration. Consulte a [ADR-0026](docs/adr/0026-atendimento-touch-em-tela-horizontal.md) e sua atualização na [ADR-0032](docs/adr/0032-atendimento-em-area-util-reduzida.md).
+O atendimento é otimizado para a área real do navegador no PC touch: **1280 × 673 pixels CSS**, medida no painel físico de 1920 × 1200. Comandas ficam à esquerda, detalhes no centro e produtos à direita. Cabeçalhos e pesagens compactos permitem manter subtotal, impressão, cancelamento e busca visíveis; listas maiores rolam dentro dos próprios painéis, preservando botões de pelo menos 48 px. Avisos ou áreas ainda menores podem exigir rolagem da página. Telas grandes continuam aproveitando o espaço adicional. O cadastro exibe produtos em três colunas. Não exige migration. Consulte a [ADR-0033](docs/adr/0033-atendimento-na-area-css-do-pc-integrado.md).
 
 ### Abertura por arquivos no Windows
 
@@ -131,6 +131,12 @@ No atendimento, clicar em um produto abre um diálogo com quantidade/peso e tecl
 ## Atualização: posicionamento da comanda
 
 Novas impressões usam o layout conforme a referência: número/data na mesma linha, preços e valores das refeições à direita, subtotal de refeições em negrito à direita, produtos e marcações em colunas e total manual/rodapé centralizados. Os textos adicionais retirados da referência não aparecem no novo papel. Documentos já salvos e suas segundas vias mantêm o layout original. O reposicionamento e negrito não exigem migration; reabra o programa. Consulte a [ADR-0023](docs/adr/0023-layout-da-comanda-conforme-referencia.md).
+
+## Comparação das telas de atendimento
+
+O **Atendimento principal**, na raiz `/`, usa a tela compacta escolhida: peso e pesagens na mesma linha, comandas de 248 pixels, itens e produtos rápidos na proporção 1 : 0,8. **Adicionar produto** fica no rodapé dos produtos rápidos e abre o catálogo com filtro durante a digitação. **Prévia e impressão** abre a comanda em diálogo, com **Imprimir** e **Imprimir e fechar**; o ícone ao lado de **Cancelar comanda** acessa a página de prévia existente. Após solicitar a impressão, o atendimento é retomado; o modo simulado é identificado no diálogo.
+
+Em **Status → Comparar telas de atendimento**, **Versão alternativa** abre a tela anterior, também disponível em `/attendance/alternative/`, com catálogo permanente. **Atendimento principal** retorna à tela compacta. As versões compartilham comandas e pesagens; suas ações preservam os respectivos destinos. Não exige migration. Consulte a [ADR-0037](docs/adr/0037-promocao-do-atendimento-compacto.md).
 
 ## Atualização: logo do restaurante
 

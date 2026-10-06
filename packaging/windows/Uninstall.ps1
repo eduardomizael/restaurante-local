@@ -28,7 +28,7 @@ function Normalize-Directory([string]$Path) {
     return $full.TrimEnd('\', '/')
 }
 
-function Assert-SafeDirectory([string]$Path) {
+function Assert-SafeDirectory([string]$Path, [switch]$ManagedSource) {
     $full = Normalize-Directory $Path
     $root = [IO.Path]::GetPathRoot($full).TrimEnd('\', '/')
     if ($full -eq $root) { throw "Não é permitido remover a raiz do disco: $full" }
@@ -42,7 +42,7 @@ function Assert-SafeDirectory([string]$Path) {
             throw "Pasta protegida ou que contém uma pasta protegida: $full"
         }
     }
-    if (Test-Path -LiteralPath (Join-Path $full '.git')) { throw "Não remover uma pasta de desenvolvimento: $full" }
+    if (-not $ManagedSource -and (Test-Path -LiteralPath (Join-Path $full '.git'))) { throw "Não remover uma pasta de desenvolvimento: $full" }
     # Resolve the whole ancestry before any recursive removal. Junction targets
     # are never accepted as installation/data roots.
     $cursor = $full
@@ -122,7 +122,8 @@ try {
         if ($current.directory -notmatch '^versions/[a-f0-9]{64}$') { throw 'Registro de versão inválido. Nada foi removido.' }
         $identified = $true
         $maintenance = Join-Path (Join-Path $InstallRoot $current.directory) 'Manutencao.exe'
-        $null = Assert-SafeDirectory (Join-Path $InstallRoot $current.directory)
+        $sourceMode = $current.PSObject.Properties.Name -contains 'mode' -and $current.mode -eq 'source'
+        $null = Assert-SafeDirectory (Join-Path $InstallRoot $current.directory) -ManagedSource:$sourceMode
         if (Test-Path -LiteralPath $maintenance) {
             # The shell command is also available in packages published before
             # this uninstaller; it resolves dotenv using the bundled Python.
@@ -180,7 +181,7 @@ try {
     Set-Location -LiteralPath ([IO.Path]::GetTempPath())
     if (-not $DeleteData) {
         $preservedSettings = Join-Path $dataLocations[-1].data_root 'preserved-installation'
-        foreach ($setting in @('.env', 'update-url.txt')) {
+        foreach ($setting in @('.env', 'update-url.txt', 'source-settings.json')) {
             $original = Join-Path $InstallRoot $setting
             if (Test-Path -LiteralPath $original) {
                 $null = Assert-SafeDirectory $preservedSettings

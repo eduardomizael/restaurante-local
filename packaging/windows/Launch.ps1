@@ -17,7 +17,9 @@ try {
     $record = Get-Content -LiteralPath (Join-Path $InstallRoot 'current.json') -Raw | ConvertFrom-Json
     if ($record.directory -notmatch '^versions/[a-f0-9]{64}$') { throw 'Registro de versão inválido.' }
     $appDirectory = Join-Path $InstallRoot $record.directory
-    $executable = Join-Path $appDirectory 'RestauranteLocal.exe'
+    $sourceMode = $record.PSObject.Properties.Name -contains 'mode' -and $record.mode -eq 'source'
+    $executable = if ($sourceMode) { Join-Path $appDirectory '.venv\Scripts\pythonw.exe' } else { Join-Path $appDirectory 'RestauranteLocal.exe' }
+    if ($sourceMode) { $RuntimeArguments = '-m runtime.windowed ' + $RuntimeArguments }
     if (-not (Test-Path -LiteralPath $executable)) { throw 'Programa ausente. Execute Atualizar.bat.' }
     if ($RuntimeArguments) {
         $application = Start-Process -FilePath $executable -ArgumentList $RuntimeArguments -WorkingDirectory $appDirectory -WindowStyle Hidden -PassThru

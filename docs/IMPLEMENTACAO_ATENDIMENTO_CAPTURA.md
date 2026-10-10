@@ -1,5 +1,9 @@
 # Atendimento touch e captura simulada
 
+## Atualização de 10/10/2026 — Teclado do Windows por tipo de campo
+
+Campos atendidos pelo teclado numérico próprio usam `inputmode="none"`: valores decimais, quantidades, ordenação dos produtos, próxima numeração e inclusão manual em diálogo. Esse atributo orienta o navegador a não mostrar o teclado virtual nesses campos. Buscas e campos de texto continuam com entrada normal, permitindo o teclado do Windows quando sua abertura automática estiver habilitada. Não há alteração nas configurações do Windows. A supressão efetiva deve ser conferida no Windows/Edge do computador final.
+
 ## Atualização de 10/10/2026 — Confirmação de descarte em diálogo
 
 O botão **Descartar** abre um diálogo na própria tela nas duas versões do atendimento, com identificação, produto, peso e valor da pesagem. **Voltar sem alterar** e Escape fecham a confirmação. Confirmar atualiza a lista sem navegação e mantém a comanda selecionada. Durante o envio, os botões e o fechamento por Escape ficam bloqueados; conflitos aparecem no diálogo. A proteção do serviço contra descarte de pesagem já utilizada permanece. Sem JavaScript, a página de confirmação continua disponível.

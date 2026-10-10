@@ -1,5 +1,7 @@
 # Estrutura técnica da aplicação local de pesagem
 
+Incremento em 10/10/2026: leitores USECB2 e PROT F selecionáveis na configuração de equipamentos, conforme [ADR-0042](adr/0042-leitores-seriais-e-protocolo-configuravel.md). Transporte lazy compartilhado, parsers específicos, substituição entre consultas e rearme ao trocar. PROT F admite retirada por peso negativo estável com tara ativa e registra tara como não informada (NULL); capturas usam líquido positivo sem novo desconto. Migrations geradas e validadas em banco isolado; atualização operacional com backup e ensaio integrado continuam separados.
+
 Incremento em 06/10/2026: janela dedicada em tela cheia no Windows, com Edge/Chrome e perfil próprio por sessão. O encerramento pela interface fecha também a janela controlada após a parada dos componentes, conforme [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md). Reaberturas pelo atalho são encaminhadas ao runtime dono. Validação nativa x64 com Edge e simuladores; conferência no Windows x86 final permanece separada.
 
 Atualização em 06/10/2026: [ADR-0038](adr/0038-atualizacao-por-git-e-pacotes-na-release.md) acrescenta instalações por Git/uv, versões por SHA, ambientes separados e abertura offline pela venv. Main distribui código aprovado; release publica executáveis. O manual atual do novo canal é [instalação por código](INSTALACAO_POR_CODIGO.md); registros datados abaixo descrevem a arquitetura anterior quando indicam publicação de pacotes pela main.

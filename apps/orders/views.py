@@ -59,14 +59,17 @@ def _attendance_result(request, order_id, *, navigate=False):
     """Return affected fragments for HTMX and preserve ordinary form navigation."""
     if request.headers.get("HX-Request") != "true":
         return _attendance_redirect(request, order_id)
+    runtime = runtime_snapshot()
     if navigate:
         template = "orders/alternative/workspace.html" if compact_layout(request) else "orders/workspace.html"
         data = attendance_snapshot(order_id)
-        data["runtime"] = runtime_snapshot()
+        data["runtime"] = runtime
         response = render(request, template, data)
         response["HX-Push-Url"] = f"{attendance_url(request)}?order={order_id}"
         return response
-    return _board_response(request, board_snapshot(order_id))
+    data = board_snapshot(order_id)
+    data["runtime"] = runtime
+    return _board_response(request, data)
 
 
 @require_GET
@@ -75,8 +78,9 @@ def _attendance_result(request, order_id, *, navigate=False):
 def attendance(request):
     """Present drafts, captures and explicit catalogue/item actions."""
     search = request.GET.get("q", "").strip()[:120]
+    runtime = runtime_snapshot()
     data = attendance_snapshot(_selected_id(request), search)
-    data["runtime"] = runtime_snapshot()
+    data["runtime"] = runtime
     fragment = request.headers.get("HX-Request") == "true" and request.headers.get("HX-History-Restore-Request") != "true"
     template = "orders/workspace.html" if fragment else "orders/attendance.html"
     if compact_layout(request):
@@ -105,12 +109,15 @@ def alternative_products(request):
 @require_GET
 @never_cache
 def board_fragment(request):
-    """Refresh only shared lists, returning no replacement when unchanged."""
+    """Read scale status before lists so a saved capture is already visible."""
     destination = _selected_id(request)
+    runtime = runtime_snapshot()
     data = board_snapshot(destination if destination is not None else 0)
+    data["runtime"] = runtime
     if destination is None:
         data["selected_id"] = ""
-    if request.GET.get("revision") == str(data["revision"]):
+    if (request.GET.get("revision") == str(data["revision"])
+            and request.GET.get("runtime_revision") == str(runtime["revision"])):
         return HttpResponse(status=204)
     return _board_response(request, data)
 
@@ -238,20 +245,43 @@ def confirm_cancel(request, order_id):
 
 @require_http_methods(["GET", "POST"])
 @never_cache
+@vary_on_headers("HX-Request")
 @requires_runtime
 def confirm_discard(request, measurement_id):
     """Confirm one manual discard without altering other captures or orders."""
+    modal = request.headers.get("HX-Request") == "true"
     form = ConfirmationForm(request.POST if request.method == "POST" else None)
     if request.method == "POST":
+        error = None
+        status = 400
         if not form.is_valid():
-            return _operation_error(request, "Confirme o descarte da medição.", status=400)
-        try:
-            discard_measurement(measurement_id)
-        except ValidationError as exc:
-            return _operation_error(request, exc)
-        return _attendance_redirect(request, _selected_id(request))
+            error = "Confirme o descarte da medição."
+        else:
+            try:
+                discard_measurement(measurement_id)
+            except ValidationError as exc:
+                error = exc
+                status = 409
+        if error is not None:
+            response = _operation_error(request, error, status=status)
+            if modal:
+                response["HX-Retarget"] = "#discard-measurement-feedback"
+                response["X-Discard-Fragment"] = "1"
+            return response
+        destination = _selected_id(request)
+        if modal and destination is None:
+            data = board_snapshot(0)
+            data["selected_id"] = ""
+            data["runtime"] = runtime_snapshot()
+            response = _board_response(request, data)
+        else:
+            response = _attendance_result(request, destination)
+        if modal:
+            response["HX-Trigger-After-Swap"] = "measurementDiscarded"
+        return response
     measurement = get_object_or_404(available_measurements(), pk=measurement_id)
-    return render(request, "orders/confirm.html", {
+    template = "orders/discard_dialog_content.html" if modal else "orders/confirm.html"
+    return render(request, template, {
         "form": form, "title": f"Descartar medição {measurement.pk}?",
         "description": "Somente esta pesagem será retirada da lista disponível.",
         "button_label": "Sim, descartar medição", "measurement": measurement,

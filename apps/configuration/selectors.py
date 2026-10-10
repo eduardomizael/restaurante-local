@@ -13,5 +13,5 @@ def application_configuration():
 def hardware_configuration():
     """Read configuration, using confirmed COM3/balanca defaults before setup."""
     return HardwareConfiguration.objects.filter(pk=1).first() or SimpleNamespace(
-        scale_port="COM3", printer_name="balanca", revision=0,
+        scale_port="COM3", scale_protocol="USECB2", printer_name="balanca", revision=0,
     )

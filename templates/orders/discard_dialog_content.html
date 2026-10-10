@@ -1,0 +1,9 @@
+{% load commercial %}
+<div class="dialog-heading"><h2 id="discard-measurement-title">{{ title }}</h2></div>
+<p id="discard-measurement-description">{{ description }}</p>
+<p>{{ measurement.product_description }} · <strong>{{ measurement.net_weight_grams|kilograms }} kg · R$ {{ measurement.total_cents|money }}</strong></p>
+<div id="discard-measurement-feedback" role="alert"></div>
+<form method="post" action="{{ request.get_full_path }}" hx-post="{{ request.get_full_path }}" hx-target="#shared-board" hx-swap="outerHTML" hx-sync="#attendance-workspace:drop" hx-disabled-elt="#discard-measurement-dialog button">
+  {% csrf_token %}{{ form.confirm }}
+  <div class="form-actions"><button type="button" class="secondary" data-close-discard autofocus>Voltar sem alterar</button><button type="submit" class="danger">{{ button_label }}</button></div>
+</form>

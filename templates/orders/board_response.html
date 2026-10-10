@@ -1,5 +1,6 @@
 {% include 'orders/board.html' %}
 {% include 'orders/measurements.html' with out_of_band=True %}
+{% include 'core/scale_fragment.html' with out_of_band=True %}
 {% include 'orders/order_list.html' with out_of_band=True %}
 {% include order_panel_template with out_of_band=True %}
 {% if not selected %}{% if compact_attendance %}{% include 'orders/alternative/quick_picker.html' with out_of_band=True %}{% include 'orders/alternative/catalogue_picker.html' with out_of_band=True %}{% else %}{% include 'orders/product_picker.html' with out_of_band=True %}{% endif %}{% endif %}

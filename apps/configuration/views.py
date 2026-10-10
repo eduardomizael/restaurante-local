@@ -41,7 +41,8 @@ def equipment(request):
     """Edit names without opening serial ports or submitting print jobs."""
     saved = hardware_configuration()
     form = HardwareConfigurationForm(request.POST if request.method == "POST" else None, initial={
-        "scale_port": saved.scale_port, "printer_name": saved.printer_name, "expected_revision": saved.revision,
+        "scale_port": saved.scale_port, "scale_protocol": saved.scale_protocol,
+        "printer_name": saved.printer_name, "expected_revision": saved.revision,
     })
     status = 200
     if request.method == "POST":

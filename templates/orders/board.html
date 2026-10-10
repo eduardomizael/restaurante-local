@@ -1,3 +1,3 @@
 <div id="shared-board" hidden
-  hx-get="{% url 'board_fragment' %}?order={{ selected_id }}&amp;revision={{ revision }}{{ attendance_layout_query }}"
+  hx-get="{% url 'board_fragment' %}?order={{ selected_id }}&amp;revision={{ revision }}&amp;runtime_revision={{ runtime.revision }}{{ attendance_layout_query }}"
   hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="#attendance-workspace:abort"></div>

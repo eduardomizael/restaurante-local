@@ -14,7 +14,7 @@ def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="
     Args:
         capture_key: Stable UUID for retries of this physical capture.
         net_weight_grams: Positive net weight, already excluding tare.
-        tare_grams: Informative tare; never subtracted again.
+        tare_grams: Informative tare, or None when not transmitted; never subtracted again.
         device: Adapter identity for history.
         stability_parameters: JSON-compatible parameters used for stability.
         expected_product_id: Optional product identity observed by the cycle.
@@ -28,7 +28,8 @@ def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="
     """
     key = require_uuid(capture_key)
     require_integer(net_weight_grams, maximum=1_000_000, label="Peso líquido")
-    require_integer(tare_grams, minimum=0, maximum=1_000_000, label="Tara")
+    if tare_grams is not None:
+        require_integer(tare_grams, minimum=0, maximum=1_000_000, label="Tara")
     if not isinstance(device, str) or not 1 <= len(device.strip()) <= 120:
         raise ValidationError("Dispositivo inválido.")
     parameters = {} if stability_parameters is None else stability_parameters

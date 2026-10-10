@@ -1,4 +1,5 @@
 from django import forms
+from apps.configuration.models import HardwareConfiguration
 
 
 class ApplicationConfigurationForm(forms.Form):
@@ -9,5 +10,7 @@ class ApplicationConfigurationForm(forms.Form):
 
 class HardwareConfigurationForm(forms.Form):
     scale_port = forms.CharField(label="Porta da balança", max_length=8)
+    scale_protocol = forms.ChoiceField(label="Protocolo da balança", choices=HardwareConfiguration.ScaleProtocol.choices,
+                                      help_text="Selecione o mesmo protocolo configurado na balança em [F][3].")
     printer_name = forms.CharField(label="Nome da fila de impressão Windows", max_length=120)
     expected_revision = forms.IntegerField(min_value=0, widget=forms.HiddenInput)

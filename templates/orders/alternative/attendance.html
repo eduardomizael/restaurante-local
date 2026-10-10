@@ -6,4 +6,4 @@
 {% if not scale_product %}<div class="notice" role="status">Selecione um produto ativo em KG para capturar pesagens. <a href="{% url 'catalogue' %}">Abrir produtos</a></div>{% endif %}
 {% include 'orders/alternative/workspace.html' %}
 {% endblock %}
-{% block dialogs %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog><dialog id="print-preview-dialog" aria-labelledby="print-preview-title"><div id="print-preview-content"></div></dialog>{% endblock %}
+{% block dialogs %}{% include 'orders/discard_dialog.html' %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog><dialog id="print-preview-dialog" aria-labelledby="print-preview-title"><div id="print-preview-content"></div></dialog>{% endblock %}

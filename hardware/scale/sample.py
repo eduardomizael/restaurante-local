@@ -6,7 +6,8 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ScaleSample:
     net_weight_grams: int
-    tare_grams: int
+    tare_grams: int | None
     sampled_at: float
     moving: bool = False
     device: str = "SIMULATOR"
+    protocol: str = "SIMULATION"

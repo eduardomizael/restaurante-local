@@ -268,7 +268,14 @@ def confirm_discard(request, measurement_id):
                 response["HX-Retarget"] = "#discard-measurement-feedback"
                 response["X-Discard-Fragment"] = "1"
             return response
-        response = _attendance_result(request, _selected_id(request))
+        destination = _selected_id(request)
+        if modal and destination is None:
+            data = board_snapshot(0)
+            data["selected_id"] = ""
+            data["runtime"] = runtime_snapshot()
+            response = _board_response(request, data)
+        else:
+            response = _attendance_result(request, destination)
         if modal:
             response["HX-Trigger-After-Swap"] = "measurementDiscarded"
         return response

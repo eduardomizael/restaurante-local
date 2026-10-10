@@ -71,5 +71,6 @@ class DiscardDialogTests(TestCase):
         self.assertContains(self.client.get(url), "<html")
         response = self.client.post(url, {"confirm": "True"}, HTTP_HX_REQUEST="true")
         self.assertContains(response, 'id="shared-board"')
+        self.assertEqual(response["X-Selected-Order"], "")
         response = self.client.post(reverse("confirm_discard", args=[self.other.pk]), {"confirm": "True"})
         self.assertEqual(response.status_code, 302)

@@ -1,6 +1,7 @@
 """Real-protocol fixtures and fault-injected transports; never physical I/O."""
 
 from threading import Event
+from io import StringIO
 from dataclasses import replace
 from unittest.mock import Mock, patch
 from uuid import uuid4
@@ -55,7 +56,7 @@ class ProtocolTests(SimpleTestCase):
     def test_incomplete_extra_corrupt_and_ambiguous_frames_are_rejected(self):
         bad = [ZERO_FRAME[:-1], ZERO_FRAME + b"x", b"x" + ZERO_FRAME[1:],
                ZERO_FRAME.replace(b"TARA:", b"PESO:"), ZERO_FRAME.replace(b"PESO L:", b"TARA:  "),
-               ZERO_FRAME.replace(b"PESO L:  0.000", b"PESO L: -0.100"),
+               ZERO_FRAME.replace(b"TARA:   0.000", b"TARA:  -0.100"),
                ZERO_FRAME.replace(b"PESO L:  0.000", b"PESO L:  0.xxx"),
                ZERO_FRAME.replace(b"TARA:   0.000", b"TARA:   ERROR")]
         for frame in bad:
@@ -69,8 +70,56 @@ class ProtocolTests(SimpleTestCase):
         frame = ZERO_FRAME[:-17] + b"MOTION      " + FRAME_SUFFIX
         self.assertTrue(parse_frame(frame, 10).moving)
 
+    def test_signed_net_reading_preserves_value_for_cycle_and_diagnostics(self):
+        for text, grams in ((b"-0.002", -2), (b"+0.002", 2), (b"-0.100", -100)):
+            frame = ZERO_FRAME.replace(b"PESO L:  0.000", b"PESO L: " + text)
+            self.assertEqual(parse_frame(frame, 10).net_weight_grams, grams)
+
 
 class SerialAdapterTests(SimpleTestCase):
+    def test_probe_invalid_options_never_open_serial_or_printer(self):
+        for options in ({"scale": False}, {"scale": True, "print_test": True},
+                        {"scale": True, "duration": 61}):
+            with self.subTest(options=options), patch("apps.core.management.commands.diagnose_hardware.SerialScale") as scale:
+                with self.assertRaises(CommandError):
+                    call_command("diagnose_hardware", probe="passive", **options)
+                scale.assert_not_called()
+
+    def test_raw_probe_preserves_unknown_bytes_and_passive_mode_sends_nothing(self):
+        for query in (False, True):
+            with self.subTest(query=query):
+                connection = self.connection([b"\x02-0.494\x03"])
+                emit = Mock()
+                adapter = SerialScale(serial_factory=Mock(return_value=connection),
+                                      clock=Mock(side_effect=[10, 10, 10.1, 11.1]))
+                self.assertEqual(adapter.probe(duration=1, query=query, emit=emit), 8)
+                self.assertEqual(emit.call_args.args[1], b"\x02-0.494\x03")
+                if query:
+                    connection.write.assert_called_once_with(b"\x04")
+                else:
+                    connection.write.assert_not_called()
+                connection.close.assert_called_once()
+
+    def test_diagnostic_continues_after_partial_response_and_closes_adapter(self):
+        output = StringIO()
+        adapter = Mock()
+        def read():
+            adapter.last_frame = ZERO_FRAME[:80] if adapter.read.call_count == 1 else ZERO_FRAME
+            if adapter.read.call_count == 1:
+                raise ScaleProtocolError("Quadro incompleto")
+            return parse_frame(ZERO_FRAME, 10)
+        adapter.read.side_effect = read
+        with patch("apps.core.management.commands.diagnose_hardware.SerialScale", return_value=adapter):
+            with self.assertRaises(CommandError):
+                call_command("diagnose_hardware", scale=True, samples=2, interval=0,
+                             show_frames=True, stdout=output)
+        self.assertEqual(adapter.read.call_count, 2)
+        adapter.close.assert_called_once()
+        self.assertIn("bytes=80", output.getvalue())
+        self.assertIn("bytes=150", output.getvalue())
+        self.assertIn("1 válidas; 1 falhas", output.getvalue())
+        self.assertIn("quadro_hex=", output.getvalue())
+
     def connection(self, blocks):
         connection = Mock()
         connection.read.side_effect = blocks
@@ -140,14 +189,29 @@ class SerialAdapterTests(SimpleTestCase):
         connection.close.assert_not_called()
         adapter.close()
 
-    def test_two_empty_replies_close_connection_and_do_not_retry_forever(self):
+    def test_two_empty_replies_keep_connection_but_do_not_retry_forever(self):
         connection = self.connection([b"", b""])
         adapter = SerialScale(serial_factory=lambda **kwargs: connection, clock=lambda: 10)
-        with self.assertRaises(ScaleProtocolError):
+        with self.assertRaisesRegex(ScaleProtocolError, "não respondeu após duas consultas"):
             adapter.read()
         self.assertEqual(connection.write.call_count, 2)
-        connection.close.assert_called_once()
+        connection.close.assert_not_called()
         self.assertEqual(adapter.last_frame, b"")
+        adapter.close()
+        connection.close.assert_called_once()
+
+    def test_read_after_empty_reply_uses_same_handle_and_fresh_buffer(self):
+        connection = self.connection([b"", b"", ZERO_FRAME])
+        factory = Mock(return_value=connection)
+        adapter = SerialScale(serial_factory=factory, clock=lambda: 10)
+        with self.assertRaises(ScaleProtocolError):
+            adapter.read()
+        self.assertEqual(adapter.read().net_weight_grams, 0)
+        factory.assert_called_once()
+        self.assertEqual(connection.reset_input_buffer.call_count, 3)
+        connection.close.assert_not_called()
+        adapter.close()
+        connection.close.assert_called_once()
 
 
 class RawAdapterTests(SimpleTestCase):

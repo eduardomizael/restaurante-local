@@ -17,7 +17,7 @@ class ScaledDecimalField(forms.CharField):
         self.minimum = minimum
         self.maximum = maximum
         super().__init__(**kwargs)
-        self.widget.attrs.update({"inputmode": "decimal", "autocomplete": "off"})
+        self.widget.attrs.update({"inputmode": "none", "autocomplete": "off"})
         self.widget.attrs["data-keypad"] = str(decimal_places)
 
     def clean(self, value):
@@ -61,4 +61,4 @@ class ProductForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name in ("quick_access_order", "slip_order"):
-            self.fields[name].widget.attrs.update({"inputmode": "numeric", "data-keypad": "0"})
+            self.fields[name].widget.attrs.update({"inputmode": "none", "data-keypad": "0"})

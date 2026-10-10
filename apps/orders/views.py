@@ -153,7 +153,7 @@ def manual_item(request, order_id, product_id):
         field_name = "weight_grams" if product.unit == "KG" else "quantity_units"
         precision = "3" if product.unit == "KG" else "0"
         form.fields[field_name].widget = forms.TextInput(attrs={
-            "inputmode": "decimal" if product.unit == "KG" else "numeric",
+            "inputmode": "none",
             "autocomplete": "off", "data-item-value": precision,
         })
     response_status = 200

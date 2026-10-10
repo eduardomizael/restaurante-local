@@ -12,7 +12,7 @@ class ManualItemForm(forms.Form):
 
     def __init__(self, *args, unit=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["quantity_units"].widget.attrs.update({"inputmode": "numeric", "data-keypad": "0"})
+        self.fields["quantity_units"].widget.attrs.update({"inputmode": "none", "data-keypad": "0"})
         if unit == "KG":
             self.fields.pop("quantity_units")
             self.fields["weight_grams"].required = True
@@ -42,4 +42,4 @@ class ConfirmationForm(forms.Form):
 
 class NextNumberForm(forms.Form):
     number = forms.IntegerField(label="Número da próxima comanda", min_value=1, max_value=2_147_483_647,
-                                widget=forms.NumberInput(attrs={"inputmode": "numeric", "data-keypad": "0"}))
+                                widget=forms.NumberInput(attrs={"inputmode": "none", "data-keypad": "0"}))

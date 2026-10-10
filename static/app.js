@@ -5,6 +5,7 @@ document.addEventListener("htmx:configRequest", (event) => {
 });
 function requestFeedback(event) {
   const source = event.detail.requestConfig?.elt || event.detail.elt;
+  if (source?.closest("#discard-measurement-dialog")) return document.getElementById("discard-measurement-feedback");
   if (source?.closest("#manual-item-dialog")) return document.getElementById("manual-item-feedback");
   if (source?.closest("#catalogue-results")) return document.getElementById("catalogue-feedback");
   if (source?.closest("#attendance-workspace") && source.id !== "shared-board") {
@@ -64,7 +65,8 @@ document.addEventListener("htmx:beforeSwap", (event) => {
   }
   // Only our explicit validation fragment may replace the local error region.
   if ([400, 409].includes(event.detail.xhr.status)
-      && event.detail.xhr.getResponseHeader("HX-Retarget") === "#attendance-feedback") {
+      && (event.detail.xhr.getResponseHeader("HX-Retarget") === "#attendance-feedback"
+          || event.detail.xhr.getResponseHeader("X-Discard-Fragment") === "1")) {
     event.detail.shouldSwap = true;
     event.detail.isError = false;
   }
@@ -138,6 +140,19 @@ window.addEventListener("pageshow", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  const discardDialog = document.getElementById("discard-measurement-dialog");
+  if (discardDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "discard-measurement-content" && !discardDialog.open) discardDialog.showModal();
+    });
+    document.addEventListener("measurementDiscarded", () => discardDialog.close());
+    discardDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-discard]") && !discardDialog.querySelector("form.htmx-request")) discardDialog.close();
+    });
+    discardDialog.addEventListener("cancel", (event) => {
+      if (discardDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+  }
   const printDialog = document.getElementById("print-preview-dialog");
   if (printDialog) {
     document.addEventListener("htmx:afterSwap", (event) => {

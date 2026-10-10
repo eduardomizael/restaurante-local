@@ -28,7 +28,7 @@ def save_application_configuration(*, display_name, expected_revision):
         return current
 
 
-def save_hardware_configuration(*, scale_port, printer_name, expected_revision):
+def save_hardware_configuration(*, scale_port, printer_name, expected_revision, scale_protocol=None):
     """Save equipment names atomically, leaving physical I/O to workers."""
     if not isinstance(scale_port, str) or not re.fullmatch(r"COM[1-9][0-9]{0,3}", scale_port.strip().upper()):
         raise ValidationError("Porta deve usar COM seguida de um número positivo.")
@@ -36,6 +36,8 @@ def save_hardware_configuration(*, scale_port, printer_name, expected_revision):
             or any(ord(char) < 32 for char in printer_name)):
         raise ValidationError("Nome da impressora deve conter de 1 a 120 caracteres válidos.")
     require_integer(expected_revision, minimum=0, maximum=2_147_483_647, label="Revisão")
+    if scale_protocol is not None and scale_protocol not in HardwareConfiguration.ScaleProtocol.values:
+        raise ValidationError("Protocolo da balança inválido.")
     with write_transaction():
         current = HardwareConfiguration.objects.filter(pk=1).first()
         if (current.revision if current else 0) != expected_revision:
@@ -45,7 +47,9 @@ def save_hardware_configuration(*, scale_port, printer_name, expected_revision):
         else:
             current.revision += 1
         current.scale_port, current.printer_name = scale_port.strip().upper(), printer_name.strip()
+        if scale_protocol is not None:
+            current.scale_protocol = scale_protocol
         current.save()
         record_event("HARDWARE_CONFIGURATION_SAVED", current, revision=current.revision,
-                     scale_port=current.scale_port, printer_name=current.printer_name)
+                     scale_port=current.scale_port, scale_protocol=current.scale_protocol, printer_name=current.printer_name)
         return current

@@ -19,7 +19,7 @@ class Measurement(models.Model):
     unit_price_cents = models.PositiveBigIntegerField()
     total_cents = models.PositiveBigIntegerField()
     net_weight_grams = models.PositiveIntegerField()
-    tare_grams = models.PositiveIntegerField(default=0)
+    tare_grams = models.PositiveIntegerField(default=0, null=True)
     device = models.CharField(max_length=120)
     stability_parameters = models.JSONField(default=dict)
     captured_at = models.DateTimeField(auto_now_add=True)

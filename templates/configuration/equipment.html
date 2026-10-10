@@ -2,6 +2,6 @@
 {% block configuration_title %}Balança e impressora{% endblock %}
 {% block configuration_description %}<p>Configure a porta da balança e a impressora usada nas comandas.</p>{% endblock %}
 {% block configuration_content %}
-<div class="notice">Trocar a porta reinicia a comunicação entre consultas e exige retorno ao zero. Trabalhos de impressão já criados conservam a fila destinatária.</div>
+<div class="notice">Troque o protocolo na balança em [F][3] e selecione o mesmo abaixo. Salvar a porta ou o protocolo reinicia a leitura entre consultas e exige retirada antes da próxima captura. No PROT F, peso negativo estável também indica retirada; a tara é descontada pela balança e seu valor não é transmitido. Trabalhos de impressão já criados conservam a fila destinatária.</div>
 <form method="post" class="card editor-form">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><button type="submit">Salvar equipamentos</button><a class="button secondary" href="{% url 'home' %}">Voltar ao atendimento</a></div></form>
 {% endblock %}

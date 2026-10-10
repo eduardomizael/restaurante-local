@@ -1,5 +1,11 @@
 # Atendimento touch e captura simulada
 
+## Atualização de 10/10/2026 — Confirmação de descarte em diálogo
+
+O botão **Descartar** abre um diálogo na própria tela nas duas versões do atendimento, com identificação, produto, peso e valor da pesagem. **Voltar sem alterar** e Escape fecham a confirmação. Confirmar atualiza a lista sem navegação e mantém a comanda selecionada. Durante o envio, os botões e o fechamento por Escape ficam bloqueados; conflitos aparecem no diálogo. A proteção do serviço contra descarte de pesagem já utilizada permanece. Sem JavaScript, a página de confirmação continua disponível.
+
+Testes HTTP cobrem os dois layouts, ausência de confirmação, uso concorrente da pesagem, preservação das outras pesagens e navegação convencional. Nenhuma mudança de hardware ou banco de dados.
+
 ## Atualização de 10/10/2026 — Destaque visual do peso e do estado
 
 O card do Atendimento omite o protocolo serial e destaca o peso líquido com fonte de 48 px, números tabulares e alto contraste. As mensagens têm fundo colorido, texto reforçado e ícone: verde para pronta ou salva, azul para estabilização/simulação, amarelo para retorno ao zero ou recuperação, vermelho para falha/configuração e cinza para leitura parada/pausada. O texto continua identificando o estado sem depender apenas da cor; a mensagem usa `role="status"`.

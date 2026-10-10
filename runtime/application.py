@@ -85,6 +85,9 @@ class LocalApplication:
         self.simulate, self.preview_print = simulate, preview_print
         self.adapter_factory = adapter_factory or (SimulatedScale if simulate else ConfiguredSerialScale)
         self.capture_factory = capture_factory or (lambda: ScaleCaptureController(CaptureCycle(
+            zero_grams=0 if simulate else 2, zero_sample_count=1 if simulate else 3,
+            minimum_grams=11 if simulate else 40,
+            maximum_silence_seconds=0 if simulate else 5,
             profile="SIMULATION_ONLY" if simulate else "US31_POP_S_PHYSICAL_PENDING_VALIDATION")))
         self.print_worker_factory = print_worker_factory or (lambda event: PrintWorker(
             event, delivery_mode="PREVIEW" if preview_print else "RAW"))

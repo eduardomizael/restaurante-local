@@ -5,6 +5,7 @@ from threading import Thread
 
 from django.db import close_old_connections, connections
 from django.core.exceptions import ValidationError
+from hardware.scale.protocol import ScaleNoResponseError
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +48,18 @@ class ScaleWorker(Thread):
                             break
                         status = self.capture_controller.observe(sample) if self.capture_controller else "SIMULATED"
                         candidate = self.capture_controller.cycle.candidate if self.capture_controller else None
+                        weight_unavailable = sample.protocol == "PROT_F" and sample.moving
                         self.state.update(
                             weight_grams=candidate.net_weight_grams if status == "WAITING_REMOVAL" and candidate
-                            else sample.net_weight_grams,
-                            live_weight_grams=sample.net_weight_grams,
+                            else self.state.snapshot()["weight_grams"] if weight_unavailable else sample.net_weight_grams,
+                            live_weight_grams=None if weight_unavailable else sample.net_weight_grams,
+                            scale_protocol=sample.protocol,
                             scale_status=status, error="",
                         )
+                    except ScaleNoResponseError as exc:
+                        recovering = bool(self.capture_controller and self.capture_controller.interrupt_silence())
+                        logger.warning("Consulta sem resposta; recuperação breve=%s", recovering)
+                        self.state.update(scale_status="RECOVERING" if recovering else "ERROR", error=str(exc))
                     except ValidationError as exc:
                         logger.warning("Captura comercial recusada: %s", exc.messages)
                         self.state.update(scale_status="ERROR", error=" ".join(exc.messages))

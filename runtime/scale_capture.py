@@ -20,6 +20,12 @@ class ScaleCaptureController:
         self.cycle.reset()
         self.status = "WAITING_ZERO"
 
+    def interrupt_silence(self):
+        """Allow a bounded empty reply without carrying old stability samples."""
+        recovering = self.cycle.interrupt_silence(monotonic())
+        self.status = self.cycle.status
+        return recovering
+
     def observe(self, sample):
         """Capture only with valid current commercial configuration.
 
@@ -43,7 +49,7 @@ class ScaleCaptureController:
             capture_measurement(
                 capture_key=candidate.capture_key, net_weight_grams=candidate.net_weight_grams,
                 tare_grams=candidate.tare_grams, device=sample.device,
-                stability_parameters=self.cycle.parameters(),
+                stability_parameters={**self.cycle.parameters(), "protocol": sample.protocol},
                 expected_product_id=product.pk, expected_product_revision=product.revision,
             )
             self.cycle.acknowledge()

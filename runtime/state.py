@@ -18,6 +18,7 @@ class RuntimeState:
             "scale_status": "STOPPED", "revision": 0,
             "mode": "SIMULATION", "error": "",
             "scale_mode": "SIMULATION", "print_mode": "PREVIEW",
+            "scale_protocol": "",
         }
 
     def update(self, **values):

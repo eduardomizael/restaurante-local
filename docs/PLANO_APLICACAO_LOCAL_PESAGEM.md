@@ -1,5 +1,7 @@
 # Plano da aplicação local de pesagem e impressão
 
+Incremento em 10/10/2026: a pedido do usuário, configuração explícita de USECB2 ou PROT F implementada conforme [ADR-0042](adr/0042-leitores-seriais-e-protocolo-configuravel.md). Na balança e na aplicação deve ser selecionado o mesmo protocolo. PROT F permite enxergar peso negativo após retirada com tara; retirada exige sequência estável e não grava peso negativo. Testes com simuladores aprovados; atualização do banco operacional, ensaio integrado e publicação são etapas distintas.
+
 Incremento em 06/10/2026: janela dedicada em tela cheia e fechamento junto com o runtime pelo botão da interface, conforme [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md). Implementação em desenvolvimento, com ensaio nativo Edge/x64 e simuladores. Publicação dessa mudança e validação no equipamento final permanecem etapas distintas.
 
 Atualização em 06/10/2026: canal por código Git/uv da main implementado conforme [ADR-0038](adr/0038-atualizacao-por-git-e-pacotes-na-release.md), preservando dados, backup e abertura offline. O usuário instalará Git e uv. Pacotes executáveis x86/x64 continuam disponíveis e sua publicação passa para release. Publicação remota e validação no Windows x86 final continuam pendentes. Consulte [instalação por código](INSTALACAO_POR_CODIGO.md); menções datadas abaixo ao build da main registram a decisão anterior.

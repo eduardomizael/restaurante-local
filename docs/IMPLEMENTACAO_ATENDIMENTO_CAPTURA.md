@@ -1,5 +1,19 @@
 # Atendimento touch e captura simulada
 
+## Atualização de 10/10/2026 — Destaque visual do peso e do estado
+
+O card do Atendimento omite o protocolo serial e destaca o peso líquido com fonte de 48 px, números tabulares e alto contraste. As mensagens têm fundo colorido, texto reforçado e ícone: verde para pronta ou salva, azul para estabilização/simulação, amarelo para retorno ao zero ou recuperação, vermelho para falha/configuração e cinza para leitura parada/pausada. O texto continua identificando o estado sem depender apenas da cor; a mensagem usa `role="status"`.
+
+Alteração de apresentação, sem mudança no ciclo de captura. Os 55 testes existentes de atendimento touch e layout compacto passaram. Sem ensaio visual em navegador ou hardware real neste ajuste.
+
+## Atualização de 10/10/2026 — Status e lista de pesagens na mesma resposta
+
+O usuário relatou pesagens com a mensagem **Peso fixado · pesagem salva · aguardando zero** que só apareciam na lista após sair e voltar ao Atendimento. Isso confirma gravação com apresentação desatualizada nesse cenário; não comprova a causa de eventuais falhas seriais anteriores.
+
+O Atendimento passa a consultar status e listas em uma única atualização HTMX de 500 ms. O status é lido antes das consultas comerciais: uma captura ocorrida durante a montagem da resposta não publica uma mensagem de sucesso mais nova que a lista. A próxima consulta entrega o estado atualizado. A resposta 204 exige tanto a revisão comercial quanto a revisão do runtime inalteradas; uma nova leitura também permite renovar a lista. A tela Status conserva seu diagnóstico próprio. Proteções de destino, diálogos, ações em envio e página oculta continuam vigentes.
+
+Validação: 52 testes de atendimento, captura, layouts e inclusão por diálogo aprovados. Novos casos cobrem mensagem de captura e medição na mesma resposta, mudança técnica sem evento comercial e captura concorrente durante a consulta. Sem migrations, hardware real, commit ou publicação. Confirmação da correção no equipamento do usuário permanece pendente.
+
 ## Atualização de interface — 03/10/2026
 
 Atendimento reorganizado a partir da referência visual do projeto Restaurante: faixa horizontal de medições acima de duas colunas; cards de comandas à esquerda e detalhes à direita. Os cards mostram número, situação, horário de abertura, quantidade de lançamentos ativos e subtotal. A selecionada tem destaque e rótulo. Em telas estreitas, as comandas passam para uma faixa horizontal acima dos detalhes.

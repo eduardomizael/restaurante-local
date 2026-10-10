@@ -30,3 +30,6 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0037 — Promoção do atendimento compacto](0037-promocao-do-atendimento-compacto.md).
 - [ADR-0038 — Atualização por Git e pacotes na release](0038-atualizacao-por-git-e-pacotes-na-release.md).
 - [ADR-0039 — Janela dedicada em tela cheia](0039-janela-dedicada-em-tela-cheia.md).
+- [ADR-0040 — Retorno próximo de zero na balança física](0040-retorno-proximo-de-zero-na-balanca-fisica.md).
+- [ADR-0041 — Recuperação limitada de silêncio serial](0041-recuperacao-limitada-de-silencio-serial.md).
+- [ADR-0042 — Leitores seriais e protocolo configurável](0042-leitores-seriais-e-protocolo-configuravel.md).

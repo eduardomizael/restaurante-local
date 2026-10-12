@@ -245,10 +245,10 @@ class TouchFlowTests(TestCase):
         for url in (reverse("home"), reverse("status_fragment") + "?surface=attendance"):
             page = self.client.get(url)
             self.assertContains(page, 'aria-label="Balança"')
-            self.assertNotContains(page, "<h2>Inicializador</h2>")
+            self.assertNotContains(page, "<h2>Balança</h2>")
             self.assertNotContains(page, 'id="pause-reading"')
         for url in (reverse("status"), reverse("status_fragment")):
-            self.assertContains(self.client.get(url), "<h2>Inicializador</h2>")
+            self.assertContains(self.client.get(url), "<h2>Balança</h2>")
             self.assertContains(self.client.get(url), 'id="pause-reading"')
 
     def test_htmx_creation_selection_and_history_restore(self):

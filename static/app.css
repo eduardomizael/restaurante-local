@@ -409,3 +409,7 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .change-history-release li p { margin: 8px 0 0; }
 #change-history-content form { margin: 0; }
 #change-history-feedback:empty { display: none; }
+.equipment-state { font-weight: 700; border-left: 5px solid #7c6816; padding: 8px 12px; background: #fff7d6; }
+.equipment-ok { border-color: #25643d; background: #e7f0e9; color: #184d2b; }
+.equipment-error { border-color: #a92828; background: #fff0ee; color: #8a2020; }
+.equipment-card { overflow-wrap: anywhere; }

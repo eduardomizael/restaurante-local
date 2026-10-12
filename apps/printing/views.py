@@ -16,7 +16,7 @@ from apps.orders.presentation import compact_layout, attendance_url, layout_url
 from apps.printing.documents import fingerprint, preview_parts
 from apps.printing.forms import DocumentConfigurationForm, FinalizeForm, ReprintForm
 from apps.printing.models import OrderDocument, PrintJob
-from apps.printing.selectors import document_configuration, document_jobs, draft_content, order_document, print_history, latest_order_document
+from apps.printing.selectors import document_configuration, document_jobs, draft_content, order_document, latest_order_document
 from apps.printing.services import finalize_order, print_open_order, request_reprint, save_document_configuration
 
 
@@ -147,8 +147,8 @@ def _submit_order_print(request, order_id, *, close_order):
 @require_GET
 @never_cache
 def history(request):
-    """Expose frozen documents and every delivery outcome."""
-    return render(request, "printing/history.html", {"documents": print_history()})
+    """Preserve the old entry point for bookmarks to the order reports."""
+    return redirect("report_orders")
 
 
 @require_GET

@@ -1,5 +1,11 @@
 # Documento, fechamento e impressão simulada
 
+## Atualização de 12/10/2026 — Três linhas para produtos manuscritos
+
+Novas prévias e documentos reservam três linhas ao final da lista de produtos, antes do separador e do total a pagar. Cada linha tem espaços sublinhados para nome/preço e caixas de marcação vazias, seguindo as colunas existentes. Elas não representam produtos cadastrados, não criam itens e não alteram valores. Mesmo sem produtos na área de marcações, as três linhas são reservadas.
+
+O snapshot grava `layout.blank_product_rows = 3`; documentos anteriores sem esse campo continuam com zero linhas extras, inclusive em segunda via. HTML, simulador e RAW compartilham a renderização. Nenhuma migration, acesso à balança ou envio à impressora. Validação: 35 testes direcionados aprovados, cobrindo impressão, layout, compatibilidade, segunda via e preservação das classificações. Prévia ampliada conferida visualmente no Chrome com banco isolado e dados fictícios; três linhas posicionadas após os produtos e antes do total. `git diff --check` aprovado. Sem commit ou publicação.
+
 Entrega em 03/10/2026, conforme [ADR-0014](adr/0014-documento-congelado-e-fila-simulada.md). Implementação e revisão diretas, sem commit implícito, spooler, COM, instalação de serviço ou alteração de dados operacionais.
 
 ## Como usar

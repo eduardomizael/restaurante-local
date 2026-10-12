@@ -2,6 +2,8 @@
 
 Status: aceita. Data: 04/10/2026. Complementa ADR-0017 e ADR-0018.
 
+Complemento solicitado em 12/10/2026: novas prévias/documentos reservam três linhas ao fim da lista de produtos para anotação manual, com nome/preço em branco e caixas vazias. A quantidade fica congelada em `layout.blank_product_rows`; sua ausência mantém a renderização antiga, sem mudança de versão, banco ou transporte. Consulte [implementação](../IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md).
+
 ## Contexto e decisão
 
 O usuário enviou uma referência com reposicionamento de elementos e remoção de textos da comanda. Aplicar o formato às novas prévias e impressões como versão documental 5, mantendo renderização das versões 1–4 sem alteração.

@@ -25,6 +25,7 @@ class MeasurementItemForm(forms.Form):
     order_id = forms.IntegerField(min_value=1, widget=forms.HiddenInput)
     measurement_id = forms.IntegerField(min_value=1, widget=forms.HiddenInput)
     request_key = forms.UUIDField(widget=forms.HiddenInput)
+    expected_revision = forms.IntegerField(min_value=1, required=False, widget=forms.HiddenInput)
 
 
 class OpenOrderForm(forms.Form):

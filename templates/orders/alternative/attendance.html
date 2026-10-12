@@ -5,4 +5,4 @@
 <p id="connection-message" class="connection-feedback" role="status"></p>
 {% include 'orders/alternative/workspace.html' %}
 {% endblock %}
-{% block dialogs %}{% include 'products/scale_dialog.html' %}{% include 'orders/discard_dialog.html' %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog><dialog id="print-preview-dialog" aria-labelledby="print-preview-title"><div id="print-preview-content"></div></dialog>{% endblock %}
+{% block dialogs %}{% include 'orders/measurement_product_dialog.html' %}{% include 'products/scale_dialog.html' %}{% include 'orders/discard_dialog.html' %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog><dialog id="print-preview-dialog" aria-labelledby="print-preview-title"><div id="print-preview-content"></div></dialog>{% endblock %}

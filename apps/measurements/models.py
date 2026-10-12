@@ -16,6 +16,8 @@ class Measurement(models.Model):
     capture_key = models.UUIDField(unique=True)
     product = models.ForeignKey("products.Product", on_delete=models.PROTECT)
     product_description = models.CharField(max_length=120)
+    is_meal = models.BooleanField(null=True, default=None)
+    revision = models.PositiveIntegerField(default=1)
     unit_price_cents = models.PositiveBigIntegerField()
     total_cents = models.PositiveBigIntegerField()
     net_weight_grams = models.PositiveIntegerField()

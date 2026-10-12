@@ -1,0 +1,3 @@
+{% extends 'core/base.html' %}
+{% block content %}{% include 'orders/measurement_product_dialog_content.html' %}
+<a class="button secondary" href="{% if compact_attendance %}{% url 'home' %}{% else %}{% url 'attendance_alternative' %}{% endif %}{% if order_id %}?order={{ order_id }}{% endif %}">Voltar ao atendimento</a>{% endblock %}

@@ -5,11 +5,58 @@ from apps.core.domain import DomainConflict, calculate_weight_total, require_int
 from apps.core.services import record_event
 from apps.measurements.models import Measurement
 from apps.products.selectors import scale_product
+from apps.products.models import Product
+
+
+def change_measurement_product(*, measurement_id, product_id, expected_revision, expected_product_revision):
+    """Correct one available capture, preserving weight and recording both snapshots.
+
+    Args:
+        measurement_id: Capture explicitly selected by the operator.
+        product_id: Active kilogram product chosen in the dialog.
+        expected_revision: Capture revision displayed when opening the dialog.
+        expected_product_revision: Product revision whose price was displayed.
+
+    Returns:
+        Measurement: Corrected capture with a recalculated commercial snapshot.
+
+    Raises:
+        ValidationError: Invalid product, unavailable capture or stale revision.
+    """
+    require_integer(expected_revision, label="Revisão da pesagem")
+    require_integer(expected_product_revision, label="Revisão do produto")
+    with write_transaction():
+        measurement = Measurement.objects.filter(pk=measurement_id).first()
+        if measurement is None:
+            raise ValidationError("Pesagem não encontrada.")
+        if measurement.status != Measurement.Status.AVAILABLE:
+            raise DomainConflict("Pesagem já incluída ou descartada.")
+        if measurement.revision != expected_revision:
+            raise DomainConflict("Pesagem alterada. Confira os valores e escolha novamente.")
+        product = Product.objects.filter(pk=product_id, active=True, unit=Product.Unit.KILOGRAM).first()
+        if product is None:
+            raise ValidationError("Escolha um produto ativo por kg.")
+        if product.revision != expected_product_revision:
+            raise DomainConflict("Produto alterado. Confira o preço e escolha novamente.")
+        before = {field: getattr(measurement, field) for field in (
+            "product_id", "product_description", "is_meal", "unit_price_cents", "total_cents", "revision",
+        )}
+        measurement.product = product
+        measurement.product_description = product.description
+        measurement.is_meal = product.is_meal
+        measurement.unit_price_cents = product.unit_price_cents
+        measurement.total_cents = calculate_weight_total(product.unit_price_cents, measurement.net_weight_grams)
+        measurement.revision += 1
+        measurement.save(update_fields=["product", "product_description", "is_meal", "unit_price_cents", "total_cents", "revision"])
+        after = {field: getattr(measurement, field) for field in before}
+        record_event("MEASUREMENT_PRODUCT_CHANGED", measurement, before=before, after=after,
+                     net_weight_grams=measurement.net_weight_grams)
+        return measurement
 
 
 def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="SIMULATOR", stability_parameters=None,
                         expected_product_id=None, expected_product_revision=None):
-    """Persist one explicitly stable capture with immutable commercial values.
+    """Persist one stable capture with commercial values independent of catalogue edits.
 
     Args:
         capture_key: Stable UUID for retries of this physical capture.
@@ -48,6 +95,7 @@ def capture_measurement(*, capture_key, net_weight_grams, tare_grams=0, device="
             raise DomainConflict("Produto da balança mudou durante a captura; aguarde retorno ao zero.")
         measurement = Measurement.objects.create(
             capture_key=key, product=product, product_description=product.description,
+            is_meal=product.is_meal,
             unit_price_cents=product.unit_price_cents,
             total_cents=calculate_weight_total(product.unit_price_cents, net_weight_grams),
             net_weight_grams=net_weight_grams, tare_grams=tare_grams, device=device.strip(),
@@ -68,6 +116,7 @@ def discard_measurement(measurement_id):
             return measurement
         updated = Measurement.objects.filter(pk=measurement.pk, status=Measurement.Status.AVAILABLE).update(
             status=Measurement.Status.DISCARDED, discard_reason="MANUAL_DISCARD", discarded_at=timezone.now(),
+            revision=measurement.revision + 1,
         )
         if updated != 1:
             raise DomainConflict("Somente medições disponíveis podem ser descartadas.")

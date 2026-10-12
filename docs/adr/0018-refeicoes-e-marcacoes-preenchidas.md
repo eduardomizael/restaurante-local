@@ -2,6 +2,8 @@
 
 Status: aceita. Data: 03/10/2026. Complementa ADR-0017 e substitui a apresentação de itens definida na ADR-0014 para novos documentos.
 
+Atualização em 12/10/2026: a identificação automática por nome/unidade foi substituída pelo campo **É refeição** para novos snapshots, conforme [ADR-0044](0044-classificacao-explicita-de-refeicoes.md). A regra abaixo fica preservada como decisão histórica e compatibilidade dos registros anteriores.
+
 ## Contexto e decisão
 
 O usuário determinou que a área de pré-inseridos mostre somente refeições, sem marcações manuais. Os outros produtos devem aparecer na área manuscrita, indicando os lançamentos nos próprios espaços de marcação.

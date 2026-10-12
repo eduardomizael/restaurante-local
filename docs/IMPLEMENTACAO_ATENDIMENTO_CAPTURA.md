@@ -1,5 +1,21 @@
 # Atendimento touch e captura simulada
 
+## Atualização de 12/10/2026 — Campo É refeição
+
+Em **Produtos**, marque **É refeição** na opção rápida do card ou no formulário de edição para agrupar novas inclusões com as refeições da comanda. A marcação é independente do nome, da unidade e de **Aparece na comanda**. Novos produtos e produtos existentes após a atualização começam desmarcados: confira o cadastro antes de novas capturas/inclusões.
+
+A classificação é copiada para novas pesagens e itens. Alterações posteriores no cadastro não mudam esses snapshots; a troca explícita do produto de uma pesagem disponível também copia a classificação do produto escolhido. Itens/pesagens anteriores à migration conservam a regra histórica e documentos salvos permanecem iguais. Produtos não alimentares por kg ficam na área de marcações, com peso e valor lançados visíveis. Decisão e migrations: [ADR-0044](adr/0044-classificacao-explicita-de-refeicoes.md). Banco operacional não alterado.
+
+Validação: suíte de 285 testes aprovada, com um teste nativo ignorado por exigir opt-in. Oito testes novos cobrem classificação explícita, snapshots e upgrade de registros existentes; testes anteriores de catálogo e impressão foram adaptados à opção explícita. Chrome conferido em 1280×673, 1024×600, 800×600, 390×650 e 1920×1200, com banco isolado e dados fictícios: opções rápidas, criação, edição, preservação das outras opções e agrupamento na prévia aprovados, sem erros JavaScript, rolagem horizontal ou alvos menores que 48 px. `makemigrations --check --dry-run` e `git diff --check` aprovados. Sem ensaio físico, commit ou publicação.
+
+## Atualização de 12/10/2026 — Correção do produto de uma pesagem disponível
+
+Tocar no corpo de um card de pesagem disponível abre o diálogo **Produto da pesagem**, com peso original, produto/total registrados e opções ativas por kg. Cada opção mostra preço atual e total recalculado. Escolher altera somente aquela pesagem, fecha o diálogo e atualiza seu card; Incluir e Descartar continuam separados. Fechar ou Escape cancela. A troca não altera o produto global da balança nem os dados físicos da captura.
+
+Revisões da pesagem e do produto protegem o envio contra alterações concorrentes. Se a pesagem já foi incluída/descartada, o diálogo informa o conflito, remove o card da lista disponível e bloqueia a escolha. Se produto/preço ou pesagem mudaram, os valores são atualizados para nova escolha. Histórico registra antes/depois em transação. A inclusão a partir do card também confere sua revisão; snapshots de itens e documentos anteriores permanecem intactos. Decisão e migration: [ADR-0043](adr/0043-correcao-individual-do-produto-da-pesagem.md). Nenhuma migration foi aplicada ao banco operacional.
+
+Validação: suíte de 277 testes aprovada, com um teste nativo ignorado por exigir opt-in; 13 testes novos verificam correção, conflitos, cálculo e concorrência real SQLite. Chrome conferido nas duas versões do atendimento em 1280×673, 1024×600, 800×600, 390×650 e 1920×1200, com dados fictícios e banco isolado. Seleção, recálculo, atualização posterior, comanda preservada, Escape, Incluir/Descartar separados e consumo por outra página com diálogo aberto funcionaram, sem erros JavaScript, rolagem horizontal ou alvos menores que 48 px. `makemigrations --check --dry-run` e `git diff --check` aprovados. Sem hardware, commit ou publicação.
+
 ## Atualização de 12/10/2026 — Produto da balança no atendimento
 
 O card de peso mostra o produto selecionado e oferece **Trocar produto** nas duas versões do atendimento. Tocar na indicação abre um diálogo com produtos ativos por kg, preço por kg e destaque do produto atual. A escolha atualiza o card e fecha o diálogo, sem navegar ou trocar a comanda selecionada. Fechar ou Escape sai sem alterar. Sem produto selecionado, o mesmo controle oferece **Escolher produto**; sem candidatos, o diálogo aponta para o cadastro.

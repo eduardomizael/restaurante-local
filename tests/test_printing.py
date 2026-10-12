@@ -351,7 +351,7 @@ class PrintHTTPTests(PrintingFixture, TestCase):
         response = self.client.get(reverse("print_preview", args=[self.order.pk]))
         self.assertContains(response, "DOCUMENTO CONGELADO")
         self.assertContains(response, "Aguardando envio")
-        self.assertContains(self.client.get(reverse("print_history")), "Comanda 1")
+        self.assertContains(self.client.get(reverse("report_orders")), "Comanda 1")
 
     def test_changed_preview_returns_conflict_without_finalizing(self):
         response = self.client.get(reverse("print_preview", args=[self.order.pk]))
@@ -378,7 +378,7 @@ class PrintHTTPTests(PrintingFixture, TestCase):
         fresh = self.client.get(reverse("print_preview", args=[self.order.pk]))
         self.assertContains(fresh, "[X][X]")
         self.assertContains(fresh, "Ver última impressão")
-        self.assertContains(self.client.get(reverse("print_history")), reverse("saved_document", args=[job.document_id]))
+        self.assertContains(self.client.get(reverse("report_orders")), reverse("saved_document", args=[job.document_id]))
 
     def test_configuration_form_parses_and_preserves_stale_values(self):
         url = reverse("document_configuration")

@@ -1,5 +1,7 @@
 # Plano da aplicação local de pesagem e impressão
 
+Incremento em 12/10/2026: Status mostra se a balança responde e se a impressora está disponível no Windows, com resultado da última verificação e modo simulado explícito. Implementação econômica para PCs modestos, conforme [ADR-0046](adr/0046-disponibilidade-dos-equipamentos-no-status.md): sem leitura serial extra, verificação de impressora a cada 10 segundos e atualização visual do Status a cada 2 segundos. Homologação física e medição no PC final permanecem pendentes.
+
 Incremento confirmado em 12/10/2026: o campo **É refeição**, no formulário e nas opções rápidas do cadastro, define quais produtos entram com as refeições na comanda. Nome e unidade deixam de classificar novos registros automaticamente. Novos produtos e catálogo existente após a atualização começam desmarcados para escolha explícita; snapshots anteriores e documentos impressos mantêm sua classificação. Consulte a [ADR-0044](adr/0044-classificacao-explicita-de-refeicoes.md).
 
 Incremento confirmado em 12/10/2026: o corpo do card de pesagem disponível permite trocar seu produto por outro ativo em KG, mantendo o peso e recalculando pelo preço atual escolhido. A correção é individual, exige disponibilidade e revisões atuais, registra histórico e não muda o produto da balança, outras pesagens, itens anteriores ou documentos. Essa exceção explícita à preservação do snapshot na captura está definida na [ADR-0043](adr/0043-correcao-individual-do-produto-da-pesagem.md).

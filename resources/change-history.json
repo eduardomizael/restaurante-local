@@ -4,6 +4,10 @@
     "version": "0.2.0",
     "changes": [
       {
+        "summary": "Balança e impressora na tela de Status",
+        "description": "Consulte o peso, pause ou retome a leitura e veja a conexão em um único card da balança. O card da impressora mostra sua disponibilidade no Windows. Ambos indicam a última resposta ou verificação, falhas e modo simulado. A verificação é leve e não imprime nada."
+      },
+      {
         "summary": "Histórico de mudanças",
         "description": "Veja as novidades ao abrir a aplicação, com as mais recentes no topo. Toque em Entendi, fechar para dispensar o aviso até a próxima mudança. Para consultar novamente, use Histórico de mudanças na tela de Status."
       },

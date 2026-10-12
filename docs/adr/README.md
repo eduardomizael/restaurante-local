@@ -36,3 +36,4 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0043 — Correção individual do produto da pesagem](0043-correcao-individual-do-produto-da-pesagem.md).
 - [ADR-0044 — Classificação explícita de refeições](0044-classificacao-explicita-de-refeicoes.md).
 - [ADR-0045 — Histórico versionado e confirmação local](0045-historico-versionado-e-confirmacao-local.md).
+- [ADR-0046 — Disponibilidade dos equipamentos no Status](0046-disponibilidade-dos-equipamentos-no-status.md).

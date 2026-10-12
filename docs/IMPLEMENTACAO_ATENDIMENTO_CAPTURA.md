@@ -1,5 +1,13 @@
 # Atendimento touch e captura simulada
 
+## Atualização de 12/10/2026 — Produto da balança no atendimento
+
+O card de peso mostra o produto selecionado e oferece **Trocar produto** nas duas versões do atendimento. Tocar na indicação abre um diálogo com produtos ativos por kg, preço por kg e destaque do produto atual. A escolha atualiza o card e fecha o diálogo, sem navegar ou trocar a comanda selecionada. Fechar ou Escape sai sem alterar. Sem produto selecionado, o mesmo controle oferece **Escolher produto**; sem candidatos, o diálogo aponta para o cadastro.
+
+A seleção usa o serviço transacional existente do cadastro, com revisão do produto e transferência atômica da marca Balança. Produtos inativos, por unidade e revisões desatualizadas são rejeitados. As pesagens já capturadas mantêm produto e preço históricos; a escolha vale para novas capturas. As mensagens do card foram encurtadas: **Pode colocar o prato**, **Aguardando estabilidade**, **Pesagem salva. Retire o prato**, **Retire o prato e aguarde zerar**, **Sem resposta. Aguarde** e **Escolha o produto da balança**. Nenhuma mudança no protocolo ou ciclo de captura.
+
+Validação: suíte de 264 testes aprovada, com um teste nativo de navegador ignorado por exigir opt-in. Conferência no Chrome com banco isolado e dados fictícios em 1280×673, 1024×600, 800×600, 390×650 e 1920×1200: seleção, atualização posterior, Escape, duas versões do atendimento, alvos de toque de ao menos 48 px e ausência de rolagem horizontal ou erros JavaScript. Sem ensaio físico, commit ou publicação.
+
 ## Atualização de 10/10/2026 — Teclado do Windows por tipo de campo
 
 Campos atendidos pelo teclado numérico próprio usam `inputmode="none"`: valores decimais, quantidades, ordenação dos produtos, próxima numeração e inclusão manual em diálogo. Esse atributo orienta o navegador a não mostrar o teclado virtual nesses campos. Buscas e campos de texto continuam com entrada normal, permitindo o teclado do Windows quando sua abertura automática estiver habilitada. Não há alteração nas configurações do Windows. A supressão efetiva deve ser conferida no Windows/Edge do computador final.

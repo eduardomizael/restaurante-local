@@ -30,11 +30,11 @@ class ProductFlagTests(TestCase):
         self.assertContains(response, "Produto da balança")
         self.assertContains(response, f'id="product-{self.scale.pk}"', count=1)
         self.assertContains(response, 'class="card product-row scale-product-card"')
-        self.assertContains(response, 'type="checkbox"', count=9)
+        self.assertContains(response, 'type="checkbox"', count=12)
         self.assertContains(response, 'name="flag" value="is_scale_product"', count=3)
 
     def test_each_flag_updates_only_its_field_and_returns_current_cards(self):
-        for flag in ("is_quick_access", "appears_on_order_slip"):
+        for flag in ("is_meal", "is_quick_access", "appears_on_order_slip"):
             response = self.change(self.drink, flag)
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, "<!doctype html>")

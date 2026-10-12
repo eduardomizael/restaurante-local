@@ -45,6 +45,7 @@ class ProductFlagForm(forms.Form):
     """Parse an explicit desired value for one catalogue flag."""
 
     flag = forms.ChoiceField(choices=[
+        ("is_meal", "É refeição"),
         ("is_scale_product", "Balança"),
         ("is_quick_access", "Acesso rápido"),
         ("appears_on_order_slip", "Aparece na comanda"),
@@ -58,6 +59,8 @@ class ProductForm(forms.Form):
     unit = forms.ChoiceField(label="Unidade", choices=Product.Unit.choices)
     unit_price_cents = ScaledDecimalField(label="Preço unitário / kg (R$)", decimal_places=2)
     active = forms.BooleanField(label="Ativo", required=False, initial=True)
+    is_meal = forms.BooleanField(label="É refeição", required=False,
+                                 help_text="Agrupa o produto com as refeições na comanda.")
     is_scale_product = forms.BooleanField(label="Produto da balança", required=False)
     is_quick_access = forms.BooleanField(label="Acesso rápido", required=False)
     appears_on_order_slip = forms.BooleanField(label="Aparece na comanda", required=False)

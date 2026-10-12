@@ -13,6 +13,7 @@ class Product(models.Model):
     unit = models.CharField(max_length=2, choices=Unit.choices)
     unit_price_cents = models.PositiveBigIntegerField()
     active = models.BooleanField(default=True)
+    is_meal = models.BooleanField(default=False)
     is_scale_product = models.BooleanField(default=False)
     is_quick_access = models.BooleanField(default=False)
     appears_on_order_slip = models.BooleanField(default=False)

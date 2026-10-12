@@ -20,6 +20,7 @@ from runtime.http_server import LocalHTTPServer
 from runtime.scale_worker import ScaleWorker
 from runtime.scale_capture import ScaleCaptureController
 from runtime.print_worker import PrintWorker
+from runtime.printer_monitor import PrinterMonitor
 from runtime.configured_scale import ConfiguredSerialScale
 from hardware.scale.cycle import CaptureCycle
 from apps.printing.services import recover_interrupted_jobs
@@ -76,7 +77,8 @@ class LocalApplication:
 
     def __init__(self, data_dir, port, *, browser=True, server_factory=LocalHTTPServer,
                  adapter_factory=None, browser_open=None, capture_factory=None,
-                 print_worker_factory=None, simulate=True, preview_print=True, browser_mode="fullscreen"):
+                 print_worker_factory=None, simulate=True, preview_print=True, browser_mode="fullscreen",
+                 printer_monitor_factory=None):
         self.data_dir = data_dir
         self.port = port
         self.url = f"http://127.0.0.1:{port}/"
@@ -91,12 +93,15 @@ class LocalApplication:
             profile="SIMULATION_ONLY" if simulate else "US31_POP_S_PHYSICAL_PENDING_VALIDATION")))
         self.print_worker_factory = print_worker_factory or (lambda event: PrintWorker(
             event, delivery_mode="PREVIEW" if preview_print else "RAW"))
+        self.printer_monitor_factory = printer_monitor_factory or (lambda event: (
+            None if preview_print else PrinterMonitor(state, event)))
         self.lock = InstanceLock(data_dir)
         self.stop_event = Event()
         self.server = None
         self.server_thread = None
         self.worker = None
         self.print_worker = None
+        self.printer_monitor = None
         self.instance_id = uuid.uuid4().hex
         self.browser_token = secrets.token_hex(32)
         self.browser_window = ApplicationBrowser(data_dir, self.instance_id, browser_mode) if browser and browser_open is None else None
@@ -129,7 +134,11 @@ class LocalApplication:
             state.update(running=True, paused=False, error="", instance_id=self.instance_id,
                          mode="SIMULATION" if self.simulate and self.preview_print else "HARDWARE",
                          scale_mode="SIMULATION" if self.simulate else "SERIAL",
-                         print_mode="PREVIEW" if self.preview_print else "RAW")
+                         print_mode="PREVIEW" if self.preview_print else "RAW",
+                         scale_access="UNKNOWN", scale_access_message="Aguardando resposta da balança.",
+                         scale_device="", scale_last_response=None, scale_last_response_tick=None,
+                         printer_access="UNKNOWN", printer_access_message="Aguardando verificação.",
+                         printer_device="", printer_checked_at=None, printer_checked_tick=None)
             self.server_thread = Thread(target=self.server.run, name="local-http", daemon=True)
             self.server_thread.start()
             probe_instance(self.url, self.instance_id)
@@ -140,6 +149,9 @@ class LocalApplication:
             self.print_worker = self.print_worker_factory(self.stop_event)
             if self.print_worker is not None:
                 self.print_worker.start()
+            self.printer_monitor = self.printer_monitor_factory(self.stop_event)
+            if self.printer_monitor is not None:
+                self.printer_monitor.start()
             record = self.data_dir / "instance.json"
             temporary = record.with_suffix(".tmp")
             temporary.write_text(json.dumps({
@@ -223,6 +235,10 @@ class LocalApplication:
                 raise RuntimeError("Impressão não encerrou; mutex mantido até a saída do processo.")
         elif self.print_worker is not None:
             self.print_worker.adapter.close()
+        if self.printer_monitor is not None and self.printer_monitor.ident is not None:
+            self.printer_monitor.join(timeout=3)
+            if self.printer_monitor.is_alive():
+                raise RuntimeError("Consulta da impressora não encerrou; mutex mantido até a saída do processo.")
         if self.server is not None:
             self.server.close()
         if self.server_thread is not None and self.server_thread.ident is not None:

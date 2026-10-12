@@ -53,6 +53,7 @@ class OrderItem(models.Model):
     request_key = models.UUIDField(unique=True)
     source = models.CharField(max_length=6, choices=Source.choices)
     product_description = models.CharField(max_length=120)
+    is_meal = models.BooleanField(null=True, default=None)
     unit = models.CharField(max_length=2)
     quantity_units = models.PositiveIntegerField(null=True, blank=True)
     weight_grams = models.PositiveIntegerField(null=True, blank=True)

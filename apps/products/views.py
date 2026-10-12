@@ -9,9 +9,45 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from apps.core.domain import DomainConflict
 from apps.core.http import requires_runtime
-from apps.products.forms import ProductFlagForm, ProductForm
-from apps.products.selectors import catalogue_products, catalogue_snapshot
+from apps.products.forms import ProductFlagForm, ProductForm, ScaleProductForm
+from apps.products.selectors import catalogue_products, catalogue_snapshot, scale_product, scale_product_choices
 from apps.products.services import save_product, set_product_flag
+from apps.core.selectors import runtime_snapshot
+from apps.orders.presentation import attendance_url
+
+
+@require_http_methods(["GET", "POST"])
+@never_cache
+@requires_runtime
+def choose_scale_product(request):
+    """Choose a scale product through the existing atomic catalogue service."""
+    errors, status = [], 200
+    if request.method == "POST":
+        form = ScaleProductForm(request.POST)
+        if form.is_valid():
+            try:
+                set_product_flag(**form.cleaned_data, flag="is_scale_product", enabled=True)
+            except ValidationError as exc:
+                errors = (["Produto alterado. Escolha novamente."]
+                          if isinstance(exc, DomainConflict) else exc.messages)
+                status = 409 if isinstance(exc, DomainConflict) else 400
+            else:
+                if request.headers.get("HX-Request") != "true":
+                    return redirect(attendance_url(request))
+                response = render(request, "core/scale_fragment.html", {
+                    "runtime": runtime_snapshot(), "scale_product": scale_product(),
+                })
+                response["HX-Retarget"] = "#runtime-status"
+                response["HX-Reswap"] = "outerHTML"
+                response["HX-Trigger-After-Settle"] = "scaleProductSelected"
+                return response
+        else:
+            errors, status = ["Seleção inválida. Escolha novamente."], 400
+    response = render(request, "products/scale_dialog_content.html", {
+        "products": scale_product_choices(), "errors": errors,
+    }, status=status)
+    response["X-Scale-Product-Fragment"] = "1"
+    return response
 
 
 def _catalogue_context(search, errors=()):

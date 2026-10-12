@@ -1,6 +1,7 @@
 """Commercial writes serialized by short SQLite IMMEDIATE transactions."""
 
 from django.core.exceptions import ValidationError
+from django.db.models import F
 from django.utils import timezone
 
 from apps.core.domain import DomainConflict, calculate_weight_total, require_integer, require_uuid, write_transaction
@@ -8,6 +9,7 @@ from apps.core.services import record_event
 from apps.measurements.models import Measurement
 from apps.orders.models import Order, OrderItem, OrderSequence
 from apps.products.models import Product
+from apps.products.classification import legacy_meal_classification
 
 MAX_ORDER_NUMBER = 2_147_483_647
 
@@ -100,20 +102,21 @@ def add_product_item(*, order_id, product_id, request_key, quantity_units=None, 
             total = calculate_weight_total(product.unit_price_cents, weight_grams)
         item = OrderItem.objects.create(
             order=order, product=product, request_key=key, source=OrderItem.Source.MANUAL,
-            product_description=product.description, unit=product.unit, quantity_units=quantity_units,
+            product_description=product.description, is_meal=product.is_meal, unit=product.unit, quantity_units=quantity_units,
             weight_grams=weight_grams, unit_price_cents=product.unit_price_cents, total_cents=total,
         )
         record_event("ITEM_ADDED", item, order_id=order.pk, source=item.source, total_cents=total)
         return item
 
 
-def add_measurement_item(*, order_id, measurement_id, request_key):
+def add_measurement_item(*, order_id, measurement_id, request_key, expected_revision=None):
     """Consume an AVAILABLE capture exactly once, preserving captured prices.
 
     Args:
         order_id: Explicit destination draft order.
         measurement_id: Shared measurement selected by the user.
         request_key: Stable UUID for this inclusion action.
+        expected_revision: Optional displayed capture revision to reject a stale card.
 
     Returns:
         OrderItem: New or previously saved item for this exact action.
@@ -132,13 +135,19 @@ def add_measurement_item(*, order_id, measurement_id, request_key):
         measurement = Measurement.objects.filter(pk=measurement_id).first()
         if measurement is None:
             raise ValidationError("Medição não encontrada.")
-        consumed = Measurement.objects.filter(pk=measurement.pk, status=Measurement.Status.AVAILABLE).update(status=Measurement.Status.USED)
+        if expected_revision is not None and measurement.revision != expected_revision:
+            raise DomainConflict("Pesagem alterada. Atualize a tela antes de incluir.")
+        consumed = Measurement.objects.filter(pk=measurement.pk, status=Measurement.Status.AVAILABLE).update(
+            status=Measurement.Status.USED, revision=measurement.revision + 1,
+        )
         if consumed != 1:
             raise DomainConflict("Esta medição já foi utilizada ou descartada.")
         item = OrderItem.objects.create(
             order=order, product_id=measurement.product_id, measurement=measurement,
             request_key=key, source=OrderItem.Source.SCALE,
             product_description=measurement.product_description, unit=Product.Unit.KILOGRAM,
+            is_meal=(measurement.is_meal if measurement.is_meal is not None else
+                     legacy_meal_classification(measurement.product_description, Product.Unit.KILOGRAM)),
             weight_grams=measurement.net_weight_grams, unit_price_cents=measurement.unit_price_cents,
             total_cents=measurement.total_cents,
         )
@@ -153,7 +162,9 @@ def _remove(item):
     item.removed_at = timezone.now()
     item.save(update_fields=["active", "removed_at"])
     if item.measurement_id:
-        released = Measurement.objects.filter(pk=item.measurement_id, status=Measurement.Status.USED).update(status=Measurement.Status.AVAILABLE)
+        released = Measurement.objects.filter(pk=item.measurement_id, status=Measurement.Status.USED).update(
+            status=Measurement.Status.AVAILABLE, revision=F("revision") + 1,
+        )
         if released != 1:
             raise DomainConflict("Vínculo da medição inconsistente; nenhuma alteração foi salva.")
     record_event("ITEM_REMOVED", item, order_id=item.order_id, measurement_id=item.measurement_id)

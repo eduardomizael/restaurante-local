@@ -19,6 +19,10 @@ class RuntimeState:
             "mode": "SIMULATION", "error": "",
             "scale_mode": "SIMULATION", "print_mode": "PREVIEW",
             "scale_protocol": "",
+            "scale_access": "UNKNOWN", "scale_access_message": "Aguardando resposta da balança.",
+            "scale_device": "", "scale_last_response": None, "scale_last_response_tick": None,
+            "printer_access": "UNKNOWN", "printer_access_message": "Aguardando verificação.",
+            "printer_device": "", "printer_checked_at": None, "printer_checked_tick": None,
         }
 
     def update(self, **values):

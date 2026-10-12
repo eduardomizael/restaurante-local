@@ -39,8 +39,8 @@ from runtime.state import state
 class PrintingFixture:
     def prepare(self):
         self.kg = save_product(description="Refeição por peso", unit="KG", unit_price_cents=5990,
-                               is_scale_product=True)
-        self.unit = save_product(description="À vontade", unit="UN", unit_price_cents=3590)
+                               is_scale_product=True, is_meal=True)
+        self.unit = save_product(description="À vontade", unit="UN", unit_price_cents=3590, is_meal=True)
         self.marked = save_product(description="Bebida reservada", unit="UN", unit_price_cents=700,
                                   appears_on_order_slip=True, slip_order=10)
         self.order = open_order(request_key=uuid4())
@@ -156,7 +156,7 @@ class DocumentTests(PrintingFixture, TestCase):
         content = draft_content(self.order)
         text = render_text(content)
         rows = [line for line in text.splitlines() if "[ ]" in line and not line.startswith("[X] =")]
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 4)
         self.assertEqual({line.index("[ ]") for line in rows}, {28})
         self.assertTrue(all(line.count("[ ]") == 6 for line in rows))
         self.assertTrue(all(len(line) <= 48 for line in rows))
@@ -166,7 +166,7 @@ class DocumentTests(PrintingFixture, TestCase):
 
     def test_meals_are_exclusive_to_top_section_even_when_marked_in_catalogue(self):
         save_product(product_id=self.unit.pk, expected_revision=1, description="REFEIÇÃO À VONTADE",
-                     unit="UN", unit_price_cents=3990, appears_on_order_slip=True)
+                     unit="UN", unit_price_cents=3990, appears_on_order_slip=True, is_meal=True)
         add_product_item(order_id=self.order.pk, product_id=self.unit.pk, quantity_units=1, request_key=uuid4())
         content = draft_content(self.order)
         top, manual = render_text(content).split("PRODUTO")

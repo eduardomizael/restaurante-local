@@ -12,12 +12,14 @@ class ConfiguredSerialScale:
         self.adapter = None
         self.revision = None
         self.closed = False
+        self.port = ""
 
     def read(self):
         """Apply revisions between queries; cycle is rearmed by ScaleWorker."""
         if self.closed:
             raise RuntimeError("Leitor serial encerrado.")
         configuration = hardware_configuration()
+        self.port = configuration.scale_port
         if self.revision != configuration.revision:
             if self.adapter:
                 self.adapter.close()

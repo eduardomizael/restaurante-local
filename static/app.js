@@ -5,8 +5,11 @@ document.addEventListener("htmx:configRequest", (event) => {
 });
 function requestFeedback(event) {
   const source = event.detail.requestConfig?.elt || event.detail.elt;
+  if (source?.closest("#change-history-dialog")) return document.getElementById("change-history-feedback");
   if (source?.closest("#discard-measurement-dialog")) return document.getElementById("discard-measurement-feedback");
   if (source?.closest("#manual-item-dialog")) return document.getElementById("manual-item-feedback");
+  if (source?.closest("#scale-product-dialog")) return document.getElementById("scale-product-feedback");
+  if (source?.closest("#measurement-product-dialog")) return document.getElementById("measurement-product-feedback");
   if (source?.closest("#catalogue-results")) return document.getElementById("catalogue-feedback");
   if (source?.closest("#attendance-workspace") && source.id !== "shared-board") {
     return document.getElementById("attendance-feedback");
@@ -49,6 +52,10 @@ const restoreAttendanceScroll = () => {
 };
 
 document.addEventListener("htmx:beforeSwap", (event) => {
+  if (event.detail.xhr.getResponseHeader("X-Change-History-Error") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
   const source = event.detail.requestConfig?.elt;
   const polling = ["shared-board", "runtime-status", "print-jobs"].includes(source?.id);
   if (polling
@@ -56,7 +63,7 @@ document.addEventListener("htmx:beforeSwap", (event) => {
     event.detail.shouldSwap = false;
     return;
   }
-  if (["shared-board", "catalogue-choices", "manual-item-content"].includes(event.detail.target.id)) {
+  if (["shared-board", "catalogue-choices", "manual-item-content", "measurement-product-content"].includes(event.detail.target.id)) {
     const destination = event.detail.xhr.getResponseHeader("X-Selected-Order");
     if (destination !== null && destination !== document.body.dataset.selectedOrder) {
       event.detail.shouldSwap = false;
@@ -64,6 +71,12 @@ document.addEventListener("htmx:beforeSwap", (event) => {
     }
   }
   // Only our explicit validation fragment may replace the local error region.
+  if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.target.id === "measurement-product-content"
+      && event.detail.xhr.getResponseHeader("X-Measurement-Product-Fragment") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
   if ([400, 409].includes(event.detail.xhr.status)
       && (event.detail.xhr.getResponseHeader("HX-Retarget") === "#attendance-feedback"
           || event.detail.xhr.getResponseHeader("X-Discard-Fragment") === "1")) {
@@ -77,6 +90,12 @@ document.addEventListener("htmx:beforeSwap", (event) => {
   }
   if ([400, 409].includes(event.detail.xhr.status)
       && event.detail.xhr.getResponseHeader("X-Manual-Item-Fragment") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.target.id === "scale-product-content"
+      && event.detail.xhr.getResponseHeader("X-Scale-Product-Fragment") === "1") {
     event.detail.shouldSwap = true;
     event.detail.isError = false;
   }
@@ -140,6 +159,44 @@ window.addEventListener("pageshow", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  const historyDialog = document.getElementById("change-history-dialog");
+  if (historyDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "change-history-content" && !historyDialog.open) historyDialog.showModal();
+    });
+    document.addEventListener("changeHistoryAcknowledged", () => historyDialog.close());
+    historyDialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      const form = historyDialog.querySelector("form");
+      if (form && !form.classList.contains("htmx-request")) form.requestSubmit();
+    });
+  }
+  const measurementDialog = document.getElementById("measurement-product-dialog");
+  if (measurementDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "measurement-product-content" && !measurementDialog.open) measurementDialog.showModal();
+    });
+    document.addEventListener("measurementProductChanged", () => measurementDialog.close());
+    measurementDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-measurement-product]") && !measurementDialog.querySelector("form.htmx-request")) measurementDialog.close();
+    });
+    measurementDialog.addEventListener("cancel", (event) => {
+      if (measurementDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+  }
+  const scaleDialog = document.getElementById("scale-product-dialog");
+  if (scaleDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "scale-product-content" && !scaleDialog.open) scaleDialog.showModal();
+    });
+    document.addEventListener("scaleProductSelected", () => scaleDialog.close());
+    scaleDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-scale-product]") && !scaleDialog.querySelector("form.htmx-request")) scaleDialog.close();
+    });
+    scaleDialog.addEventListener("cancel", (event) => {
+      if (scaleDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+  }
   const discardDialog = document.getElementById("discard-measurement-dialog");
   if (discardDialog) {
     document.addEventListener("htmx:afterSwap", (event) => {

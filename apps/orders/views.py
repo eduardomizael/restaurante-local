@@ -11,8 +11,9 @@ from django.views.decorators.vary import vary_on_headers
 from apps.core.domain import DomainConflict
 from apps.core.http import requires_runtime
 from apps.core.selectors import runtime_snapshot
-from apps.measurements.selectors import available_measurements
-from apps.measurements.services import discard_measurement
+from apps.measurements.forms import MeasurementProductForm
+from apps.measurements.selectors import all_measurements, available_measurements, measurement_product_choices
+from apps.measurements.services import change_measurement_product, discard_measurement
 from apps.orders.forms import (
     ConfirmationForm, ManualItemForm, MeasurementItemForm, NextNumberForm, OpenOrderForm, RemoveItemForm,
 )
@@ -287,6 +288,59 @@ def confirm_discard(request, measurement_id):
         "button_label": "Sim, descartar medição", "measurement": measurement,
         "order_id": _selected_id(request),
     })
+
+
+@require_http_methods(["GET", "POST"])
+@never_cache
+@vary_on_headers("HX-Request")
+@requires_runtime
+def measurement_product(request, measurement_id):
+    """Correct a capture independently of the scale product and selected order."""
+    measurement = get_object_or_404(all_measurements(), pk=measurement_id)
+    modal = request.headers.get("HX-Request") == "true"
+    destination = _selected_id(request)
+    errors, status = [], 200
+    if request.method == "POST":
+        form = MeasurementProductForm(request.POST)
+        if form.is_valid():
+            try:
+                change_measurement_product(measurement_id=measurement_id, **form.cleaned_data)
+            except ValidationError as exc:
+                errors = exc.messages
+                status = 409 if isinstance(exc, DomainConflict) else 400
+            else:
+                if not modal:
+                    return _attendance_redirect(request, destination)
+                runtime = runtime_snapshot()
+                data = board_snapshot(destination if destination is not None else 0)
+                if destination is None:
+                    data["selected_id"] = ""
+                data["runtime"] = runtime
+                response = _board_response(request, data)
+                response["HX-Trigger-After-Swap"] = "measurementProductChanged"
+                return response
+        else:
+            errors, status = ["Seleção inválida. Escolha novamente."], 400
+        measurement.refresh_from_db()
+    available = measurement.status == "AVAILABLE"
+    if not available:
+        errors, status = ["Pesagem já incluída ou descartada."], 409
+    data = board_snapshot(destination if destination is not None else 0)
+    if destination is None:
+        data["selected_id"] = ""
+    data.update({
+        "measurement": measurement, "measurement_available": available,
+        "measurement_products": measurement_product_choices(measurement.net_weight_grams) if available else [],
+        "errors": errors, "order_id": destination, "refresh_measurements": modal and status != 200,
+    })
+    template = "orders/measurement_product_dialog_content.html" if modal else "orders/measurement_product.html"
+    response = render(request, template, data, status=status)
+    if modal:
+        response["X-Measurement-Product-Fragment"] = "1"
+        response["X-Selected-Order"] = str(data["selected_id"])
+        response["HX-Retarget"] = "#measurement-product-content"
+        response["HX-Reswap"] = "innerHTML"
+    return response
 
 
 @require_http_methods(["GET", "POST"])

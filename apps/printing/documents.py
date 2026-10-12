@@ -3,12 +3,12 @@
 import hashlib
 import json
 import textwrap
-import unicodedata
 from copy import deepcopy
 from decimal import Decimal
 from datetime import datetime
 
 from django.utils import timezone
+from apps.products.classification import legacy_meal_classification
 
 
 def fingerprint(content):
@@ -34,13 +34,14 @@ def build_content(order, items, products, configuration):
         "unit": item.unit, "quantity_units": item.quantity_units, "weight_grams": item.weight_grams,
         "unit_price_cents": item.unit_price_cents, "total_cents": item.total_cents,
         "source": item.source, "measurement_id": item.measurement_id,
-        "is_meal": _is_meal(item.product_description, item.unit),
+        "is_meal": (item.is_meal if item.is_meal is not None else
+                    legacy_meal_classification(item.product_description, item.unit)),
     } for item in items]
     rows = []
     for product in products:
-        inserted = [line for line in lines if line["product_id"] == product.pk]
-        inserted = [line for line in inserted if not line["is_meal"]]
-        if not inserted and (_is_meal(product.description, product.unit)
+        product_lines = [line for line in lines if line["product_id"] == product.pk]
+        inserted = [line for line in product_lines if not line["is_meal"]]
+        if not inserted and (product_lines or product.is_meal
                              or not (product.active and product.appears_on_order_slip)):
             continue
         variants = []
@@ -55,6 +56,7 @@ def build_content(order, items, products, configuration):
             matching = [line for line in inserted if all(line[key] == variant[key]
                         for key in ("description", "unit", "unit_price_cents"))]
             variant["quantity_units"] = sum(line["quantity_units"] or 0 for line in matching)
+            variant["weight_grams"] = sum(line["weight_grams"] or 0 for line in matching)
             variant["total_cents"] = sum(line["total_cents"] for line in matching)
         rows.append({
             "product_id": product.pk, "description": variants[0]["description"], "variants": variants,
@@ -66,7 +68,8 @@ def build_content(order, items, products, configuration):
                                for row in rows for variant in row["variants"]])
     return {
         "version": 7, "paper_width_mm": 80, "columns": 48,
-        "layout": {"header_scale": 2, "name_columns": 20, "price_columns": price_columns},
+        "layout": {"header_scale": 2, "name_columns": 20, "price_columns": price_columns,
+                   "blank_product_rows": 3},
         "order_id": order.pk, "order_number": order.number,
         "opened_at": timezone.localtime(order.created_at).isoformat(),
         "header": configuration.header if configuration else "",
@@ -76,13 +79,6 @@ def build_content(order, items, products, configuration):
         "items": lines, "manuscript_rows": rows,
         "subtotal_cents": sum(line["total_cents"] for line in lines),
     }
-
-
-def _is_meal(description, unit):
-    """Identify weight meals and named fixed-price meals in the local catalogue."""
-    name = " ".join(unicodedata.normalize("NFKD", description).encode("ascii", "ignore")
-                    .decode("ascii").upper().split())
-    return unit == "KG" or name.startswith("REFEICAO ") or name == "REFEICAO" or name.startswith("A VONTADE")
 
 
 def _money(cents):
@@ -181,6 +177,10 @@ def _render_reference_layout(content, *, second_copy=False, bold_lines=None):
             output.extend(line.ljust(name_columns) for line in name_lines[1:])
             if count > capacity:
                 append(f"Quantidade lançada: {count} UN")
+            if variant["unit"] == "KG" and variant.get("weight_grams"):
+                append(f"Peso lançado: {_kilograms(variant['weight_grams'])} kg - R$ {_money(variant['total_cents'])}")
+    for _ in range(content["layout"].get("blank_product_rows", 0)):
+        append(f"{'_' * name_columns} {'_' * price_columns} {'[ ]' * capacity}")
     append("-" * width)
     append()
     append()

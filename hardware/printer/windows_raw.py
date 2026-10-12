@@ -29,6 +29,8 @@ class WindowsSpooler:
             "EndDocPrinter": ([wintypes.HANDLE], wintypes.BOOL),
             "AbortPrinter": ([wintypes.HANDLE], wintypes.BOOL),
             "ClosePrinter": ([wintypes.HANDLE], wintypes.BOOL),
+            "GetPrinterW": ([wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p,
+                             wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)], wintypes.BOOL),
         }
         for name, (arguments, result) in signatures.items():
             function = getattr(api, name)
@@ -48,6 +50,12 @@ class WindowsSpooler:
     def start(self, handle):
         info = DOC_INFO_1W("Restaurante Local — comanda", None, "RAW")
         return self._check(self.api.StartDocPrinterW(handle, 1, ctypes.byref(info)))
+
+    def status(self, handle):
+        """Read PRINTER_INFO_6 without creating a document or sending bytes."""
+        value, needed = wintypes.DWORD(), wintypes.DWORD()
+        self._check(self.api.GetPrinterW(handle, 6, ctypes.byref(value), ctypes.sizeof(value), ctypes.byref(needed)))
+        return value.value
 
     def page(self, handle):
         self._check(self.api.StartPagePrinter(handle))

@@ -1,5 +1,11 @@
 # Plano da aplicação local de pesagem e impressão
 
+Incremento em 12/10/2026: Status mostra se a balança responde e se a impressora está disponível no Windows, com resultado da última verificação e modo simulado explícito. Implementação econômica para PCs modestos, conforme [ADR-0046](adr/0046-disponibilidade-dos-equipamentos-no-status.md): sem leitura serial extra, verificação de impressora a cada 10 segundos e atualização visual do Status a cada 2 segundos. Homologação física e medição no PC final permanecem pendentes.
+
+Incremento confirmado em 12/10/2026: o campo **É refeição**, no formulário e nas opções rápidas do cadastro, define quais produtos entram com as refeições na comanda. Nome e unidade deixam de classificar novos registros automaticamente. Novos produtos e catálogo existente após a atualização começam desmarcados para escolha explícita; snapshots anteriores e documentos impressos mantêm sua classificação. Consulte a [ADR-0044](adr/0044-classificacao-explicita-de-refeicoes.md).
+
+Incremento confirmado em 12/10/2026: o corpo do card de pesagem disponível permite trocar seu produto por outro ativo em KG, mantendo o peso e recalculando pelo preço atual escolhido. A correção é individual, exige disponibilidade e revisões atuais, registra histórico e não muda o produto da balança, outras pesagens, itens anteriores ou documentos. Essa exceção explícita à preservação do snapshot na captura está definida na [ADR-0043](adr/0043-correcao-individual-do-produto-da-pesagem.md).
+
 Incremento em 10/10/2026: a pedido do usuário, configuração explícita de USECB2 ou PROT F implementada conforme [ADR-0042](adr/0042-leitores-seriais-e-protocolo-configuravel.md). Na balança e na aplicação deve ser selecionado o mesmo protocolo. PROT F permite enxergar peso negativo após retirada com tara; retirada exige sequência estável e não grava peso negativo. Testes com simuladores aprovados; atualização do banco operacional, ensaio integrado e publicação são etapas distintas.
 
 Incremento em 06/10/2026: janela dedicada em tela cheia e fechamento junto com o runtime pelo botão da interface, conforme [ADR-0039](adr/0039-janela-dedicada-em-tela-cheia.md). Implementação em desenvolvimento, com ensaio nativo Edge/x64 e simuladores. Publicação dessa mudança e validação no equipamento final permanecem etapas distintas.
@@ -72,7 +78,7 @@ As respostas anteriores sobre catálogo, impressão, numeração e Windows foram
 - Propostas complementares: `active`, ordem de acesso rápido e ordem no papel. Essas opções não ampliam o sistema para estoque ou caixa.
 - O valor unitário de um produto em `KG` é o preço por quilograma. Para `UN`, é o preço por unidade. À vontade usa `UN`.
 - Proposta: exatamente um produto por peso selecionado para a captura; impedir seleção de produto unitário e impedir leitura comercial sem produto/preço configurado.
-- Cada medição guarda descrição, unidade, preço/kg e total calculado vigentes na captura. Mudanças no cadastro não reescrevem medições ou documentos anteriores.
+- Cada medição guarda descrição, unidade, preço/kg e total calculado vigentes na captura. Mudanças no cadastro não reescrevem medições ou documentos anteriores. Somente a correção explícita de produto em uma medição disponível substitui seu snapshot comercial, com recálculo e histórico conforme a ADR-0043.
 - Itens adicionados diretamente guardam descrição, unidade, quantidade e preço vigentes na inclusão. O produto à vontade não precisa de associação a um produto pesado.
 - Quantidade digitada de produto por peso aceita kg com até três casas decimais e é convertida para gramas inteiras; proposta de validação: quantidade positiva e preço não negativo. Inclusão manual não consome uma medição disponível e registra origem `MANUAL`; inclusão da balança registra `SCALE` e referência à medição.
 
@@ -91,7 +97,7 @@ As respostas anteriores sobre catálogo, impressão, numeração e Windows foram
 1. Atendente abre o programa, verifica equipamentos e inicia a leitura.
 2. A aplicação consulta a balança e mostra peso atual e estado da conexão.
 3. Peso positivo, recente e estável cria automaticamente uma medição persistente com identificador único, peso líquido e horário, **sem vínculo a uma comanda**. Produto da balança, preço/kg e valor por peso são congelados para que o valor informado ao cliente seja o lançado depois.
-4. A medição entra na lista de disponíveis. O atendente informa o valor por peso e registra a escolha do cliente ao incluir a refeição na comanda.
+4. A medição entra na lista de disponíveis. O atendente informa o valor por peso e registra a escolha do cliente ao incluir a refeição na comanda. Antes de incluir, pode tocar no corpo do card e escolher outro produto ativo em KG para aquela pesagem; peso e dados físicos permanecem, preço e total são recalculados e a correção fica registrada.
 5. Retirar o prato rearma a captura; outros pratos geram novas medições, independentemente do lançamento das anteriores.
 6. O atendente abre ou seleciona uma comanda e insere nela uma medição disponível, com o total congelado. Também pode incluir diretamente qualquer produto, inclusive à vontade ou produto em kg com quantidade digitada. Inclusão direta não consome medição automaticamente.
 7. O atendente inclui produtos pelos botões de acesso rápido ou pela busca no cadastro completo. Proposta: cada toque em produto unitário acrescenta uma unidade, com ajuste ou remoção antes de imprimir. Produtos em kg oferecem seleção de medição ou entrada manual de quantidade.
@@ -204,3 +210,7 @@ Continuação: captura automática de 236 g e saída completa da comanda nº 2 c
 ## Ajustes explícitos em 03/10/2026
 
 Impressão pode ocorrer sem fechamento: a comanda permanece aberta e cada envio preserva snapshot próprio. Fechamento com impressão é ação separada. Refeições ficam somente no topo, sem marcações; outros produtos indicam unidades inseridas nos espaços [X], sem valor abaixo da linha. Quantidades acima da capacidade continuam explícitas. Peso é capturado e destacado ao estabilizar, com nova captura somente após leitura de zero sem movimento. Estas instruções substituem os trechos anteriores que associam toda impressão ao fechamento; decisões detalhadas nas ADRs 0018, 0019 e 0020.
+### Histórico de mudanças
+
+Histórico cumulativo em `resources/change-history.json`, com data, resumo e descrição. O diálogo abre automaticamente quando o conteúdo muda e pode ser reaberto pelo Status. A confirmação por hash fica em `DATA_DIR/change-history-state.json`, sem banco ou migration. Ver ADR-0045.
+

@@ -39,6 +39,7 @@ def board_snapshot(selected_id=None):
     items = list(active_items(selected.pk)) if selected else []
     return {
         "revision": revision, "orders": orders, "selected": selected,
+        "scale_product": scale_product(),
         "open_key": uuid4(),
         "selected_id": selected_id if selected_id is not None else (selected.pk if selected else ""),
         "measurements": measurements,
@@ -53,7 +54,7 @@ def attendance_snapshot(selected_id=None, search=""):
     data.update({
         "quick_products": list(quick_access_products()),
         "products": list(active_products().filter(description__icontains=search)),
-        "scale_product": scale_product(), "search": search,
+        "search": search,
     })
     return data
 

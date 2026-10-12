@@ -7,6 +7,7 @@ for package in ("apps", "config", "runtime", "hardware", "django.contrib.content
                 "django.db.backends.sqlite3", "django.core.management.commands", "pystray"):
     hidden += collect_submodules(package)
 datas = [(str(root / "templates"), "templates"), (str(root / "static"), "static")]
+datas += [(str(root / "resources"), "resources")]
 # Django discovers commands and migrations using filesystem enumeration.
 datas += collect_data_files("apps", include_py_files=True)
 datas += collect_data_files("django.contrib.contenttypes", include_py_files=True)

@@ -1,5 +1,13 @@
 <section id="runtime-status" class="scale-summary" data-scale-state="{{ runtime.scale_status }}" aria-label="Balança" {% if out_of_band %}hx-swap-oob="outerHTML"{% endif %}>
-  <div><span class="eyebrow">PESO LÍQUIDO {% if runtime.scale_mode != 'SERIAL' %}SIMULADO{% endif %}</span>
-    <strong class="scale-weight">{{ runtime.weight_kg }} <small>kg</small></strong></div>
+  <div>
+    <a class="scale-product-choice" href="{% url 'choose_scale_product' %}{{ attendance_layout_suffix }}"
+       hx-get="{% url 'choose_scale_product' %}{{ attendance_layout_suffix }}" hx-target="#scale-product-content" hx-swap="innerHTML" aria-haspopup="dialog">
+      {% comment %} <span class="eyebrow">PRODUTO DA BALANÇA</span> {% endcomment %}
+      <strong>{{ scale_product.description|default:'Escolher produto' }}</strong>
+      {% comment %} <span>Trocar produto ›</span> {% endcomment %}
+    </a>
+    <span class="eyebrow">PESO LÍQUIDO {% if runtime.scale_mode != 'SERIAL' %}SIMULADO{% endif %}</span>
+    <strong class="scale-weight">{{ runtime.weight_kg }} <small>kg</small></strong>
+  </div>
   <p class="scale-message" role="status"><span class="scale-status-icon" aria-hidden="true">{{ runtime.scale_icon }}</span><span>{{ runtime.scale_label }}</span></p>
 </section>

@@ -12,7 +12,7 @@ def set_product_flag(*, product_id, flag, enabled, expected_revision):
 
     Args:
         product_id: Product being edited.
-        flag: One of the three editable catalogue flag names.
+        flag: One of the editable catalogue flag names.
         enabled: Explicit desired boolean value.
         expected_revision: Revision displayed when the action was requested.
 
@@ -22,7 +22,7 @@ def set_product_flag(*, product_id, flag, enabled, expected_revision):
     Raises:
         ValidationError: Invalid flag, product, value or stale revision.
     """
-    if flag not in {"is_scale_product", "is_quick_access", "appears_on_order_slip"}:
+    if flag not in {"is_meal", "is_scale_product", "is_quick_access", "appears_on_order_slip"}:
         raise ValidationError("Opção de produto inválida.")
     if type(enabled) is not bool:
         raise ValidationError("Opção do produto deve ser booleana.")
@@ -32,7 +32,7 @@ def set_product_flag(*, product_id, flag, enabled, expected_revision):
         if product is None:
             raise ValidationError("Produto não encontrado.")
         values = {name: getattr(product, name) for name in (
-            "description", "unit", "unit_price_cents", "active", "is_scale_product",
+            "description", "unit", "unit_price_cents", "active", "is_meal", "is_scale_product",
             "is_quick_access", "appears_on_order_slip", "quick_access_order", "slip_order",
         )}
         values[flag] = enabled
@@ -40,7 +40,7 @@ def set_product_flag(*, product_id, flag, enabled, expected_revision):
 
 
 def save_product(*, description, unit, unit_price_cents, product_id=None, expected_revision=None,
-                 active=True, is_scale_product=False, is_quick_access=False,
+                 active=True, is_meal=False, is_scale_product=False, is_quick_access=False,
                  appears_on_order_slip=False, quick_access_order=0, slip_order=0):
     """Create or update catalogue values without changing historical snapshots.
 
@@ -51,6 +51,7 @@ def save_product(*, description, unit, unit_price_cents, product_id=None, expect
         product_id: Existing product identity, or None for creation.
         expected_revision: Required revision when updating to reject stale edits.
         active: Whether the product is available for new items.
+        is_meal: Explicit grouping in the meal section, regardless of name or unit.
         is_scale_product: Whether this is the unique active scale product.
         is_quick_access: Whether it is offered as a quick action.
         appears_on_order_slip: Whether to reserve a manuscript line.
@@ -67,7 +68,7 @@ def save_product(*, description, unit, unit_price_cents, product_id=None, expect
         raise ValidationError("Descrição deve conter de 1 a 120 caracteres.")
     if unit not in Product.Unit.values:
         raise ValidationError("Unidade deve ser UN ou KG.")
-    for flag in (active, is_scale_product, is_quick_access, appears_on_order_slip):
+    for flag in (active, is_meal, is_scale_product, is_quick_access, appears_on_order_slip):
         if type(flag) is not bool:
             raise ValidationError("Opções do produto devem ser booleanas.")
     require_integer(unit_price_cents, minimum=0, label="Preço em centavos")
@@ -76,7 +77,7 @@ def save_product(*, description, unit, unit_price_cents, product_id=None, expect
     if is_scale_product and (unit != Product.Unit.KILOGRAM or not active):
         raise ValidationError("Produto da balança deve estar ativo e usar KG.")
     values = dict(description=description.strip(), unit=unit, unit_price_cents=unit_price_cents,
-                  active=active, is_scale_product=is_scale_product, is_quick_access=is_quick_access,
+                  active=active, is_meal=is_meal, is_scale_product=is_scale_product, is_quick_access=is_quick_access,
                   appears_on_order_slip=appears_on_order_slip, quick_access_order=quick_access_order,
                   slip_order=slip_order)
     with write_transaction():

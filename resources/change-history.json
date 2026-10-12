@@ -1,0 +1,36 @@
+[
+  {
+    "date": "2026-10-12",
+    "version": "0.2.0",
+    "changes": [
+      {
+        "summary": "Balança e impressora na tela de Status",
+        "description": "Consulte o peso, pause ou retome a leitura e veja a conexão em um único card da balança. O card da impressora mostra sua disponibilidade no Windows. Ambos indicam a última resposta ou verificação, falhas e modo simulado. A verificação é leve e não imprime nada."
+      },
+      {
+        "summary": "Histórico de mudanças",
+        "description": "Veja as novidades ao abrir a aplicação, com as mais recentes no topo. Toque em Entendi, fechar para dispensar o aviso até a próxima mudança. Para consultar novamente, use Histórico de mudanças na tela de Status."
+      },
+      {
+        "summary": "Espaço para anotações na comanda",
+        "description": "As novas comandas têm três linhas em branco ao final da lista de produtos para escrever o nome e o preço de itens à mão."
+      },
+      {
+        "summary": "Escolha quais produtos são refeições",
+        "description": "Marque É refeição no cadastro ou no card do produto para colocá-lo junto das refeições na comanda. Revise os produtos já cadastrados: essa opção começa desmarcada. A escolha vale para novos lançamentos; os anteriores são preservados."
+      },
+      {
+        "summary": "Troca de produto de uma pesagem",
+        "description": "Toque no corpo do card de uma pesagem disponível e escolha outro produto por quilo. O peso é mantido e o valor é recalculado pelo preço do produto escolhido. A troca vale só para essa pesagem."
+      },
+      {
+        "summary": "Troca rápida do produto da balança",
+        "description": "O card do peso atual mostra qual produto está sendo pesado. Toque no produto para escolher outro sem sair do atendimento. A troca vale para as próximas pesagens; as já salvas mantêm seu produto."
+      },
+      {
+        "summary": "Orientações da balança mais diretas",
+        "description": "As mensagens abaixo do peso ficaram mais curtas e claras, indicando quando colocar o prato, aguardar a estabilidade ou retirar o prato após salvar a pesagem."
+      }
+    ]
+  }
+]

@@ -3,6 +3,7 @@
 <div class="heading"><p class="eyebrow">DIAGNÓSTICO</p><h1>Status da aplicação</h1>
 <p>Fechar esta janela mantém o inicializador em execução.</p></div>
 {% include 'core/status_fragment.html' %}
+<section class="card"><h2>Novidades da aplicação</h2><a class="button secondary" href="{% url 'change_history' %}" hx-get="{% url 'change_history' %}" hx-target="#change-history-content">Histórico de mudanças</a></section>
 <section class="card"><h2>Como encerrar</h2>
 <p>Toque no botão abaixo e confirme. Você também pode usar <strong>Sair</strong> na bandeja.</p>
 <p>A janela dedicada do Restaurante Local será fechada ao concluir o encerramento.</p>

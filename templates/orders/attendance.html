@@ -6,7 +6,6 @@
   {% include 'core/scale_fragment.html' %}
 </div>
 <p id="connection-message" class="connection-feedback" role="status"></p>
-{% if not scale_product %}<div class="notice" role="status">Selecione um produto ativo em KG para capturar pesagens. <a href="{% url 'catalogue' %}">Abrir produtos</a></div>{% endif %}
 {% include 'orders/workspace.html' %}
 {% endblock %}
-{% block dialogs %}{% include 'orders/discard_dialog.html' %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog>{% endblock %}
+{% block dialogs %}{% include 'orders/measurement_product_dialog.html' %}{% include 'products/scale_dialog.html' %}{% include 'orders/discard_dialog.html' %}<dialog id="manual-item-dialog" aria-labelledby="manual-item-title"><div id="manual-item-content"></div></dialog>{% endblock %}

@@ -1,14 +1,16 @@
 <section id="runtime-status" class="status-grid" aria-label="Estado técnico"
   hx-get="{% url 'status_fragment' %}"
-  hx-trigger="every 500ms [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
-  <div class="card weight-card">
+  hx-trigger="every 2s [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop">
+  <div class="card weight-card equipment-card">
+    <h2>Balança</h2>
+    <p class="equipment-state equipment-{{ runtime.scale_equipment.tone }}">{{ runtime.scale_equipment.label }}</p>
     <span class="eyebrow">PESO LÍQUIDO {% if runtime.scale_mode == 'SERIAL' %}DA BALANÇA{% else %}SIMULADO{% endif %}</span>
     <div class="weight">{{ runtime.weight_kg }} <small>kg</small></div>
     <p>{{ runtime.scale_label }}</p>
-  </div>
-  <div class="card">
-    <h2>Inicializador</h2>
-    <p>{% if runtime.running %}Em execução no próprio PC{% else %}Inicializador não está em execução{% endif %}</p>
+    {% if runtime.scale_equipment.device %}<p>Porta: <strong>{{ runtime.scale_equipment.device }}</strong></p>{% endif %}
+    <p>{{ runtime.scale_equipment.message }}</p>
+    {% if runtime.scale_equipment.checked_at %}<p class="muted">Última resposta: {{ runtime.scale_equipment.checked_at|date:'d/m/Y H:i:s' }}</p>{% endif %}
+    {% if not runtime.running %}<p>Inicializador não está em execução.</p>{% endif %}
     {% if runtime.error %}<p role="alert" class="error">{{ runtime.error }}</p>{% endif %}
     <form hx-post="{% url 'toggle_pause' %}" hx-target="#runtime-status" hx-swap="outerHTML">
       {% csrf_token %}
@@ -16,6 +18,14 @@
         {% if runtime.paused %}▶ Retomar leitura{% else %}Ⅱ Pausar leitura{% endif %}
       </button>
     </form>
-    <p class="muted" id="connection-message" role="status">Atualização local a cada meio segundo.</p>
+    <p class="muted" id="connection-message" role="status">Atualização do status a cada 2 segundos.</p>
+  </div>
+  <div class="card equipment-card">
+    <h2>Impressora</h2>
+    <p class="equipment-state equipment-{{ runtime.printer_equipment.tone }}">{{ runtime.printer_equipment.label }}</p>
+    {% if runtime.printer_equipment.device %}<p>Nome: <strong>{{ runtime.printer_equipment.device }}</strong></p>{% endif %}
+    <p>{{ runtime.printer_equipment.message }}</p>
+    {% if runtime.printer_equipment.checked_at %}<p class="muted">Última verificação: {{ runtime.printer_equipment.checked_at|date:'d/m/Y H:i:s' }}</p>{% endif %}
+    {% if runtime.print_mode == 'RAW' %}<p class="muted">Verificação a cada 10 segundos. A disponibilidade no Windows não confirma a saída do papel.</p>{% endif %}
   </div>
 </section>

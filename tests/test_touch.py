@@ -181,7 +181,7 @@ class TouchFlowTests(TestCase):
             "order": order.pk, "revision": page.context["revision"],
             "runtime_revision": page.context["runtime"]["revision"],
         })
-        self.assertContains(response, "Peso fixado · pesagem salva · aguardando zero")
+        self.assertContains(response, "Pesagem salva. Retire o prato")
         self.assertEqual([item.pk for item in response.context["measurements"]], [measurement.pk])
         self.assertContains(response, 'id="runtime-status"', count=1)
         self.assertNotContains(response, '?surface=attendance')
@@ -205,13 +205,13 @@ class TouchFlowTests(TestCase):
         with patch("apps.orders.views.board_snapshot", side_effect=concurrent_capture):
             response = self.client.get(reverse("board_fragment"))
         self.assertEqual(response.context["measurements"], [])
-        self.assertNotContains(response, "pesagem salva")
+        self.assertNotContains(response, "Pesagem salva")
         # Both revisions remain old; the next poll must deliver the new capture.
         refreshed = self.client.get(reverse("board_fragment"), {
             "revision": response.context["revision"],
             "runtime_revision": response.context["runtime"]["revision"],
         })
-        self.assertContains(refreshed, "pesagem salva")
+        self.assertContains(refreshed, "Pesagem salva")
         self.assertEqual(len(refreshed.context["measurements"]), 1)
 
     def test_polling_without_selection_does_not_choose_a_new_order(self):
@@ -245,10 +245,10 @@ class TouchFlowTests(TestCase):
         for url in (reverse("home"), reverse("status_fragment") + "?surface=attendance"):
             page = self.client.get(url)
             self.assertContains(page, 'aria-label="Balança"')
-            self.assertNotContains(page, "<h2>Inicializador</h2>")
+            self.assertNotContains(page, "<h2>Balança</h2>")
             self.assertNotContains(page, 'id="pause-reading"')
         for url in (reverse("status"), reverse("status_fragment")):
-            self.assertContains(self.client.get(url), "<h2>Inicializador</h2>")
+            self.assertContains(self.client.get(url), "<h2>Balança</h2>")
             self.assertContains(self.client.get(url), 'id="pause-reading"')
 
     def test_htmx_creation_selection_and_history_restore(self):

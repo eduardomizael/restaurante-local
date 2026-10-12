@@ -56,6 +56,28 @@ class SlipLayoutTests(SimpleTestCase):
         self.assertIn("SEGUNDA VIA", render_text(content, second_copy=True))
         self.assertNotIn("SEGUNDA VIA", render_text(content))
 
+    def test_three_manual_rows_follow_products_without_changing_legacy_documents(self):
+        content = self.content()
+        content["version"] = 7
+        legacy = render_text(content)
+        content["layout"]["blank_product_rows"] = 3
+        row = "_" * 20 + " " + "_" * 6 + " " + "[ ]" * 6
+        for second_copy in (False, True):
+            text = render_text(content, second_copy=second_copy)
+            lines = text.splitlines()
+            index = lines.index(row)
+            self.assertEqual(lines[index:index + 3], [row] * 3)
+            self.assertEqual(lines[index + 3], "-" * 48)
+            self.assertTrue(lines[index - 1].startswith("COCA COLA"))
+            self.assertLess(index, lines.index("TOTAL A PAGAR R$ ______________________".center(48)))
+            self.assertLessEqual(max(map(len, lines)), 48)
+            parts = preview_parts(content, second_copy=second_copy)
+            self.assertEqual(parts["slip_header"] + parts["slip_body"], text)
+            self.assertIn((row + "\n").encode("cp860") * 3, encode_document(text))
+        self.assertNotIn(row, legacy)
+        content["manuscript_rows"] = []
+        self.assertEqual(render_text(content).splitlines().count(row), 3)
+
     def test_long_descriptions_prices_and_quantity_overflow_preserve_paper_width(self):
         content = self.content()
         content["items"][0]["description"] = "REFEIÇÃO COM UMA DESCRIÇÃO BEM LONGA PARA ENVOLVER LINHAS"

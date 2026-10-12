@@ -129,6 +129,14 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .attendance-page > .notice { flex-shrink: 0; margin: 0; padding: 12px; }
 .scale-summary { --scale-accent: #475569; --scale-tint: #edf1f5; display: flex; align-items: center; gap: 16px; width: 640px; padding: 12px 16px; border: 2px solid var(--scale-accent); border-radius: 12px; background: var(--scale-tint); }
 .scale-summary > div { min-width: 0; }
+.scale-product-choice { display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 48px; min-height: 48px; padding: 8px; border: 1px solid var(--scale-accent); border-radius: 8px; color: #173d36; text-decoration: none; overflow-wrap: anywhere; }
+.scale-product-choice > span:last-child { font-size: 13px; text-decoration: underline; }
+.scale-summary .scale-product-choice { flex: 1; min-width: 0; }
+.alternative-top .scale-product-choice { width: 100%; flex: none; }
+#scale-product-dialog { width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 16px; }
+#scale-product-dialog h2 { overflow-wrap: anywhere; }
+.scale-product-options { display: grid; gap: 8px; }
+.scale-product-options button { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; text-align: left; overflow-wrap: anywhere; }
 .scale-summary .eyebrow { font-size: 11px; font-weight: 800; color: #334155; }
 .scale-weight { display: block; font-size: 48px; font-weight: 900; line-height: 1.15; letter-spacing: -1.5px; color: #10251d; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .scale-weight small { font-size: 22px; font-weight: 700; letter-spacing: 0; }
@@ -147,6 +155,10 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .measurement-list { display: flex; gap: 12px; max-height: 220px; overflow: auto; padding: 4px 4px 8px; scroll-padding: 4px; }
 .measurement-card { flex: 0 0 288px; max-width: 100%; padding: 12px; border: 1px solid #baccc0; border-radius: 10px; background: white; }
 .measurement-card p { margin: 8px 0 0; overflow-wrap: anywhere; }
+.measurement-product-trigger { display: block; min-width: 48px; min-height: 48px; color: inherit; text-decoration: none; border-radius: 4px; }
+.measurement-change-hint { display: block; margin-top: 2px; font-size: 12px; text-decoration: underline; color: #486052; }
+#measurement-product-dialog { width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 16px; }
+#measurement-product-dialog h2 { overflow-wrap: anywhere; }
 .measurement-heading { font-size: 20px; }
 .measurement-actions { gap: 8px; margin-top: 12px; }
 .measurement-actions form { flex: 1; min-width: 0; }
@@ -383,3 +395,21 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
   .attendance-alternative .order-list { max-height: 220px; }
   .attendance-alternative .order-summary .form-actions .button { min-width: 48px; }
 }
+/* Keep the history acknowledgment reachable on touch screens. */
+#change-history-dialog { width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 20px; box-sizing: border-box; overflow: hidden; }
+#change-history-content { display: flex; flex-direction: column; max-height: calc(100dvh - 66px); gap: 12px; }
+#change-history-content header, #change-history-content form { flex-shrink: 0; }
+#change-history-content h1 { margin: 0; }
+.change-history-entries { overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+.change-history-entries .card { margin: 0 0 12px; }
+.change-history-entries time { color: #475569; font-size: .9rem; }
+.change-history-release ul { padding-left: 24px; margin-bottom: 0; }
+.change-history-release li + li { margin-top: 24px; }
+.change-history-release h3 { font-size: 18px; margin: 0; }
+.change-history-release li p { margin: 8px 0 0; }
+#change-history-content form { margin: 0; }
+#change-history-feedback:empty { display: none; }
+.equipment-state { font-weight: 700; border-left: 5px solid #7c6816; padding: 8px 12px; background: #fff7d6; }
+.equipment-ok { border-color: #25643d; background: #e7f0e9; color: #184d2b; }
+.equipment-error { border-color: #a92828; background: #fff0ee; color: #8a2020; }
+.equipment-card { overflow-wrap: anywhere; }

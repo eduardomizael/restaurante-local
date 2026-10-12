@@ -1,0 +1,18 @@
+{% extends 'reports/base.html' %}
+{% block report_content %}
+<h2>Totais por período ou por dia</h2>
+{% include 'reports/period.html' %}
+<p>Contagem de todas as comandas pela situação atual. Quantidades e valores somente dos itens registrados nas comandas fechadas; anotações à mão não entram no cálculo.</p>
+{% if reports %}
+<p>{{ reports|length }} relatório{{ reports|length|pluralize:'s' }} · Bobina de 80 mm · {% if runtime_mode.print_mode == 'RAW' %}Impressão térmica{% else %}Simulação sem papel{% endif %}. A prévia vale por uma hora.</p>
+<form method="post" action="{% url 'report_print' %}">
+  {% csrf_token %}{% for field in print_form.hidden_fields %}{% if field.name != 'selection' %}{{ field }}{% endif %}{% endfor %}
+  {% if reports|length > 1 %}<div class="form-actions"><button type="submit" name="selection" value="all">{% if runtime_mode.print_mode == 'RAW' %}Imprimir todos os dias{% else %}Simular todos os dias{% endif %} ({{ reports|length }})</button></div>{% endif %}
+  <div class="report-previews">{% for report in reports %}<section class="card report-preview">
+    <h3>{% if form.cleaned_data.mode == 'daily' %}Dia {{ report.day|date:'d/m/Y' }}{% else %}Total no período{% endif %}</h3>
+    <button type="submit" name="selection" value="{{ forloop.counter0 }}">{% if runtime_mode.print_mode == 'RAW' %}Imprimir{% else %}Simular impressão{% endif %}{% if form.cleaned_data.mode == 'daily' %} deste dia{% endif %}</button>
+    <div class="slip-container"><pre class="order-slip">{{ report.text }}</pre></div>
+  </section>{% endfor %}</div>
+</form>
+{% endif %}
+{% endblock %}

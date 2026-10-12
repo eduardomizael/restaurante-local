@@ -1,6 +1,8 @@
 """Reading/capture worker, independent of every HTTP page."""
 
 import logging
+from datetime import datetime, timezone
+from time import monotonic
 from threading import Thread
 
 from django.db import close_old_connections, connections
@@ -37,8 +39,14 @@ class ScaleWorker(Thread):
                     if was_paused and self.capture_controller:
                         self.capture_controller.reset()
                     was_paused = False
+                    read_succeeded = False
                     try:
                         sample = self.adapter.read()
+                        read_succeeded = True
+                        self.state.update(scale_access="AVAILABLE", scale_access_message="Resposta recebida.",
+                                          scale_device=getattr(self.adapter, "port", ""),
+                                          scale_last_response=datetime.now(timezone.utc),
+                                          scale_last_response_tick=monotonic())
                         revision = getattr(self.adapter, "revision", None)
                         if revision != adapter_revision:
                             if self.capture_controller:
@@ -59,7 +67,9 @@ class ScaleWorker(Thread):
                     except ScaleNoResponseError as exc:
                         recovering = bool(self.capture_controller and self.capture_controller.interrupt_silence())
                         logger.warning("Consulta sem resposta; recuperação breve=%s", recovering)
-                        self.state.update(scale_status="RECOVERING" if recovering else "ERROR", error=str(exc))
+                        self.state.update(scale_status="RECOVERING" if recovering else "ERROR", error=str(exc),
+                                          scale_access="NO_RESPONSE", scale_access_message="Balança sem resposta.",
+                                          scale_device=getattr(self.adapter, "port", ""))
                     except ValidationError as exc:
                         logger.warning("Captura comercial recusada: %s", exc.messages)
                         self.state.update(scale_status="ERROR", error=" ".join(exc.messages))
@@ -67,6 +77,9 @@ class ScaleWorker(Thread):
                         logger.exception("Falha de leitura")
                         if self.capture_controller:
                             self.capture_controller.reset()
+                        if not read_succeeded:
+                            self.state.update(scale_access="UNAVAILABLE", scale_access_message="Não foi possível ler a balança.",
+                                              scale_device=getattr(self.adapter, "port", ""))
                         self.state.update(scale_status="ERROR", error=str(exc))
                 self.stop_event.wait(self.interval)
         finally:

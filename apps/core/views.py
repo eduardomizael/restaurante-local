@@ -6,6 +6,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from apps.core.selectors import runtime_snapshot
+from apps.products.selectors import scale_product
 from runtime.state import state
 from apps.core.http import ShutdownResponse
 
@@ -22,7 +23,7 @@ def status_page(request):
 def status_fragment(request):
     """Return the technical polling fragment."""
     template = "core/scale_fragment.html" if request.GET.get("surface") == "attendance" else "core/status_fragment.html"
-    return render(request, template, {"runtime": runtime_snapshot()})
+    return render(request, template, {"runtime": runtime_snapshot(), "scale_product": scale_product()})
 
 
 @require_GET

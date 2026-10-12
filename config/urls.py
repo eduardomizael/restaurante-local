@@ -13,6 +13,7 @@ urlpatterns = [
     path("board/fragment/", order_views.board_fragment, name="board_fragment"),
     path("board/products/", order_views.product_choices, name="product_choices"),
     path("products/", product_views.catalogue, name="catalogue"),
+    path("attendance/scale-product/", product_views.choose_scale_product, name="choose_scale_product"),
     path("products/new/", product_views.edit_product, name="new_product"),
     path("products/<int:product_id>/edit/", product_views.edit_product, name="edit_product"),
     path("products/<int:product_id>/flags/", product_views.update_flag, name="update_product_flag"),

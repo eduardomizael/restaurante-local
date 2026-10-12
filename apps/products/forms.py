@@ -34,6 +34,13 @@ class ScaledDecimalField(forms.CharField):
         return result
 
 
+class ScaleProductForm(forms.Form):
+    """Parse the scale picker identity and displayed product revision."""
+
+    product_id = forms.IntegerField(min_value=1)
+    expected_revision = forms.IntegerField(min_value=1)
+
+
 class ProductFlagForm(forms.Form):
     """Parse an explicit desired value for one catalogue flag."""
 

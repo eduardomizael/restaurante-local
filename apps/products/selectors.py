@@ -27,6 +27,11 @@ def quick_access_products():
     return active_products().filter(is_quick_access=True)
 
 
+def scale_product_choices():
+    """Return only products eligible for scale capture."""
+    return active_products().filter(unit=Product.Unit.KILOGRAM)
+
+
 def scale_product():
     """Return the selected active kilogram product, if configured."""
     return active_products().filter(is_scale_product=True, unit=Product.Unit.KILOGRAM).first()

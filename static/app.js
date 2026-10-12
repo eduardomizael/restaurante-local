@@ -7,6 +7,7 @@ function requestFeedback(event) {
   const source = event.detail.requestConfig?.elt || event.detail.elt;
   if (source?.closest("#discard-measurement-dialog")) return document.getElementById("discard-measurement-feedback");
   if (source?.closest("#manual-item-dialog")) return document.getElementById("manual-item-feedback");
+  if (source?.closest("#scale-product-dialog")) return document.getElementById("scale-product-feedback");
   if (source?.closest("#catalogue-results")) return document.getElementById("catalogue-feedback");
   if (source?.closest("#attendance-workspace") && source.id !== "shared-board") {
     return document.getElementById("attendance-feedback");
@@ -81,6 +82,12 @@ document.addEventListener("htmx:beforeSwap", (event) => {
     event.detail.isError = false;
   }
   if ([400, 409].includes(event.detail.xhr.status)
+      && event.detail.target.id === "scale-product-content"
+      && event.detail.xhr.getResponseHeader("X-Scale-Product-Fragment") === "1") {
+    event.detail.shouldSwap = true;
+    event.detail.isError = false;
+  }
+  if ([400, 409].includes(event.detail.xhr.status)
       && event.detail.target.id === "catalogue-results"
       && event.detail.xhr.getResponseHeader("X-Catalogue-Fragment") === "1") {
     event.detail.shouldSwap = true;
@@ -140,6 +147,19 @@ window.addEventListener("pageshow", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  const scaleDialog = document.getElementById("scale-product-dialog");
+  if (scaleDialog) {
+    document.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target.id === "scale-product-content" && !scaleDialog.open) scaleDialog.showModal();
+    });
+    document.addEventListener("scaleProductSelected", () => scaleDialog.close());
+    scaleDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-scale-product]") && !scaleDialog.querySelector("form.htmx-request")) scaleDialog.close();
+    });
+    scaleDialog.addEventListener("cancel", (event) => {
+      if (scaleDialog.querySelector("form.htmx-request")) event.preventDefault();
+    });
+  }
   const discardDialog = document.getElementById("discard-measurement-dialog");
   if (discardDialog) {
     document.addEventListener("htmx:afterSwap", (event) => {

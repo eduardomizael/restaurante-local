@@ -5,12 +5,12 @@ from runtime.state import state
 STATUS_LABELS = {
     "STOPPED": "Leitura parada", "PAUSED": "Leitura pausada",
     "SIMULATED": "Leitura simulada", "ERROR": "Falha de leitura",
-    "WAITING_ZERO": "Captura bloqueada · retire o prato e aguarde retorno ao zero",
-    "RECOVERING": "Balança sem resposta · aguardando novas leituras válidas",
-    "MEASURING": "Pronta para o próximo prato",
-    "STABILIZING": "Aguardando peso estável",
-    "WAITING_REMOVAL": "Peso fixado · pesagem salva · aguardando zero",
-    "CONFIG_REQUIRED": "Selecione um produto ativo em KG no cadastro",
+    "WAITING_ZERO": "Retire o prato e aguarde zerar",
+    "RECOVERING": "Sem resposta. Aguarde",
+    "MEASURING": "Pode colocar o prato",
+    "STABILIZING": "Aguardando estabilidade",
+    "WAITING_REMOVAL": "Pesagem salva. Retire o prato",
+    "CONFIG_REQUIRED": "Escolha o produto da balança",
 }
 
 STATUS_ICONS = {

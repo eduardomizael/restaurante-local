@@ -1,0 +1,9 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="heading"><p class="eyebrow">CONSULTA E IMPRESSÃO</p><h1>Relatórios</h1></div>
+<nav class="configuration-nav" aria-label="Seções de relatórios">
+  <a href="{% url 'report_orders' %}" {% if report_section == 'orders' %}aria-current="page"{% endif %}>Comandas</a>
+  <a href="{% url 'report_totals' %}" {% if report_section == 'totals' %}aria-current="page"{% endif %}>Totais</a>
+</nav>
+{% block report_content %}{% endblock %}
+{% endblock %}

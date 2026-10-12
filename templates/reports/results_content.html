@@ -1,0 +1,8 @@
+<div id="report-results" {% if pending %}hx-get="{% url 'report_print_result' batch_key %}?fragment=1" hx-trigger="every 1s [window.localPollingAllowed()]" hx-swap="outerHTML" hx-sync="this:drop"{% endif %}>
+{% for job in jobs %}<section class="card">
+  <h3>Relatório {{ job.report_start|date:'d/m/Y' }} a {{ job.report_end|date:'d/m/Y' }}</h3>
+  <p>Envio #{{ job.pk }} · {{ job.get_delivery_mode_display }} · {{ job.get_status_display }}</p>
+  {% if job.printer_name %}<p>Fila: {{ job.printer_name }}</p>{% endif %}
+  {% if job.result_message %}<p>{{ job.result_message }}</p>{% endif %}
+</section>{% endfor %}
+</div>

@@ -4,9 +4,14 @@ from apps.core import views
 from apps.orders import views as order_views
 from apps.products import views as product_views
 from apps.printing import views as print_views
+from apps.printing import report_views
 from apps.configuration import views as configuration_views
 
 urlpatterns = [
+    path("reports/orders/", report_views.orders, name="report_orders"),
+    path("reports/totals/", report_views.totals, name="report_totals"),
+    path("reports/totals/print/", report_views.print_totals, name="report_print"),
+    path("reports/prints/<uuid:batch_key>/", report_views.print_result, name="report_print_result"),
     path("", order_views.attendance, name="home"),
     path("attendance/alternative/", order_views.attendance, name="attendance_alternative"),
     path("attendance/products/", order_views.alternative_products, name="alternative_products"),

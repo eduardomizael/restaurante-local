@@ -1,0 +1,28 @@
+{% extends 'reports/base.html' %}{% load commercial %}
+{% block report_content %}
+<h2>Comandas no período</h2>
+{% include 'reports/period.html' %}
+{% if page %}<p>{{ page.paginator.count }} comanda{{ page.paginator.count|pluralize:'s' }} encontrada{{ page.paginator.count|pluralize:'s' }}. As situações são as atuais.</p>{% endif %}
+<div class="product-list">
+{% for order in page %}
+<section class="card report-order">
+  <div class="panel-heading"><h3>Comanda {{ order.number }}</h3><strong>{{ order.get_status_display }}</strong></div>
+  <p>Abertura: {{ order.created_at|date:'d/m/Y H:i' }} · Valor dos itens registrados: R$ {{ order.report_total|default_if_none:0|money }}</p>
+  {% if order.finalized_at %}<p>Fechamento: {{ order.finalized_at|date:'d/m/Y H:i' }}</p>{% endif %}
+  {% if order.cancelled_at %}<p>Cancelamento: {{ order.cancelled_at|date:'d/m/Y H:i' }}</p>{% endif %}
+  <details><summary>Versões para abrir e reimprimir ({{ order.documents.all|length }})</summary>
+    <div class="report-versions">{% for document in order.documents.all %}
+    <div class="job-row"><p><strong>Versão {{ forloop.counter }} · {% if document.is_final %}Fechamento{% else %}Impressão sem fechar{% endif %}</strong><br>{{ document.created_at|date:'d/m/Y H:i:s' }} · R$ {{ document.content.subtotal_cents|money }}</p>
+      <a class="button secondary" href="{% url 'saved_document' document.pk %}">Abrir versão {{ forloop.counter }}</a>
+      <a class="button secondary" href="{% url 'reprint_document' document.pk %}">Reimprimir versão {{ forloop.counter }}</a>
+    </div>{% empty %}<p>Esta comanda ainda não possui uma versão impressa para reimpressão.</p>{% endfor %}</div>
+  </details>
+</section>
+{% empty %}{% if form.is_valid %}<div class="card"><p>Nenhuma comanda no período selecionado.</p></div>{% endif %}{% endfor %}
+</div>
+{% if page.paginator.num_pages > 1 %}<nav class="form-actions" aria-label="Paginação das comandas">
+  {% if page.has_previous %}<a class="button secondary" href="?{{ period_query }}&amp;page={{ page.previous_page_number }}">Anterior</a>{% endif %}
+  <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="button secondary" href="?{{ period_query }}&amp;page={{ page.next_page_number }}">Próxima</a>{% endif %}
+</nav>{% endif %}
+{% endblock %}

@@ -1,5 +1,7 @@
 # Estrutura técnica da aplicação local de pesagem
 
+Incremento em 12/10/2026: **Relatórios** consulta comandas e versões para reimpressão, totais consolidados ou um relatório completo por dia. Seleção por data de abertura, contagens por situação atual e somas históricas somente dos itens ativos das fechadas. Prévia assinada, impressão individual/em lote pela fila compartilhada e snapshots próprios em `PrintJob`. Migration printing 0005 gerada; não aplicada automaticamente no banco operacional. Consulte a [ADR-0047](adr/0047-relatorios-de-comandas-e-totais.md).
+
 Incremento em 12/10/2026: indicadores de disponibilidade da balança e impressora na tela de Status. A balança reutiliza as leituras existentes; um monitor exclusivo da impressão RAW consulta a fila Windows a cada 10 segundos e publica resultados somente em memória. A apresentação do Status atualiza a cada 2 segundos, sem consultas a hardware nas views. Sem novas dependências ou migrations; consulte a [ADR-0046](adr/0046-disponibilidade-dos-equipamentos-no-status.md).
 
 Incremento em 12/10/2026: `Product.is_meal` controla explicitamente o grupo de refeições; classificação copiada para novas pesagens/itens e preservada nos documentos. NULL nos snapshots anteriores conserva a regra histórica, sem reclassificação pelo cadastro atual. Migrations geradas para products, measurements e orders conforme [ADR-0044](adr/0044-classificacao-explicita-de-refeicoes.md); nenhuma aplicação no banco operacional. O catálogo existente começa desmarcado e exige definição explícita antes de novas capturas/inclusões.

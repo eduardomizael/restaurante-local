@@ -1,0 +1,7 @@
+{% extends 'reports/base.html' %}
+{% block report_content %}
+<h2>Impressão dos relatórios</h2>
+<p>Confira o resultado de cada envio. Resultado incerto exige conferir o papel antes de solicitar uma nova impressão.</p>
+{% include 'reports/results_content.html' %}
+<a class="button secondary" href="{% url 'report_totals' %}">Voltar aos totais</a>
+{% endblock %}

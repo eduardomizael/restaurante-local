@@ -8,7 +8,8 @@ def application_identity(request):
     area = "home"
     for route, pages in {
         "catalogue": {"catalogue", "new_product", "edit_product", "update_product_flag"},
-        "print_history": {"print_history", "saved_document", "reprint_document", "print_jobs_fragment"},
+        "report_orders": {"print_history", "saved_document", "reprint_document", "print_jobs_fragment",
+                          "report_orders", "report_totals", "report_print", "report_print_result"},
         "application_configuration": {
             "application_configuration", "numbering", "document_configuration", "equipment_configuration",
         },

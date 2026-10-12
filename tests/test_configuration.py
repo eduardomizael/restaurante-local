@@ -48,7 +48,7 @@ class ConfigurationTests(TestCase):
         self.assertEqual(saved.display_name, "Restaurante São José")
         self.assertEqual(saved.revision, 1)
         self.assertTrue(DomainEvent.objects.filter(kind="APPLICATION_CONFIGURATION_SAVED").exists())
-        for name in ("home", "catalogue", "print_history", "equipment_configuration"):
+        for name in ("home", "catalogue", "report_orders", "report_totals", "equipment_configuration"):
             response = self.client.get(reverse(name))
             self.assertContains(response, "<title>Restaurante São José</title>", html=True)
             self.assertContains(response, '<a class="brand" href="/">Restaurante São José</a>', html=True)

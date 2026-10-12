@@ -29,13 +29,13 @@ class ShutdownHTTPTests(TransactionTestCase):
         from django.urls import reverse
 
         pages = [self.client.get(reverse(route)) for route in
-                 ("home", "catalogue", "print_history", "application_configuration", "status")]
+                 ("home", "catalogue", "report_orders", "application_configuration", "status")]
         for page in pages:
             self.assertEqual(page.status_code, 200)
             html = page.content.decode()
             navbar = html.split('<nav class="primary-nav"', 1)[1].split('</nav>', 1)[0]
             self.assertNotIn('shutdown-link', navbar)
-            for route in ("home", "catalogue", "print_history", "application_configuration", "status"):
+            for route in ("home", "catalogue", "report_orders", "application_configuration", "status"):
                 self.assertIn(f'href="{reverse(route)}"', navbar)
         self.assertContains(pages[-1], 'class="button danger shutdown-link"')
         self.assertContains(pages[-1], reverse("shutdown_confirmation"))

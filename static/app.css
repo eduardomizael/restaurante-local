@@ -413,3 +413,12 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .equipment-ok { border-color: #25643d; background: #e7f0e9; color: #184d2b; }
 .equipment-error { border-color: #a92828; background: #fff0ee; color: #8a2020; }
 .equipment-card { overflow-wrap: anywhere; }
+.report-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.report-filters .form-errors { flex-basis: 100%; }
+.report-filters .form-field { flex: 1 1 180px; min-width: 0; }
+.report-filters input, .report-filters select { width: 100%; }
+.report-order summary { min-height: 48px; padding: 12px; cursor: pointer; }
+.report-versions { margin-top: 12px; }
+.report-versions .button { margin: 4px; }
+.report-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 16px; margin: 16px 0; }
+.report-preview { min-width: 0; }

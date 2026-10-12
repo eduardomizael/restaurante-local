@@ -7,6 +7,7 @@ from django.db import close_old_connections, connections
 
 from apps.printing.documents import document_bold_lines, render_text, render_header
 from apps.printing.models import PrintJob
+from apps.printing.report_documents import render_report
 from apps.printing.services import claim_next_job, complete_job
 from hardware.printer.simulator import SimulatedPrinter
 from hardware.printer.results import PrintFailure, PrintResult
@@ -35,10 +36,12 @@ class PrintWorker(Thread):
         spooler_job_id = None
         raw_adapter = None
         try:
-            text = render_text(job.document.content, second_copy=job.kind == PrintJob.Kind.REPRINT)
+            content = job.report_content if job.document_id is None else job.document.content
+            text = (render_report(content) if job.document_id is None else
+                    render_text(content, second_copy=job.kind == PrintJob.Kind.REPRINT))
             if job.delivery_mode == "RAW":
                 raw_adapter = WindowsRawPrinter(job.printer_name)
-            if raw_adapter and job.document.content["version"] in (2, 3, 4, 5, 6, 7):
+            if raw_adapter and job.document_id is not None and content["version"] in (2, 3, 4, 5, 6, 7):
                 emphasis = ({"bold_lines": document_bold_lines(
                     job.document.content, second_copy=job.kind == PrintJob.Kind.REPRINT)}
                     if job.document.content["version"] in (6, 7) else {})

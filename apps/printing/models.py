@@ -33,7 +33,7 @@ class OrderDocument(models.Model):
 
 
 class PrintJob(models.Model):
-    """Persistent delivery lifecycle, distinct from commercial finalization."""
+    """Persistent delivery lifecycle for order documents and report snapshots."""
 
     class Kind(models.TextChoices):
         INITIAL = "INITIAL", "Primeira via"
@@ -47,7 +47,9 @@ class PrintJob(models.Model):
         FAILED = "FAILED", "Falha confirmada"
         UNKNOWN = "UNKNOWN", "Resultado incerto — revise antes de reimprimir"
 
-    document = models.ForeignKey(OrderDocument, on_delete=models.PROTECT, related_name="jobs")
+    document = models.ForeignKey(OrderDocument, null=True, blank=True, on_delete=models.PROTECT, related_name="jobs")
+    report_content = models.JSONField(null=True, blank=True)
+    report_batch_key = models.UUIDField(null=True, blank=True, db_index=True)
     request_key = models.UUIDField(unique=True)
     kind = models.CharField(max_length=7, choices=Kind.choices)
     status = models.CharField(max_length=14, choices=Status.choices, default=Status.PENDING)
@@ -64,6 +66,10 @@ class PrintJob(models.Model):
     class Meta:
         ordering = ["id"]
         constraints = [
+            models.CheckConstraint(condition=(
+                Q(document__isnull=False, report_content__isnull=True, report_batch_key__isnull=True)
+                | Q(document__isnull=True, report_content__isnull=False, report_batch_key__isnull=False, kind="INITIAL")
+            ), name="print_job_single_content_source"),
             models.UniqueConstraint(fields=["document"], condition=Q(kind="INITIAL"), name="one_initial_job_per_document"),
             models.UniqueConstraint(fields=["document"], condition=Q(status__in=["PENDING", "SUBMITTING"]), name="one_pending_job_per_document"),
             models.CheckConstraint(condition=Q(kind__in=["INITIAL", "REPRINT"]), name="print_job_valid_kind"),

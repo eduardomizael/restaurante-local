@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -9,6 +9,53 @@ from apps.core.selectors import runtime_snapshot
 from apps.products.selectors import scale_product
 from runtime.state import state
 from apps.core.http import ShutdownResponse
+from apps.core.history_selectors import change_history, history_seen
+from apps.core.history_services import acknowledge_history
+from apps.core.forms import HistoryAcknowledgmentForm
+
+
+@require_GET
+@never_cache
+def change_history_page(request):
+    """Show all changes, automatically only when the local record differs."""
+    try:
+        context = change_history()
+    except (OSError, ValueError):
+        if request.GET.get("automatic") == "1":
+            return HttpResponse(status=204)
+        return HttpResponse("Não foi possível carregar o histórico.", status=503)
+    if request.GET.get("automatic") == "1" and history_seen(context["fingerprint"]):
+        return HttpResponse(status=204)
+    context["history_page"] = True
+    template = "core/change_history_content.html" if request.headers.get("HX-Request") == "true" else "core/change_history.html"
+    return render(request, template, context)
+
+
+@require_POST
+@never_cache
+def acknowledge_change_history(request):
+    """Acknowledge only after a successful local file write."""
+    try:
+        form = HistoryAcknowledgmentForm(request.POST)
+        if not form.is_valid():
+            raise ValueError("O histórico mudou. Reabra para ver as novidades.")
+        acknowledge_history(form.cleaned_data["fingerprint"])
+    except (OSError, ValueError) as exc:
+        error = str(exc) if isinstance(exc, ValueError) else "Não foi possível salvar. Tente fechar novamente."
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse(error, status=409)
+            response["X-Change-History-Error"] = "1"
+            return response
+        try:
+            context = change_history()
+        except (OSError, ValueError):
+            return HttpResponse("Não foi possível carregar o histórico.", status=503)
+        return render(request, "core/change_history.html", {**context, "history_page": True, "error": error}, status=409)
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = "changeHistoryAcknowledged"
+        return response
+    return redirect("status")
 
 
 @require_GET

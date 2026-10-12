@@ -13,5 +13,9 @@
   <main class="{% block main_class %}{% endblock %}">{% block content %}{% endblock %}</main>
   {% include 'core/keypad.html' %}
   {% block dialogs %}{% endblock %}
+  {% if not history_page %}
+  <dialog id="change-history-dialog" aria-labelledby="change-history-title"><div id="change-history-content"></div></dialog>
+  <div hidden hx-get="{% url 'change_history' %}?automatic=1" hx-trigger="load" hx-target="#change-history-content" hx-swap="innerHTML"></div>
+  {% endif %}
 </body>
 </html>

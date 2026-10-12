@@ -1,0 +1,12 @@
+<header><p class="eyebrow">NOVIDADES</p><h1 id="change-history-title">Histórico de mudanças</h1></header>
+<div class="change-history-entries" tabindex="0" aria-label="Mudanças da aplicação">
+  {% for release in releases %}<section class="card change-history-release">
+    <h2>Versão {{ release.version }} — <time datetime="{{ release.date }}">{{ release.display_date|date:'d/m/Y' }}</time></h2>
+    <ul>{% for change in release.changes %}<li><h3>{{ change.summary }}</h3><p>{{ change.description }}</p></li>{% endfor %}</ul>
+  </section>{% endfor %}
+</div>
+<form method="post" action="{% url 'acknowledge_change_history' %}" hx-post="{% url 'acknowledge_change_history' %}" hx-target="#change-history-feedback" hx-swap="innerHTML" hx-disabled-elt="find button">
+  {% csrf_token %}<input type="hidden" name="fingerprint" value="{{ fingerprint }}">
+  <p id="change-history-feedback" role="alert" class="error">{{ error }}</p>
+  <button type="submit">Entendi, fechar</button>
+</form>

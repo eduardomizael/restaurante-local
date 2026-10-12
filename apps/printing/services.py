@@ -78,6 +78,8 @@ def _print_order(*, order_id, request_key, expected_fingerprint, delivery_mode, 
     with write_transaction():
         existing = PrintJob.objects.filter(request_key=key).select_related("document").first()
         if existing:
+            if existing.document_id is None:
+                raise DomainConflict("Identificador de impressão já usado para um relatório.")
             reviewed = {name: value for name, value in existing.document.content.items()
                         if name not in ("finalized_at", "printed_at")}
             if (existing.document.order_id != order_id or existing.kind != PrintJob.Kind.INITIAL

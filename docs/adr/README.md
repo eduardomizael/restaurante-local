@@ -38,3 +38,4 @@ Registrar contexto, alternativas, decisão, consequências, status e data. Não 
 - [ADR-0045 — Histórico versionado e confirmação local](0045-historico-versionado-e-confirmacao-local.md).
 - [ADR-0046 — Disponibilidade dos equipamentos no Status](0046-disponibilidade-dos-equipamentos-no-status.md).
 - [ADR-0047 — Relatórios de comandas e totais](0047-relatorios-de-comandas-e-totais.md).
+- [ADR-0048 — Ordenação visual dos produtos](0048-ordenacao-visual-dos-produtos.md).

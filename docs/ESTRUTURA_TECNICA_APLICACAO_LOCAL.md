@@ -135,6 +135,8 @@ Snapshot inclui itens, todas as refeições, união de produtos marcados e lanç
 
 ## 5. Interface touch e HTTP local
 
+Produtos possui as subseções Catálogo e Organizar listas, com a mesma navegação secundária de Relatórios e Configurações. O catálogo editável mantém o produto da balança em destaque e os demais produtos em ordem alfabética, ignorando diferenças de acentos e maiúsculas. Organizar listas oferece duas sequências completas e independentes: produtos da comanda e produtos rápidos. Arraste pela alça com SortableJS local ou use Subir/Descer, com salvamento automático, controle de conflito por lista e preservação dos documentos congelados. A busca pertence somente ao catálogo. Contrato e validação: [ADR-0048](adr/0048-ordenacao-visual-dos-produtos.md).
+
 Estado implementado em 03/10/2026: atendimento, catálogo, numeração, teclado numérico, captura persistente pelo simulador e telas documentais. Contratos de apresentação, polling e limites provisórios estão registrados em [Atendimento e captura](IMPLEMENTACAO_ATENDIMENTO_CAPTURA.md) e [Impressão simulada](IMPLEMENTACAO_DOCUMENTO_IMPRESSAO.md). Serial e impressão física continuam propostos. Os simuladores não alteram os contratos de hardware homologável.
 
 Templates Django e HTMX retornam HTML e fragments; forms validam sintaxe, services calculam e persistem, selectors consultam. JavaScript cuida de teclado numérico, foco e feedback; não é autoridade de preços, comanda ou consumo da pesagem.

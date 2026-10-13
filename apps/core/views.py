@@ -138,6 +138,8 @@ def asset(request, name):
         "app.css": ("app.css", "text/css"),
         "app.js": ("app.js", "text/javascript"),
         "htmx.min.js": ("vendor/htmx.min.js", "text/javascript"),
+        "sortable.min.js": ("vendor/sortable-1.15.7.min.js", "text/javascript"),
+        "product-order.js": ("product-order.js", "text/javascript"),
     }
     if name not in assets:
         raise Http404

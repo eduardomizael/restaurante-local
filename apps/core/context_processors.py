@@ -7,7 +7,7 @@ def application_identity(request):
     name = request.resolver_match.url_name if request.resolver_match else None
     area = "home"
     for route, pages in {
-        "catalogue": {"catalogue", "new_product", "edit_product", "update_product_flag"},
+        "catalogue": {"catalogue", "product_ordering", "update_product_order", "new_product", "edit_product", "update_product_flag"},
         "report_orders": {"print_history", "saved_document", "reprint_document", "print_jobs_fragment",
                           "report_orders", "report_totals", "report_print", "report_print_result"},
         "application_configuration": {

@@ -422,3 +422,32 @@ dialog .form-actions button { flex: 1; min-width: 48px; }
 .report-versions .button { margin: 4px; }
 .report-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 16px; margin: 16px 0; }
 .report-preview { min-width: 0; }
+
+/* Complete independent sequences, separate from the searchable catalogue. */
+.product-order-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
+.product-order-section { min-width: 0; padding: 16px; border: 1px solid #baccc0; border-radius: 16px; background: #e7f0e9; }
+.product-order-section h2 { margin-bottom: 8px; }
+.product-order-section > .muted { margin: 0 0 8px; }
+.order-feedback { min-height: 26px; margin: 0 0 8px; font-weight: 600; }
+.product-order-list { display: grid; gap: 10px; list-style: none; padding: 4px; margin: 0; max-height: 440px; overflow-y: auto; scrollbar-gutter: stable; scroll-padding: 8px; }
+.product-order-card { display: grid; grid-template-columns: 24px 56px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; }
+.order-position { font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.order-handle { display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 48px; min-height: 56px; border: 1px solid #baccc0; border-radius: 8px; background: #edf2ed; font-size: 24px; cursor: grab; touch-action: none; user-select: none; }
+.order-handle span { font-size: 11px; }
+.order-product-details { min-width: 0; overflow-wrap: anywhere; }
+.order-product-details h3 { font-size: 17px; margin: 0 0 4px; }
+.order-product-details p { margin: 0; font-size: 14px; }
+.order-actions { display: flex; gap: 6px; }
+.order-actions button { min-width: 72px; min-height: 48px; padding: 8px; font-size: 14px; }
+.order-actions button:disabled { background: #edf2ed; color: #627267; border-color: #cbd9d1; }
+.order-drag-ghost { opacity: .35; }
+.order-drag-chosen { border-color: #173d36; box-shadow: 0 0 0 2px #688c76; }
+.order-empty { padding: 16px; line-height: 1.6; }
+@media (max-width: 1150px) { .product-order-sections { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 500px) {
+  .product-order-card { grid-template-columns: 24px 48px minmax(0, 1fr); gap: 8px; }
+  .order-actions { grid-column: 2 / -1; }
+  .order-actions button { flex: 1; }
+  .catalogue-page .product-list { grid-template-columns: minmax(0, 1fr); }
+  .catalogue-page .scale-product-card .product-details { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}

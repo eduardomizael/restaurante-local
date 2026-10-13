@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{% url 'asset' 'app.css' %}">
   <script src="{% url 'asset' 'htmx.min.js' %}" defer></script>
   <script src="{% url 'asset' 'app.js' %}" defer></script>
+  {% block extra_scripts %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" data-selected-order="{{ selected_id|default_if_none:'' }}">
   {% include 'core/navbar.html' %}

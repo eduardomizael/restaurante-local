@@ -1,0 +1,10 @@
+{% extends 'core/base.html' %}
+{% block main_class %}catalogue-page{% endblock %}
+{% block content %}
+<div class="heading heading-actions"><div><p class="eyebrow">CADASTRO LOCAL</p><h1>Produtos</h1></div><a class="button" href="{% url 'new_product' %}">＋ Novo produto</a></div>
+<nav class="configuration-nav" aria-label="Seções de produtos">
+  {% include 'core/navigation_link.html' with route='catalogue' label='Catálogo' active_route=request.resolver_match.url_name %}
+  {% include 'core/navigation_link.html' with route='product_ordering' label='Organizar listas' active_route=request.resolver_match.url_name %}
+</nav>
+{% block product_content %}{% endblock %}
+{% endblock %}

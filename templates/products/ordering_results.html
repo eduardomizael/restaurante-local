@@ -1,0 +1,6 @@
+<div id="catalogue-results">
+  <div id="catalogue-feedback" class="form-errors" role="status" aria-live="polite">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>
+  <div class="product-order-sections">
+    {% for ordering in ordering_lists %}{% include 'products/ordering.html' %}{% endfor %}
+  </div>
+</div>

@@ -1,0 +1,27 @@
+{% load commercial %}
+<section class="product-order-section" aria-labelledby="order-{{ ordering.kind }}-heading">
+  <h2 id="order-{{ ordering.kind }}-heading">{{ ordering.title }} <span class="muted">({{ ordering.products|length }})</span></h2>
+  <p id="order-{{ ordering.kind }}-help" class="muted">Arraste pela alça ou use Subir e Descer. A ordem é salva automaticamente.{% if ordering.kind == 'slip' %} Refeições continuam na seção própria do papel.{% endif %}</p>
+  <p class="order-feedback{% if order_error_kind == ordering.kind %} error{% endif %}" data-order-feedback role="status" aria-live="polite">{% if order_saved_kind == ordering.kind %}Ordem salva.{% elif order_error_kind == ordering.kind %}{{ order_error }}{% endif %}</p>
+  <form method="post" action="{% url 'update_product_order' %}" data-product-order="{{ ordering.kind }}"
+        hx-post="{% url 'update_product_order' %}" hx-target="#catalogue-results" hx-swap="outerHTML" hx-sync="#catalogue-results:drop"
+        hx-disabled-elt="#catalogue-results button:not(:disabled), #catalogue-results input[type='checkbox']:not(:disabled)">
+    {% csrf_token %}
+    <input type="hidden" name="kind" value="{{ ordering.kind }}">
+    <input type="hidden" name="expected_fingerprint" value="{{ ordering.fingerprint }}">
+    <input type="hidden" name="product_ids" value="{{ ordering.product_ids }}">
+    <ol class="product-order-list" id="order-{{ ordering.kind }}-list" aria-describedby="order-{{ ordering.kind }}-help">
+      {% for product in ordering.products %}
+      <li class="card product-order-card" data-product-id="{{ product.pk }}">
+        <span class="order-position" aria-label="Posição {{ forloop.counter }}">{{ forloop.counter }}</span>
+        <span class="order-handle" title="Arrastar {{ product.description }}" aria-hidden="true">⠿<span>Arrastar</span></span>
+        <div class="order-product-details"><h3>{{ product.description }}</h3><p>R$ {{ product.unit_price_cents|money }} / {{ product.unit }}{% if product.is_meal %} · Refeição{% endif %}</p></div>
+        <div class="order-actions">
+          <button type="submit" class="secondary" name="move" value="{{ product.pk }}:up" aria-label="Subir {{ product.description }}"{% if forloop.first %} disabled{% endif %}>↑ Subir</button>
+          <button type="submit" class="secondary" name="move" value="{{ product.pk }}:down" aria-label="Descer {{ product.description }}"{% if forloop.last %} disabled{% endif %}>↓ Descer</button>
+        </div>
+      </li>
+      {% empty %}<li class="order-empty">{% if ordering.kind == 'slip' %}Marque “Aparece na comanda” nos produtos ativos do catálogo.{% else %}Marque “Acesso rápido” nos produtos ativos do catálogo.{% endif %}</li>{% endfor %}
+    </ol>
+  </form>
+</section>

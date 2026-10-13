@@ -1,0 +1,9 @@
+{% extends 'products/base.html' %}
+{% block extra_scripts %}
+<script src="{% url 'asset' 'sortable.min.js' %}" defer></script>
+<script src="{% url 'asset' 'product-order.js' %}" defer></script>
+{% endblock %}
+{% block product_content %}
+<p class="muted">Organize a sequência da comanda e do acesso rápido separadamente. Para incluir ou remover produtos destas listas, altere as tags no Catálogo.</p>
+{% include 'products/ordering_results.html' %}
+{% endblock %}

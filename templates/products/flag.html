@@ -1,7 +1,7 @@
 <form method="post" action="{% url 'update_product_flag' product.pk %}"
       hx-post="{% url 'update_product_flag' product.pk %}" hx-trigger="change"
       hx-target="#catalogue-results" hx-swap="outerHTML" hx-sync="#catalogue-results:drop"
-      hx-disabled-elt="#catalogue-results input[type='checkbox']:not(:disabled)" class="product-flag-form">
+      hx-disabled-elt="#catalogue-results button:not(:disabled), #catalogue-results input[type='checkbox']:not(:disabled)" class="product-flag-form">
   {% csrf_token %}
   <input type="hidden" name="flag" value="{{ flag }}">
   <input type="hidden" name="expected_revision" value="{{ product.revision }}">

@@ -9,9 +9,9 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from apps.core.domain import DomainConflict
 from apps.core.http import requires_runtime
-from apps.products.forms import ProductFlagForm, ProductForm, ScaleProductForm
-from apps.products.selectors import catalogue_products, catalogue_snapshot, scale_product, scale_product_choices
-from apps.products.services import save_product, set_product_flag
+from apps.products.forms import ProductFlagForm, ProductForm, ProductOrderForm, ScaleProductForm
+from apps.products.selectors import catalogue_products, catalogue_snapshot, product_ordering_snapshot, scale_product, scale_product_choices
+from apps.products.services import reorder_products, save_product, set_product_flag
 from apps.core.selectors import runtime_snapshot
 from apps.orders.presentation import attendance_url
 
@@ -63,6 +63,40 @@ def catalogue(request):
     """Present search and all product flags for touch editing."""
     search = request.GET.get("q", "").strip()[:120]
     return render(request, "products/catalogue.html", _catalogue_context(search))
+
+
+@require_POST
+@never_cache
+@requires_runtime
+def update_order(request):
+    """Save list ordering and return authoritative cards on success or conflict."""
+    form = ProductOrderForm(request.POST)
+    errors, status = [], 200
+    if form.is_valid():
+        try:
+            reorder_products(**form.cleaned_data)
+        except ValidationError as exc:
+            errors = exc.messages
+            status = 409 if isinstance(exc, DomainConflict) else 400
+    else:
+        errors, status = ["Ordem inválida. A lista salva foi recuperada; tente novamente."], 400
+    if request.headers.get("HX-Request") != "true" and not errors:
+        return redirect("product_ordering")
+    context = {**product_ordering_snapshot(), "errors": errors}
+    context["order_saved_kind"] = form.cleaned_data.get("kind") if not errors else None
+    context["order_error_kind"] = form.cleaned_data.get("kind") if errors else None
+    context["order_error"] = " ".join(errors)
+    template = "products/ordering_results.html" if request.headers.get("HX-Request") == "true" else "products/ordering_page.html"
+    response = render(request, template, context, status=status)
+    response["X-Catalogue-Fragment"] = "1"
+    return response
+
+
+@require_GET
+@never_cache
+def ordering_page(request):
+    """Present the independent ordering lists in their own product subsection."""
+    return render(request, "products/ordering_page.html", product_ordering_snapshot())
 
 
 @require_POST

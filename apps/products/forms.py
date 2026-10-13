@@ -7,6 +7,7 @@ from django import forms
 
 from apps.core.domain import MAX_MONEY_CENTS
 from apps.products.models import Product
+from apps.products.ordering import PRODUCT_LISTS
 
 
 class ScaledDecimalField(forms.CharField):
@@ -52,6 +53,23 @@ class ProductFlagForm(forms.Form):
     ])
     enabled = forms.BooleanField(required=False)
     expected_revision = forms.IntegerField(min_value=1)
+
+
+class ProductOrderForm(forms.Form):
+    """Parse a complete order or a single accessible move in that order."""
+
+    kind = forms.ChoiceField(choices=[(kind, values[2]) for kind, values in PRODUCT_LISTS.items()])
+    product_ids = forms.JSONField()
+    expected_fingerprint = forms.RegexField(regex=r"\A[0-9a-f]{64}\Z")
+    move = forms.RegexField(regex=r"\A[1-9][0-9]*:(up|down)\Z", required=False)
+
+    def clean_product_ids(self):
+        """Reject duplicate IDs and coercions before any database write."""
+        ids = self.cleaned_data["product_ids"]
+        if (not isinstance(ids, list) or any(type(pk) is not int or pk < 1 for pk in ids)
+                or len(ids) != len(set(ids))):
+            raise forms.ValidationError("Lista de produtos inválida. Recarregue a página.")
+        return ids
 
 
 class ProductForm(forms.Form):

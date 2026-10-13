@@ -5,6 +5,60 @@ from django.utils import timezone
 from apps.core.domain import DomainConflict, require_integer, write_transaction
 from apps.core.services import record_event
 from apps.products.models import Product
+from apps.products.ordering import PRODUCT_LISTS, order_fingerprint
+from apps.products.selectors import ordered_products
+
+
+def reorder_products(*, kind, product_ids, expected_fingerprint, move=""):
+    """Save a complete list atomically, rejecting stale membership or positions.
+
+    Args:
+        kind: Independent quick-access or order-slip list.
+        product_ids: All active members in the desired order.
+        expected_fingerprint: Membership and positions displayed by the client.
+        move: Optional product ID and up/down direction for conventional POSTs.
+
+    Raises:
+        ValidationError: Invalid list or move.
+        DomainConflict: Another window changed the list before this request.
+    """
+    if kind not in PRODUCT_LISTS:
+        raise ValidationError("Lista de produtos inválida.")
+    if (not isinstance(product_ids, list) or any(type(pk) is not int or pk < 1 for pk in product_ids)
+            or len(product_ids) != len(set(product_ids))):
+        raise ValidationError("Lista de produtos inválida.")
+    _, field, _ = PRODUCT_LISTS[kind]
+    with write_transaction():
+        products = list(ordered_products(kind))
+        if order_fingerprint(products, field) != expected_fingerprint:
+            raise DomainConflict("Esta lista mudou em outra janela. A ordem atual foi recuperada; confira e tente novamente.")
+        by_id = {product.pk: product for product in products}
+        if set(product_ids) != set(by_id):
+            raise ValidationError("Envie todos os produtos desta lista, sem incluir produtos de outra lista.")
+        ids = product_ids.copy()
+        if move:
+            try:
+                raw_id, direction = move.split(":")
+                index = ids.index(int(raw_id))
+                if direction not in {"up", "down"}:
+                    raise ValueError
+            except (ValueError, AttributeError) as exc:
+                raise ValidationError("Movimento de produto inválido.") from exc
+            destination = index + (-1 if direction == "up" else 1)
+            if 0 <= destination < len(ids):
+                ids[index], ids[destination] = ids[destination], ids[index]
+        changed = []
+        now = timezone.now()
+        for position, pk in enumerate(ids):
+            product = by_id[pk]
+            if getattr(product, field) != position:
+                setattr(product, field, position)
+                product.revision += 1
+                product.updated_at = now
+                changed.append(product)
+        if changed:
+            Product.objects.bulk_update(changed, [field, "revision", "updated_at"])
+            record_event("PRODUCT_LIST_REORDERED", changed[0], list_kind=kind, product_ids=ids)
 
 
 def set_product_flag(*, product_id, flag, enabled, expected_revision):

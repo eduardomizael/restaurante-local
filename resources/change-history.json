@@ -4,6 +4,10 @@
     "version": "0.2.0",
     "changes": [
       {
+        "summary": "Organização dos produtos da comanda e do acesso rápido",
+        "description": "Em Produtos > Organizar listas, organize a comanda e o acesso rápido separadamente. Arraste os cards pela alça ou use Subir e Descer; a ordem é salva automaticamente. O Catálogo fica em ordem alfabética, com busca e edição das tags."
+      },
+      {
         "summary": "Relatórios de comandas e totais",
         "description": "O menu Relatórios reúne todas as comandas por período, com versões para abrir e reimprimir, e totais consolidados ou por dia. Veja contagens de abertas, fechadas e canceladas, quantidades de cada item e valores das comandas fechadas. Imprima os resumos na térmica, individualmente ou todos os dias. Os totais consideram somente os itens registrados no sistema."
       },

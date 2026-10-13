@@ -7,7 +7,8 @@
     {% else %}<p>Nenhum produto selecionado para a balança. Marque a tag Balança em um produto ativo por kg.</p>{% endif %}
   </section>
   <section aria-labelledby="other-products-heading">
-    <h2 id="other-products-heading">{% if search %}Resultados para “{{ search }}”{% else %}Demais produtos{% endif %}</h2>
+  <h2 id="other-products-heading">{% if search %}Resultados para “{{ search }}”{% else %}Demais produtos{% endif %}</h2>
+  <p class="muted">Produtos em ordem alfabética.</p>
     <div class="product-list">
       {% for product in products %}{% include 'products/card.html' %}
       {% empty %}<div class="card"><p>{% if search %}Nenhum outro produto encontrado para esta busca.{% else %}Nenhum outro produto cadastrado.{% endif %}</p></div>{% endfor %}
